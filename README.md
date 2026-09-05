@@ -79,9 +79,9 @@ The video covers setup, but the overall process is:
 3. assign players roles and activate Dusk to start the game (open the grimoire and look for the **T** button for keybind list)
 
 Additional voice chat setup (highly recommended):
-4. Create a persistent isolated voicechat group for each building
-5. place a command block on the inside making players join the building group (define player homes above this block!)
-6. place a command block on the outside making players leave the group
+1. Create a persistent isolated voicechat group for each building
+2. place a command block on the inside making players join the building group (define player homes above this block!)
+3. place a command block on the outside making players leave the group
 
 ## Can I include this in my modpack?
 
