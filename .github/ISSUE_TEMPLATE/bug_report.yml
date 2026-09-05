@@ -1,0 +1,73 @@
+name: Bug report
+description: Something in the mod misbehaved
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        > This form is for bugs only. For questions about running a game, check the in-game guides and the [wiki](https://github.com/autumnmyst/blood-on-the-blocktower/wiki) first.
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before reporting
+      options:
+        - label: I checked the in-game guides and the wiki, and this isn't covered there
+          required: true
+        - label: I can reproduce this
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: What went wrong, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the grimoire
+        2. Assign ...
+        3. Press ...
+    validations:
+      required: true
+  - type: input
+    id: mod_version
+    attributes:
+      label: Mod version
+      placeholder: 1.21.1-1.0.0
+    validations:
+      required: true
+  - type: input
+    id: loader
+    attributes:
+      label: Fabric Loader and Fabric API versions
+      placeholder: Loader 0.19.5 / API 0.116.17
+    validations:
+      required: true
+  - type: dropdown
+    id: side
+    attributes:
+      label: Where it happened
+      options:
+        - Singleplayer or LAN
+        - Dedicated server
+    validations:
+      required: true
+  - type: input
+    id: script
+    attributes:
+      label: Script and characters involved
+      description: If the bug involves specific characters or a homebrew script, name them.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: Paste the relevant part of `logs/latest.log`, or link a paste. Client log for HUD or screen problems, server log for everything else.
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots

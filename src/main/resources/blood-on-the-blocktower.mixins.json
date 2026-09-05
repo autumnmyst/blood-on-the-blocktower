@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "com.autumnwind.botb.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"MessageCommandMixin",
+		"PlayerNameMixin",
+		"PlayerListNameMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

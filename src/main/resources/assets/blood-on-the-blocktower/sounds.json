@@ -1,0 +1,90 @@
+{
+  "doorbell": {
+    "sounds": [
+      "blood-on-the-blocktower:doorbell"
+    ]
+  },
+  "doorknock": {
+    "sounds": [
+      {
+        "name": "blood-on-the-blocktower:doorknock",
+        "volume": 1.5
+      }
+    ]
+  },
+  "dusk": {
+    "sounds": [
+      "blood-on-the-blocktower:dusk"
+    ]
+  },
+  "dawn": {
+    "sounds": [
+      "blood-on-the-blocktower:dawn"
+    ]
+  },
+  "call_back": {
+    "sounds": [
+      "blood-on-the-blocktower:call_back"
+    ]
+  },
+  "role_receive": {
+    "sounds": [
+      "blood-on-the-blocktower:role_receive"
+    ]
+  },
+  "nomination": {
+    "sounds": [
+      "blood-on-the-blocktower:nomination"
+    ]
+  },
+  "vote_start": {
+    "sounds": [
+      "blood-on-the-blocktower:vote_start"
+    ]
+  },
+  "vote_music": {
+    "sounds": [
+      "blood-on-the-blocktower:vote_music"
+    ]
+  },
+  "clock_ticking": {
+    "sounds": [
+      "blood-on-the-blocktower:clock_ticking"
+    ]
+  },
+  "not_enough_votes": {
+    "sounds": [
+      "blood-on-the-blocktower:not_enough_votes"
+    ]
+  },
+  "tie": {
+    "sounds": [
+      "blood-on-the-blocktower:tie"
+    ]
+  },
+  "marked": {
+    "sounds": [
+      "blood-on-the-blocktower:marked"
+    ]
+  },
+  "execution": {
+    "sounds": [
+      "blood-on-the-blocktower:execution"
+    ]
+  },
+  "execution_survived": {
+    "sounds": [
+      "blood-on-the-blocktower:execution_survived"
+    ]
+  },
+  "game_end": {
+    "sounds": [
+      "blood-on-the-blocktower:game_end"
+    ]
+  },
+  "whisper": {
+    "sounds": [
+      "blood-on-the-blocktower:whisper"
+    ]
+  }
+}

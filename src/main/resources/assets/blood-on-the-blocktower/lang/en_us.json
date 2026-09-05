@@ -1,0 +1,22 @@
+{
+  "item.blood-on-the-blocktower.script": "Script",
+  "item.blood-on-the-blocktower.grimoire": "Grimoire",
+  "item.blood-on-the-blocktower.setup_stick": "BotB Setup Stick",
+  "key.category.blood-on-the-blocktower.botc": "Blood on the Blocktower",
+  "key.blood-on-the-blocktower.open_assign_gui": "Open Grimoire",
+  "key.blood-on-the-blocktower.toggle_show_role": "Toggle Role HUD",
+  "key.blood-on-the-blocktower.open_my_role_details": "Open My Role Details",
+  "key.blood-on-the-blocktower.open_script": "Open Script Reference",
+  "key.blood-on-the-blocktower.open_catalog": "Open Role Catalog",
+  "key.blood-on-the-blocktower.quick_role_view": "Grimoire Quick View",
+  "key.blood-on-the-blocktower.toggle_sidebar": "Toggle Player Sidebar",
+  "key.blood-on-the-blocktower.disable_hud": "Toggle All HUD",
+  "key.blood-on-the-blocktower.toggle_night_hud": "Toggle Night HUD",
+  "key.blood-on-the-blocktower.night_hud_next": "Night HUD Next",
+  "key.blood-on-the-blocktower.night_hud_prev": "Night HUD Previous",
+  "key.blood-on-the-blocktower.night_hud_teleport": "Night HUD Teleport",
+  "key.blood-on-the-blocktower.toggle_auto_teleport": "Night HUD Auto Teleport",
+  "key.blood-on-the-blocktower.open_timer": "Open Timer",
+  "key.blood-on-the-blocktower.teleport_town_square": "Teleport to Town Square",
+  "key.blood-on-the-blocktower.open_storyteller_tools": "Open Storyteller Tools"
+}

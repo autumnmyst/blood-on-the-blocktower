@@ -1,0 +1,326 @@
+package com.autumnwind.botb.hud;
+
+import com.autumnwind.botb.states.ClientState;
+import com.autumnwind.botb.states.StorytellerState;
+import com.autumnwind.botb.timer.ClientTimerState;
+import com.autumnwind.botb.util.*;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.math.ColorHelper;
+
+import java.util.List;
+import com.autumnwind.botb.event.KeyInputHandler;
+
+/**
+ * Renders the role HUD overlay showing player counts and role information.
+ * Has two modes:
+ * - Full HUD: Detailed player counts + role box with icon, name, type, and description
+ * - Minimal HUD: Compact player counts + small role icon
+ *
+ * For operators with night info enabled, shows current visit instructions instead of their role.
+ */
+public class RoleHUD {
+
+    /**
+     * Renders the role HUD.
+     * @param drawContext The draw context
+     * @param client The Minecraft client
+     */
+    public static void render(DrawContext drawContext, MinecraftClient client) {
+        if (client.player == null) return;
+
+        // Get player count and role info
+        int playerCount = ClientState.activePlayerCount;
+        int travelerCount = ClientState.travelerCount;
+        int nonTravelerCount = playerCount - travelerCount;
+        // Use non-traveler count for role counts lookup (like SetupValidator does)
+        RoleCounts.RoleCountInfo counts = RoleCounts.getCounts(nonTravelerCount);
+        Role role = ClientState.myRole;
+        Boolean isGood = ClientState.myAlignment;
+
+        // Position player counts higher when no timer, below timer when timer is active
+        // Boss bar is at the top, with text above it
+        // Timer text renders at y ~30-35, so we render below it at ~20 when timer is active
+        final int playerCountsHeight = ClientTimerState.hasActiveTimer() ? 20 : 10;
+
+        if (ClientState.isRoleHudVisible) {
+            renderFullHUD(drawContext, client, counts, role, isGood, playerCount, travelerCount, playerCountsHeight);
+        } else {
+            renderMinimalHUD(drawContext, client, counts, role, travelerCount, playerCountsHeight);
+        }
+    }
+
+    /**
+     * Renders the full HUD with detailed player counts and role box.
+     */
+    private static void renderFullHUD(DrawContext drawContext, MinecraftClient client,
+                                       RoleCounts.RoleCountInfo counts, Role role, Boolean isGood,
+                                       int playerCount, int travelerCount, int playerCountsHeight) {
+        // 1. Render detailed player counts
+        Text countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, true);
+        if (countText != null) {
+            int screenWidth = drawContext.getScaledWindowWidth();
+            drawContext.drawCenteredTextWithShadow(client.textRenderer, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
+        }
+
+        // 2. Render full role box OR night order instructions box
+        // For operators with night info enabled and current visit, show instructions HUD instead
+        boolean isOperator = client.player.hasPermissionLevel(2);
+        boolean isActuallyNight = ClientState.currentNight > ClientState.currentDay;
+        boolean isOperatorWithVisits = isOperator &&
+                StorytellerState.sendTeleportInfo &&
+                ClientState.isNightHudVisible;
+
+        // Show the instructions HUD whenever the selected visit has content (icon + instruction),
+        // day or night: daytime visits (Nominations and its modifiers, the Leviathan and Vizier
+        // announcements) need it as much as the night ones. currentVisitScriptRole is null for
+        // static visits, and we still want their instruction shown, so don't gate on it here.
+        boolean showInstructionsHud = isOperatorWithVisits &&
+                StorytellerState.currentVisitInstructions != null &&
+                !StorytellerState.currentVisitInstructions.isBlank() &&
+                StorytellerState.currentVisitIcon != null;
+
+        // At night with the order open but no visit to show, hide the role box entirely. During
+        // the day a visit with nothing to say (Dawn, Dusk) falls back to the storyteller's own role.
+        if (isOperatorWithVisits && isActuallyNight && !showInstructionsHud) {
+            return;
+        }
+
+        // Determine what to display
+        if (showInstructionsHud) {
+            // Storyteller instructions HUD - use visit state
+            Identifier displayIcon = StorytellerState.currentVisitIcon;
+            String displayText = StorytellerState.currentVisitInstructions;
+            boolean displayIsGoodVal = StorytellerState.currentVisitIsGood;
+
+            // Determine role type / default alignment / display name from the script role
+            // when present. Static-only visits have no script role, so fall back to NONE
+            // type and an empty display name (currentVisitRoleText, set by VisitNavigation,
+            // overrides the displayName at render time when present).
+            ScriptRole visitScriptRole = StorytellerState.currentVisitScriptRole;
+            RoleType roleType = visitScriptRole != null && visitScriptRole.getTeam() != null
+                    ? visitScriptRole.getTeam() : RoleType.NONE;
+            boolean isDefaultGood = visitScriptRole == null || visitScriptRole.isDefaultGood();
+            String displayName = visitScriptRole != null ? visitScriptRole.getDisplayName() : "";
+
+            renderRoleBox(drawContext, client, displayIcon, displayName, roleType,
+                    isDefaultGood, displayIsGoodVal, displayText, true, null);
+        } else {
+            // Normal player HUD
+            if (ClientState.myAssignment != null && ClientState.myAssignment.isCustomRole()) {
+                // Custom role from assignment
+                ScriptRole scriptRole = ClientState.myAssignment.getScriptRole();
+                if (scriptRole != null) {
+                    boolean displayIsGoodVal = isGood != null ? isGood : true;
+                    renderRoleBox(drawContext, client, scriptRole.getIcon(),
+                            ClientState.myAssignment.getDisplayName(),
+                            ClientState.myAssignment.getRoleType(),
+                            ClientState.myAssignment.isRoleDefaultGood(),
+                            displayIsGoodVal,
+                            scriptRole.getAbility(), false, ClientState.myAssignment.override());
+                }
+            } else if (role != null && role != Role.NO_ROLE && isGood != null) {
+                // Official role
+                AlignmentOverride override = ClientState.myAssignment != null ? ClientState.myAssignment.override() : AlignmentOverride.DEFAULT;
+                renderRoleBox(drawContext, client, role.getIcon(), role.getDisplayName(),
+                        role.getType(), role.isDefaultGood(), isGood, role.getDescription(), false, override);
+            }
+        }
+    }
+
+    /**
+     * Renders the role box with icon, name, type, and description.
+     * Works for both official and custom roles by accepting extracted values.
+     * @param icon The role icon identifier
+     * @param displayName The role display name
+     * @param roleType The role type (Townsfolk, Outsider, Minion, Demon)
+     * @param isDefaultGood Whether the role is good by default
+     * @param displayIsGood The actual alignment after overrides
+     * @param displayText The role description/instructions
+     * @param showExtraInfo If true, show extra info from NightOrderInfoGenerator (operators only)
+     * @param override The alignment override (null for storyteller HUD)
+     */
+    private static void renderRoleBox(DrawContext drawContext, MinecraftClient client,
+                                       Identifier icon, String displayName, RoleType roleType,
+                                       boolean isDefaultGood, boolean displayIsGood, String displayText,
+                                       boolean showExtraInfo, AlignmentOverride override) {
+        // Text Preparation
+        // For storyteller instructions HUD, use the role/associated role text and player names
+        Text roleNameText;
+        MutableText roleTypeText;
+
+        if (showExtraInfo && StorytellerState.currentVisitRoleText != null) {
+            // Show "ASSIGNED / ASSOCIATED (Drunk)" format for storyteller with proper colors
+            roleNameText = StorytellerState.currentVisitRoleText;
+            // Show player name(s) in yellow instead of role type (no italics)
+            roleTypeText = StorytellerState.currentVisitPlayerNames != null
+                ? StorytellerState.currentVisitPlayerNames.copy() : Text.empty();
+        } else {
+            // Normal player HUD - show role name and type
+            roleNameText = Text.literal(displayName);
+            boolean isTraveler = roleType == RoleType.TRAVELER;
+            boolean alignmentMismatched = displayIsGood != isDefaultGood;
+
+            if (isTraveler) {
+                // Travelers show alignment indicator based on override:
+                // FORCE_GOOD -> (GOOD), FORCE_BAD -> (EVIL), DEFAULT -> (---)
+                roleTypeText = Text.literal(roleType.name());
+                if (override == AlignmentOverride.FORCE_GOOD) {
+                    roleTypeText.append(Text.literal(" (GOOD)").formatted(Formatting.BOLD, Formatting.BLUE));
+                } else if (override == AlignmentOverride.FORCE_BAD) {
+                    roleTypeText.append(Text.literal(" (EVIL)").formatted(Formatting.BOLD, Formatting.RED));
+                } else {
+                    // Default alignment - show neutral indicator
+                    roleTypeText.append(Text.literal(" (---)").formatted(Formatting.ITALIC, Formatting.GRAY));
+                }
+            } else {
+                roleTypeText = Text.literal(roleType.name());
+                if (alignmentMismatched) {
+                    roleTypeText.append(Text.literal(displayIsGood ? " (GOOD)" : " (EVIL)").formatted(Formatting.BOLD));
+                }
+            }
+            roleTypeText.formatted(Formatting.ITALIC);
+        }
+
+        MutableText descText = Text.literal(displayText);
+        if (!showExtraInfo && ClientState.hintsEnabled) {
+            String keyName = KeyInputHandler.openMyRoleDetailsKey
+                    .getBoundKeyLocalizedText().getString();
+            descText.append(Text.literal("\n\n[").formatted(Formatting.GRAY))
+                    .append(Text.literal(keyName).formatted(Formatting.YELLOW))
+                    .append(Text.literal("] for details").formatted(Formatting.GRAY));
+        }
+        List<OrderedText> wrappedDesc = client.textRenderer.wrapLines(descText, 200);
+
+        // Extra info for storyteller only (from NightOrderInfoGenerator)
+        List<OrderedText> wrappedExtraInfo = List.of();
+        if (showExtraInfo && StorytellerState.currentVisitExtraInfo != null) {
+            wrappedExtraInfo = client.textRenderer.wrapLines(StorytellerState.currentVisitExtraInfo, 200);
+        }
+        int extraInfoGap = wrappedExtraInfo.isEmpty() ? 0 : 4; // Gap before extra info
+
+        // Static-info bundles (MINION_INFO / DEMON_INFO) have no specific role to label,
+        // so VisitNavigation puts the player names into roleNameText and leaves
+        // roleTypeText empty. Collapse the empty line rather than rendering blank space.
+        boolean hasRoleType = !roleTypeText.getString().isEmpty();
+
+        // Layout Calculations
+        int x_padding = 10, y_padding = 10, icon_size = 48, text_x_padding = 5;
+        int text_x_start = x_padding + icon_size + text_x_padding;
+        int font_height = client.textRenderer.fontHeight;
+        int text_lines = 1 + (hasRoleType ? 1 : 0) + wrappedDesc.size() + wrappedExtraInfo.size();
+        int text_height = font_height * text_lines + 2 + extraInfoGap;
+        int box_inner_height = Math.max(icon_size, text_height);
+        int box_width = icon_size + text_x_padding + 200 + 2 * x_padding;
+        int box_height = box_inner_height + 2 * y_padding;
+        int x = 10, y = 50;
+
+        int text_area_x1 = x + text_x_start - 3, text_area_y1 = y + y_padding - 2;
+        int text_area_x2 = x + box_width - x_padding + 3, text_area_y2 = y + y_padding + text_height + 2;
+
+        // Rendering
+        int alpha = 128;
+        int background_color = displayIsGood ? ColorHelper.Argb.getArgb(alpha, 135, 206, 235) : ColorHelper.Argb.getArgb(alpha, 240, 128, 128);
+        drawContext.fill(x, y, x + box_width, y + box_height, background_color);
+
+        int icon_x = x + x_padding, icon_y = y + y_padding;
+        drawContext.drawTexture(icon, icon_x, icon_y, 0, 0, icon_size, icon_size, icon_size, icon_size);
+        drawContext.drawBorder(icon_x - 1, icon_y - 1, icon_size + 2, icon_size + 2, 0xFFFFFFFF);
+
+        int text_backdrop_color = ColorHelper.Argb.getArgb(191, 0, 0, 0);
+        drawContext.fill(text_area_x1, text_area_y1, text_area_x2, text_area_y2, text_backdrop_color);
+
+        int text_start_x = icon_x + icon_size + text_x_padding;
+        int current_y = icon_y;
+
+        // Color role name based on role type, with alignment override handling
+        // Travelers always use purple, regardless of alignment override
+        // Forced-evil good roles should be minion red, forced-good evil roles should be townsfolk blue
+        int name_color;
+        boolean isTravelerRole = roleType == RoleType.TRAVELER;
+        if (isTravelerRole) {
+            // Travelers always show purple name, alignment is shown via the indicator
+            name_color = roleType.getColor() | 0xFF000000;
+        } else if (displayIsGood && !isDefaultGood) {
+            // Forced good (evil role made good) - townsfolk blue
+            name_color = RoleType.TOWNSFOLK.getColor() | 0xFF000000;
+        } else if (!displayIsGood && isDefaultGood) {
+            // Forced evil (good role made evil) - minion red
+            name_color = RoleType.MINION.getColor() | 0xFF000000;
+        } else {
+            // No alignment override - use role's type color
+            name_color = roleType.getColor() | 0xFF000000;
+        }
+        drawContext.drawTextWithShadow(client.textRenderer, roleNameText, text_start_x, current_y, name_color);
+        current_y += font_height;
+
+        if (hasRoleType) {
+            drawContext.drawTextWithShadow(client.textRenderer, roleTypeText, text_start_x, current_y, 0xFFAAAAAA);
+            current_y += font_height + 2;
+        } else {
+            current_y += 2; // small gap before description, matching the spaced-out look
+        }
+
+        for (OrderedText line : wrappedDesc) {
+            drawContext.drawText(client.textRenderer, line, text_start_x, current_y, 0xFFFFFFFF, false);
+            current_y += font_height;
+        }
+
+        // Render extra info if present (for storyteller HUD)
+        if (!wrappedExtraInfo.isEmpty()) {
+            current_y += extraInfoGap;
+            for (OrderedText line : wrappedExtraInfo) {
+                drawContext.drawText(client.textRenderer, line, text_start_x, current_y, 0xFFFFFFFF, false);
+                current_y += font_height;
+            }
+        }
+    }
+
+    /**
+     * Renders the minimal HUD with compact player counts and small role icon.
+     */
+    private static void renderMinimalHUD(DrawContext drawContext, MinecraftClient client,
+                                          RoleCounts.RoleCountInfo counts, Role role, int travelerCount, int playerCountsHeight) {
+        // 1. Render minimal player counts
+        // Note: travelerCount is already available, but we need playerCount for the utility
+        int playerCount = ClientState.activePlayerCount;
+        Text countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, false);
+        if (countText != null) {
+            int screenWidth = drawContext.getScaledWindowWidth();
+            drawContext.drawCenteredTextWithShadow(client.textRenderer, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
+        }
+
+        // 2. Render small role icon - either night order visit role or player's role
+        // For operators with night info enabled, show the current visit icon instead
+        boolean isOperatorInNightMode = client.player.hasPermissionLevel(2) &&
+                StorytellerState.sendTeleportInfo &&
+                ClientState.isNightHudVisible;
+
+        Identifier iconToRender = null;
+
+        if (isOperatorInNightMode && StorytellerState.currentVisitIcon != null) {
+            // Storyteller visit icon (works for both official and custom roles)
+            iconToRender = StorytellerState.currentVisitIcon;
+        } else if (ClientState.myAssignment != null && ClientState.myAssignment.isCustomRole()) {
+            // Player has custom role - get icon from assignment
+            ScriptRole scriptRole = ClientState.myAssignment.getScriptRole();
+            if (scriptRole != null) {
+                iconToRender = scriptRole.getIcon();
+            }
+        } else if (role != null && role != Role.NO_ROLE) {
+            // Player has official role
+            iconToRender = role.getIcon();
+        }
+
+        if (iconToRender != null) {
+            int iconSize = 32;
+            int x = 10, y = 10;
+            drawContext.drawTexture(iconToRender, x, y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+        }
+    }
+}

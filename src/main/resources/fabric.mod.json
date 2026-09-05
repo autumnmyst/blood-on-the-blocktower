@@ -1,0 +1,45 @@
+{
+	"schemaVersion": 1,
+	"id": "blood-on-the-blocktower",
+	"version": "${version}",
+	"name": "Blood on the Blocktower",
+	"description": "A Minecraft adaptation of the social deduction game \"Blood on the Clocktower\". Unofficial fan project, not affiliated with The Pandemonium Institute.",
+	"authors": [
+		"Autumn Wind"
+	],
+	"contact": {
+		"homepage": "https://github.com/autumnmyst/blood-on-the-blocktower",
+		"sources": "https://github.com/autumnmyst/blood-on-the-blocktower",
+		"issues": "https://github.com/autumnmyst/blood-on-the-blocktower/issues"
+	},
+	"license": "All-Rights-Reserved",
+	"icon": "assets/blood-on-the-blocktower/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.autumnwind.botb.BloodOnTheBlocktower"
+		],
+		"client": [
+			"com.autumnwind.botb.BloodOnTheBlocktowerClient"
+		],
+		"voicechat": [
+			"com.autumnwind.botb.voicechat.SpectatorVoicechatPlugin"
+		]
+	},
+	"mixins": [
+		"blood-on-the-blocktower.mixins.json",
+		{
+			"config": "blood-on-the-blocktower.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.17.3",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": ">=0.116.0"
+	},
+	"suggests": {
+		"voicechat": ">=2.6.0"
+	}
+}

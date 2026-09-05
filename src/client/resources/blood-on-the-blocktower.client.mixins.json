@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "com.autumnwind.botb.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"plugin": "com.autumnwind.botb.mixin.client.ClientMixinPlugin",
+	"client": [
+		"GroupChatRenderMixin",
+		"TitleLogoMixin",
+		"VoiceChatGroupScreenOpenMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
