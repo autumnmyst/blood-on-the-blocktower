@@ -17,7 +17,7 @@ Blood on the Blocktower is a Minecraft adaptation of the fantastic social deduct
 
 [GitHub Releases](https://github.com/autumnmyst/blood-on-the-blocktower/releases/latest)
 
-The mod is serverside, and every player needs it.
+Currently working on getting approval from mod hosting sites, downloads will be available from there soon!
 
 ## Dependencies
 [Fabric API](https://modrinth.com/mod/fabric-api)
@@ -25,6 +25,8 @@ The mod is serverside, and every player needs it.
 There is also voice chat integration, so **Highly Recommended:**
 - [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat)
 - [Simple Voice Chat Enhanced Groups](https://modrinth.com/mod/enhanced-groups) (for isolated chat rooms)
+
+This mod is serverside, so every player needs it.
 
 ## Videos
 
