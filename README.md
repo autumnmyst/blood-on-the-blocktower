@@ -9,7 +9,7 @@ Wiki
 </p>
 
 # Overview
-Blood on the Blocktower is a Minecraft adaptation of the fantastic social deduction game **Blood on the *Clocktower*** (see what I did there?) It allows you to easily setup and run the game on any map with your friends!
+Blood on the Blocktower is a Minecraft adaptation of the fantastic social deduction game **Blood on the *Clocktower***. It allows you to easily setup and run the game on any map with your friends!
 
 > Blood on the Blocktower is an UNOFFICIAL fan project, not affiliated with or endorsed by The Pandemonium Institute. [Credits](#credits).
 
