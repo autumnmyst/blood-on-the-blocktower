@@ -533,6 +533,33 @@ public class AssignRolesScreen extends Screen {
                 }
             }
 
+            // After the game-end reveal, the game resets from the Storyteller Tools join the list.
+            if (ClientState.rolesRevealed) {
+                largeButtonY += buttonHeight + buttonSpacing + 10;
+                this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Reset Game").formatted(Formatting.GREEN),
+                        button -> {
+                            if (this.client.player != null) {
+                                this.client.player.networkHandler.sendCommand("botb resetGame");
+                            }
+                        }
+                ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
+                .tooltip(Tooltip.of(Text.literal("Revive everyone, clear roles, day/night back to 0. Seats and grimoires are kept")))
+                .build());
+                largeButtonY += buttonHeight + buttonSpacing;
+
+                this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Full Reset").formatted(Formatting.RED),
+                        button -> {
+                            if (this.client.player != null) {
+                                this.client.player.networkHandler.sendCommand("botb resetGameHard");
+                            }
+                        }
+                ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
+                .tooltip(Tooltip.of(Text.literal("Same as Reset Game, plus unseats all players and wipes their grimoires")))
+                .build());
+            }
+
             // --- Storyteller Tools Button (bold "T", always present for operators) ---
             int gearButtonSize = 20;
             int gearButtonX;
