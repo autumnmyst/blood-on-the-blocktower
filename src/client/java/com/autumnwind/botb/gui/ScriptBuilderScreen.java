@@ -264,9 +264,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
         }
         if (contains(key)) return false;
-        // A character on the script is never barred from random draws. Every route onto the
-        // script runs through here (opening the builder, Import Script, the palette, a random
-        // draw), so the bar is lifted in one place.
+        // A character on the script is never barred from random draws.
         RandomBanList.setBanned(key, false);
         working.add(role);
         return true;
@@ -437,10 +435,11 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         buttonX += customsWidth + spacing;
 
         buttonX += addFooterButton(Text.literal(randomLabel).formatted(Formatting.AQUA), buttonX, buttonY, buttonHeight,
-                "Roll a random script: " + FULL_COUNTS[0] + "/" + FULL_COUNTS[1] + "/"
+                Text.literal("Roll a random script: " + FULL_COUNTS[0] + "/" + FULL_COUNTS[1] + "/"
                         + FULL_COUNTS[2] + "/" + FULL_COUNTS[3] + "\nShift for Teensyville: "
                         + TEENSYVILLE_COUNTS[0] + "/" + TEENSYVILLE_COUNTS[1] + "/"
-                        + TEENSYVILLE_COUNTS[2] + "/" + TEENSYVILLE_COUNTS[3] + "\nCtrl+Click ban/unban all",
+                        + TEENSYVILLE_COUNTS[2] + "/" + TEENSYVILLE_COUNTS[3])
+                        .append(Text.literal("\nCtrl+Click ban/unban all").formatted(Formatting.GRAY, Formatting.ITALIC)),
                 button -> {
                     if (hasControlDown()) {
                         toggleBanAll();
@@ -473,10 +472,14 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
     /** Adds a footer button sized to its label, and returns that width. */
     private int addFooterButton(Text label, int x, int y, int height, String tooltip, ButtonWidget.PressAction action) {
+        return addFooterButton(label, x, y, height, Text.literal(tooltip), action);
+    }
+
+    private int addFooterButton(Text label, int x, int y, int height, Text tooltip, ButtonWidget.PressAction action) {
         int width = textWidth(label.getString()) + 12;
         this.addDrawableChild(ButtonWidget.builder(label, action)
                 .dimensions(x, y, width, height)
-                .tooltip(Tooltip.of(Text.literal(tooltip)))
+                .tooltip(Tooltip.of(tooltip))
                 .build());
         return width;
     }
@@ -1007,13 +1010,14 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                 this.customsButton.setMessage(Text.literal(customsRoomy ? CLEAR_CUSTOMS_LABEL : CLEAR_CUSTOMS_SHORT)
                         .formatted(Formatting.RED));
                 this.customsButton.setTooltip(Tooltip.of(Text.literal(
-                        "Forget every character in your custom role library.")));
+                        "Forget every character in your custom role library")));
             } else {
                 this.customsButton.setMessage(Text.literal(customsRoomy ? IMPORT_CUSTOMS_LABEL : IMPORT_CUSTOMS_SHORT)
                         .formatted(Formatting.LIGHT_PURPLE));
                 this.customsButton.setTooltip(Tooltip.of(Text.literal(
-                        "Add every homebrew character in the clipboard script to your custom role library. "
-                                + "Hold Shift to clear the library.")));
+                        "Add every homebrew character in the clipboard script to your custom role library")
+                        .append(Text.literal("\nShift to clear the library")
+                                .formatted(Formatting.GRAY, Formatting.ITALIC))));
             }
         }
 
@@ -1180,9 +1184,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                         trimToWidth(name, rowWidth - (textX - rowLeft) - 4), textX, textY, 0xFFFFFF);
 
                 if (isMouseOver) {
-                    List<Text> hints = new ArrayList<>(List.of(
-                            Text.literal("Click to remove").formatted(Formatting.GRAY),
-                            Text.literal("Shift+Click for details").formatted(Formatting.DARK_GRAY)));
+                    List<Text> hints = new ArrayList<>();
                     if (AbilityText.isBootlegger(role)) {
                         hints.add(Text.literal("Ctrl+Click to edit special rules").formatted(Formatting.AQUA));
                     }
@@ -1311,11 +1313,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
                     if (isMouseOver) {
                         List<Text> extra = new ArrayList<>();
-                        extra.add(Text.literal("Shift+Click for details").formatted(Formatting.DARK_GRAY));
                         if (isBannable(role)) {
                             extra.add(Text.literal(banned
-                                    ? "Ctrl+Click to allow in random draws"
-                                    : "Ctrl+Click to bar from random draws").formatted(Formatting.DARK_GRAY));
+                                    ? "Ctrl+Click to allow in random"
+                                    : "Ctrl+Click to bar from random").formatted(Formatting.DARK_GRAY));
                         }
                         CustomRoleLibrary.get(role.getId()).ifPresent(entry -> {
                             if (!entry.sourceScript().isBlank()) {
