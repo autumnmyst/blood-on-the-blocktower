@@ -78,10 +78,51 @@ public class AssignRolesActions {
             fireRoleSwitchTriggersForChangedPlayers(oldRoles);
         }
 
+        Collections.shuffle(StorytellerState.DEMON_BLUFFS);
+
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
         return true; // Trigger animation
+    }
+
+    /**
+     * Re-draws the three demon bluffs from the script's good characters that aren't in play.
+     * Pope lets in-play characters be bluffs.
+     */
+    public static void randomizeBluffs() {
+        Script script = ClientState.currentScript;
+        if (script == null) {
+            return;
+        }
+
+        boolean popeActive = script.hasFabledOrLoric("pope");
+        Set<String> inPlayIds = new HashSet<>();
+        if (!popeActive) {
+            for (PendingRoleAssignment assignment : StorytellerState.PENDING_ROLES.values()) {
+                if (assignment == null) continue;
+                if (assignment.isCustomRole() && assignment.customRole().isPresent()) {
+                    inPlayIds.add(assignment.customRole().get().id().toLowerCase());
+                } else if (assignment.role() != null) {
+                    inPlayIds.add(assignment.role().name().toLowerCase().replace("_", ""));
+                }
+            }
+        }
+
+        List<ScriptRole> pool = new ArrayList<>();
+        Set<String> pooledIds = new HashSet<>();
+        for (ScriptRole scriptRole : script.allRoles()) {
+            RoleType team = scriptRole.getTeam();
+            if (team != RoleType.TOWNSFOLK && team != RoleType.OUTSIDER) continue;
+            String id = scriptRole.getId().toLowerCase();
+            if (inPlayIds.contains(id) || !pooledIds.add(id)) continue;
+            pool.add(scriptRole);
+        }
+        Collections.shuffle(pool);
+
+        for (int i = 0; i < StorytellerState.DEMON_BLUFFS.size(); i++) {
+            StorytellerState.DEMON_BLUFFS.set(i, i < pool.size() ? pool.get(i) : null);
+        }
     }
 
     /**
@@ -331,6 +372,8 @@ public class AssignRolesActions {
         if (isMidGame && client.player != null && client.player.hasPermissionLevel(2)) {
             fireRoleSwitchTriggersForChangedPlayers(oldRoles);
         }
+
+        randomizeBluffs();
 
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
