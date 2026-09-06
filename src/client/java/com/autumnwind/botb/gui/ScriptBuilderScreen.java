@@ -5,6 +5,7 @@ import com.autumnwind.botb.config.RandomBanList;
 import com.autumnwind.botb.networking.ClientReceive;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
+import com.autumnwind.botb.util.AbilityText;
 import com.autumnwind.botb.util.CustomRole;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
@@ -103,6 +104,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     private String baseLogo;
     private String baseAlmanac;
     private List<String> baseExtraAlmanacs = new ArrayList<>();
+    private List<String> baseBootlegger = new ArrayList<>();
     private List<String> baseFirstNightOrder;
     private List<String> baseOtherNightOrder;
 
@@ -118,6 +120,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     private Set<String> seededIds = new HashSet<>();
     private String seededName = "";
     private String seededAuthor = "";
+    private List<String> seededBootlegger = new ArrayList<>();
 
     private TextFieldWidget nameField;
     private TextFieldWidget authorField;
@@ -180,6 +183,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         baseLogo = null;
         baseAlmanac = null;
         baseExtraAlmanacs = new ArrayList<>();
+        baseBootlegger = new ArrayList<>();
         baseFirstNightOrder = null;
         baseOtherNightOrder = null;
         scriptName = "";
@@ -203,6 +207,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             baseAlmanac = script.almanac();
             if (script.extraAlmanacs() != null) {
                 baseExtraAlmanacs = new ArrayList<>(script.extraAlmanacs());
+            }
+            if (script.bootlegger() != null) {
+                baseBootlegger = new ArrayList<>(script.bootlegger());
             }
             baseFirstNightOrder = script.firstNightOrder();
             baseOtherNightOrder = script.otherNightOrder();
@@ -231,6 +238,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         seededIds = workingIds();
         seededName = nameField != null ? nameField.getText() : scriptName;
         seededAuthor = authorField != null ? authorField.getText() : scriptAuthor;
+        seededBootlegger = new ArrayList<>(baseBootlegger);
     }
 
     private void addAll(List<ScriptRole> roles, List<String> almanacs) {
@@ -290,6 +298,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
     private boolean isDirty() {
         if (!workingIds().equals(seededIds)) return true;
+        if (!baseBootlegger.equals(seededBootlegger)) return true;
         if (nameField != null && !nameField.getText().equals(seededName)) return true;
         return authorField != null && !authorField.getText().equals(seededAuthor);
     }
@@ -618,6 +627,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         baseLogo = null;
         baseAlmanac = null;
         baseExtraAlmanacs = new ArrayList<>();
+        baseBootlegger = new ArrayList<>();
         baseFirstNightOrder = null;
         baseOtherNightOrder = null;
         scriptName = "";
@@ -642,6 +652,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         baseLogo = null;
         baseAlmanac = null;
         baseExtraAlmanacs = new ArrayList<>();
+        baseBootlegger = new ArrayList<>();
         baseFirstNightOrder = null;
         baseOtherNightOrder = null;
 
@@ -841,6 +852,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                 baseLogo,
                 mainAlmanac,
                 extraAlmanacs,
+                baseBootlegger,
                 prunedNightOrder(baseFirstNightOrder, ordered),
                 prunedNightOrder(baseOtherNightOrder, ordered)
         );
@@ -1127,10 +1139,13 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                         trimToWidth(name, rowWidth - (textX - rowLeft) - 4), textX, textY, 0xFFFFFF);
 
                 if (isMouseOver) {
-                    queueTooltip(tooltipLines(role.getAbility(), List.of(
+                    List<Text> hints = new ArrayList<>(List.of(
                             Text.literal("Click to remove").formatted(Formatting.GRAY),
-                            Text.literal("Shift+Click for details").formatted(Formatting.DARK_GRAY)
-                    )), mouseX, mouseY);
+                            Text.literal("Shift+Click for details").formatted(Formatting.DARK_GRAY)));
+                    if (AbilityText.isBootlegger(role)) {
+                        hints.add(Text.literal("Ctrl+Click to edit special rules").formatted(Formatting.AQUA));
+                    }
+                    queueTooltip(tooltipLines(AbilityText.of(role, baseBootlegger), hints), mouseX, mouseY);
                 }
             }
 
@@ -1144,7 +1159,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             @Override
             public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 if (button != GLFW.GLFW_MOUSE_BUTTON_1) return false;
-                if (Screen.hasShiftDown()) {
+                if (Screen.hasControlDown() && AbilityText.isBootlegger(role)) {
+                    pendingAction = () -> client.setScreen(new BootleggerRulesScreen(ScriptBuilderScreen.this, baseBootlegger));
+                } else if (Screen.hasShiftDown()) {
                     pendingAction = () -> client.setScreen(new CharacterDetailsScreen(role, ScriptBuilderScreen.this));
                 } else {
                     pendingAction = () -> toggleRole(role);

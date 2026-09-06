@@ -519,7 +519,7 @@ public class ScriptReferenceScreen extends Screen {
                     }
                     if (isMouseOverIcon) {
                         List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                                .wrapLines(scriptRole.getAbility(), 170, Style.EMPTY);
+                                .wrapLines(AbilityText.of(scriptRole), 170, Style.EMPTY);
                         List<Text> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
                                 .collect(Collectors.toList());
@@ -733,7 +733,7 @@ public class ScriptReferenceScreen extends Screen {
 
                 if (hoveredRole != null) {
                     List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                            .wrapLines(hoveredRole.getAbility(), 170, Style.EMPTY);
+                            .wrapLines(AbilityText.of(hoveredRole), 170, Style.EMPTY);
                     List<Text> tooltipTextLines = wrappedLines.stream()
                             .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
                             .collect(Collectors.toList());

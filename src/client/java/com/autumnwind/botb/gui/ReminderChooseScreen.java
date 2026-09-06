@@ -903,7 +903,7 @@ public class ReminderChooseScreen extends Screen {
                         if (isFabled) {
                             ScriptRole fabledRole = ClientState.currentScript != null ?
                                     ClientState.currentScript.getFabledOrLoric(def.fabledId()).orElse(null) : null;
-                            description = fabledRole != null ? fabledRole.getAbility() : "Fabled character";
+                            description = fabledRole != null ? AbilityText.of(fabledRole) : "Fabled character";
                         } else if (isCustomRole) {
                             CustomRole customRole = ClientState.currentScript != null ?
                                     ClientState.currentScript.getCustomRole(def.customRoleId()).orElse(null) : null;

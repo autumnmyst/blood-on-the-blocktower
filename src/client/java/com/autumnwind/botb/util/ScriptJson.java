@@ -144,6 +144,7 @@ public final class ScriptJson {
         addIfPresent(metaObj, "logo", meta.logo());
         addIfPresent(metaObj, "almanac", meta.almanac());
         addIfNotEmpty(metaObj, "extraAlmanacs", meta.extraAlmanacs());
+        addIfNotEmpty(metaObj, "bootlegger", meta.bootlegger());
         addIfNotEmpty(metaObj, "firstNight", meta.firstNightOrder());
         addIfNotEmpty(metaObj, "otherNight", meta.otherNightOrder());
         root.add(metaObj);
@@ -194,6 +195,7 @@ public final class ScriptJson {
             String logo,
             String almanac,
             List<String> extraAlmanacs,
+            List<String> bootlegger,
             List<String> firstNightOrder,
             List<String> otherNightOrder
     ) {}

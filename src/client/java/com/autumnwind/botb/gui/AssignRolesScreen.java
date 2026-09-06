@@ -1368,7 +1368,7 @@ public class AssignRolesScreen extends Screen {
             if (bluff.isMouseOver(mouseX, mouseY)) {
                 // Show description when shift is held, otherwise show name
                 if (Screen.hasShiftDown() && bluff.hasRole()) {
-                    bluffHoverText = Text.literal(bluff.scriptRole.getAbility());
+                    bluffHoverText = Text.literal(AbilityText.of(bluff.scriptRole));
                     showingBluffDescription = true;
                 } else {
                     // For empty slots, show "NO ROLE", for assigned slots, show role name

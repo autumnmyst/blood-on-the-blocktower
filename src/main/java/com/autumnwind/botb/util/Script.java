@@ -35,6 +35,7 @@ public record Script(
     String logo,                         // URL to script logo image
     String almanac,                      // URL to main almanac HTML
     List<String> extraAlmanacs,          // URLs to extra almanac HTML pages (role data only)
+    List<String> bootlegger,             // Bootlegger special rules from _meta, null if not provided
     String rawJson                       // Original JSON for network transmission
 ) {
 
@@ -370,6 +371,7 @@ public record Script(
             String logo = null;
             String almanac = null;
             List<String> extraAlmanacs = null;
+            List<String> bootlegger = null;
 
             if (rawList == null || rawList.isEmpty()) return Optional.empty();
 
@@ -417,6 +419,19 @@ public record Script(
                             if (extraAlmanacs.size() > MAX_EXTRA_ALMANACS) {
                                 extraAlmanacs = new ArrayList<>(extraAlmanacs.subList(0, MAX_EXTRA_ALMANACS));
                             }
+                        }
+
+                        // Bootlegger special rules: an array of strings, or a single string
+                        Object bootleggerObj = entry.get("bootlegger");
+                        if (bootleggerObj instanceof List<?> rules) {
+                            bootlegger = new ArrayList<>();
+                            for (Object rule : rules) {
+                                if (rule instanceof String s && !s.isBlank()) {
+                                    bootlegger.add(s);
+                                }
+                            }
+                        } else if (bootleggerObj instanceof String s && !s.isBlank()) {
+                            bootlegger = new ArrayList<>(List.of(s));
                         }
 
                     } else if (entry.containsKey("team") || entry.containsKey("ability")) {
@@ -477,6 +492,7 @@ public record Script(
                 logo,
                 almanac,
                 extraAlmanacs,
+                bootlegger,
                 jsonString
             ));
 
@@ -530,6 +546,13 @@ public record Script(
      */
     public boolean hasLogo() {
         return logo != null && !logo.isEmpty();
+    }
+
+    /**
+     * Check if this script declares Bootlegger special rules in its _meta.
+     */
+    public boolean hasBootleggerRules() {
+        return bootlegger != null && !bootlegger.isEmpty();
     }
 
     /**

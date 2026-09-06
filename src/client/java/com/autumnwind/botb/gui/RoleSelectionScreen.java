@@ -536,7 +536,7 @@ public class RoleSelectionScreen extends Screen {
                     if (isMouseOver) {
                         int tooltipMaxWidth = 170;
                         List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                                .wrapLines(scriptRole.getAbility(), tooltipMaxWidth, Style.EMPTY);
+                                .wrapLines(AbilityText.of(scriptRole), tooltipMaxWidth, Style.EMPTY);
                         List<Text> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
                                 .collect(Collectors.toList());

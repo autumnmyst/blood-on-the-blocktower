@@ -373,6 +373,19 @@ public class CharacterDetailsScreen extends Screen {
 
             int textWidth = this.getRowWidth() - 10; // Padding inside the list
 
+            List<String> specialRules = AbilityText.bootleggerRules(scriptRole, ClientState.currentScript);
+            if (specialRules != null) {
+                this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Special Rules").formatted(Formatting.GOLD, Formatting.BOLD)));
+                String prefix = specialRules.size() > 1 ? "- " : "";
+                for (String rule : specialRules) {
+                    for (OrderedText line : textRenderer.wrapLines(Text.literal(prefix + rule), textWidth)) {
+                        this.addEntry(DocumentEntry.text(textRenderer, line, 0x55FFFF));
+                    }
+                }
+                this.addEntry(DocumentEntry.spacer());
+                this.addEntry(DocumentEntry.spacer());
+            }
+
             if (details != null) {
                 // Official role - show Summary and Examples from RoleDetails
                 this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Summary").formatted(Formatting.GOLD)));

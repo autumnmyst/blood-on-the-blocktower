@@ -1,6 +1,7 @@
 package com.autumnwind.botb.gui.assignroles.widgets;
 
 import com.autumnwind.botb.gui.assignroles.AssignRolesConstants;
+import com.autumnwind.botb.util.AbilityText;
 import com.autumnwind.botb.util.PlayerListUtil;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.ScriptRole;
@@ -49,8 +50,8 @@ public class ClickablePlayer {
     }
 
     public String getDescription() {
-        if (scriptRole != null) return scriptRole.getAbility();
-        return role.getDescription();
+        if (scriptRole != null) return AbilityText.of(scriptRole);
+        return AbilityText.of(role);
     }
 
     public Identifier getIcon() {
