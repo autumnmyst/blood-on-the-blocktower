@@ -154,13 +154,14 @@ public class NominationManager {
                 .append(Text.literal(nomineeName).styled(style -> style.withColor(0xFF8C00))); // Orange (canBeNominated color)
 
         Text subtitleText;
-        if (DaytimeState.hasMarkedPlayer()) {
-            // There's already someone MFE
-            int votesForTie = DaytimeState.getVotesForMarkedPlayer();
-            subtitleText = Text.literal(votesForTie + " to tie, " + (votesForTie + 1) + " to execute")
+        int votesForTie = DaytimeState.getVotesForMarkedPlayer();
+        if (votesForTie > 0) {
+            votesRequired = votesForTie + 1;
+        }
+        if (DaytimeState.getMarkedForExecution() != null) {
+            subtitleText = Text.literal(votesForTie + " to tie, " + votesRequired + " to execute")
                     .formatted(Formatting.GRAY);
         } else {
-            // First nomination
             subtitleText = Text.literal(votesRequired + " votes required")
                     .formatted(Formatting.GRAY);
         }

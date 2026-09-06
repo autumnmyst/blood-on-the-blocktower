@@ -205,15 +205,15 @@ public class VotingManager {
         UUID nominee = DaytimeState.getCurrentNominee();
         VoteResult result;
         UUID currentMFE = DaytimeState.getMarkedForExecution();
-        int currentMFEVotes = DaytimeState.hasMarkedPlayer() ? DaytimeState.getVotesForMarkedPlayer() : 0;
+        int currentMFEVotes = DaytimeState.getVotesForMarkedPlayer();
 
         // In Voudon mode: threshold is 1 vote (any votes = marked), but still need most votes
         int effectiveThreshold = cachedVoudonMode ? 1 : threshold;
 
-        if (DaytimeState.hasMarkedPlayer()) {
+        if (currentMFEVotes > 0) {
             if (adjustedVoteCount > currentMFEVotes) {
                 result = VoteResult.MARKED;
-            } else if (adjustedVoteCount == currentMFEVotes) {
+            } else if (adjustedVoteCount == currentMFEVotes && currentMFE != null) {
                 result = VoteResult.TIE;
             } else {
                 result = VoteResult.NOT_ENOUGH;
@@ -244,7 +244,7 @@ public class VotingManager {
             if (currentMFE != null) {
                 NominationManager.updateMarkedGlow(server, currentMFE, false);
             }
-            DaytimeState.clearMarkedForExecution();
+            DaytimeState.setMarkedForExecution(null, adjustedVoteCount);
         }
 
         // Clear nomination and end vote
@@ -267,15 +267,15 @@ public class VotingManager {
         UUID storytellerMFE;
         int storytellerMFEVotes;
 
-        if (prevStorytellerMFE != null) {
+        if (prevStorytellerMFEVotes > 0) {
             if (storytellerVoteCount > prevStorytellerMFEVotes) {
                 storytellerResult = VoteResult.MARKED;
                 storytellerMFE = nominee;
                 storytellerMFEVotes = storytellerVoteCount;
-            } else if (storytellerVoteCount == prevStorytellerMFEVotes && storytellerVoteCount > 0) {
+            } else if (storytellerVoteCount == prevStorytellerMFEVotes && prevStorytellerMFE != null) {
                 storytellerResult = VoteResult.TIE;
                 storytellerMFE = null;
-                storytellerMFEVotes = 0;
+                storytellerMFEVotes = storytellerVoteCount;
             } else {
                 storytellerResult = VoteResult.NOT_ENOUGH;
                 storytellerMFE = prevStorytellerMFE;
@@ -293,11 +293,7 @@ public class VotingManager {
             }
         }
 
-        if (storytellerMFE != null) {
-            DaytimeState.setStorytellerMFE(storytellerMFE, storytellerMFEVotes);
-        } else {
-            DaytimeState.clearStorytellerMFE();
-        }
+        DaytimeState.setStorytellerMFE(storytellerMFE, storytellerMFEVotes);
 
         boolean legionProtectedVote = (result == VoteResult.MARKED || result == VoteResult.TIE) &&
                 !Objects.equals(nominee, storytellerMFE) && isLegionGame;

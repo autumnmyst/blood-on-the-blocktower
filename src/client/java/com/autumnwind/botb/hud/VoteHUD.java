@@ -62,8 +62,11 @@ public class VoteHUD {
         int votesRequired = (int) Math.ceil(aliveCount / 2.0);
 
         // Check if there's a tie scenario (hidden in Organ Grinder mode for non-operators)
+        int votesForTie = hideVoteInfo ? 0 : ClientState.votesForMarkedPlayer;
+        if (votesForTie > 0) {
+            votesRequired = votesForTie + 1;
+        }
         boolean hasMFE = ClientState.markedForExecution != null && !hideVoteInfo;
-        int votesForTie = hasMFE ? ClientState.votesForMarkedPlayer : 0;
 
         // Check if player is dead and lost ghost vote (either publicly or secretly in OG mode)
         // In Voudon mode dead players vote freely, so a used ghost vote doesn't block them

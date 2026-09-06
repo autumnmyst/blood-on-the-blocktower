@@ -179,10 +179,6 @@ public class DaytimeState {
         return votesForMarkedPlayer;
     }
 
-    public static boolean hasMarkedPlayer() {
-        return markedForExecution != null;
-    }
-
     // Storyteller MFE getters/setters (for Legion games)
     public static UUID getStorytellerMFE() {
         return storytellerMFE;
