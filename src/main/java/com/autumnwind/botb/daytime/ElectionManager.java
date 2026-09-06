@@ -296,7 +296,7 @@ public class ElectionManager {
     // their vote committing (lever read + piston sink), and the re-extension delay after a vote
     public static final int PISTON_POWER_DELAY_TICKS = 2;
 
-    // Tick-delayed actions, decremented and run on END_SERVER_TICK (server thread only)
+    // Tick-delayed actions, decremented and run on START_SERVER_TICK (server thread only)
     private static final List<TickDelayedAction> pendingTickActions = new ArrayList<>();
 
     private static final class TickDelayedAction {
@@ -314,7 +314,7 @@ public class ElectionManager {
      * Called once from mod init.
      */
     public static void registerTickScheduler() {
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
+        ServerTickEvents.START_SERVER_TICK.register(server -> {
             if (pendingTickActions.isEmpty()) return;
             List<Runnable> due = new ArrayList<>();
             Iterator<TickDelayedAction> it = pendingTickActions.iterator();
