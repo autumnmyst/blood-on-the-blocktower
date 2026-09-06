@@ -134,6 +134,11 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     private boolean customsShowingClear;
     private boolean customsRoomy = true;
 
+    /** Import/Export script share one button, swapped by shift. */
+    private ButtonWidget importButton;
+    private boolean importShowingExport;
+    private boolean importRoomy = true;
+
     private List<ScriptRole> paletteSource = new ArrayList<>();
     private String lastQuery = "";
 
@@ -404,9 +409,18 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         this.customsRoomy = roomy;
 
         int buttonX = padding;
-        buttonX += addFooterButton(Text.literal(importLabel), buttonX, buttonY, buttonHeight,
-                "Load the script JSON in your clipboard into the builder.",
-                button -> importScript()) + spacing;
+        // Label, colour and tooltip are swapped by shift in render(), and the press reads shift too.
+        int importWidth = Math.max(textWidth(importLabel), textWidth(roomy ? "Export Script" : "Export")) + 12;
+        this.importRoomy = roomy;
+        this.importButton = this.addDrawableChild(ButtonWidget.builder(Text.literal(importLabel), button -> {
+            if (hasShiftDown()) {
+                exportScript();
+            } else {
+                importScript();
+            }
+        }).dimensions(buttonX, buttonY, importWidth, buttonHeight).build());
+        this.importShowingExport = !hasShiftDown(); // force the first update in render()
+        buttonX += importWidth + spacing;
 
         // Label, colour and tooltip are swapped by shift in render(), and the press reads shift too.
         this.customsButton = this.addDrawableChild(ButtonWidget.builder(
@@ -695,6 +709,16 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         refreshBoth();
     }
 
+    private void exportScript() {
+        Script script = ClientState.currentScript;
+        if (script == null || script.rawJson() == null || script.rawJson().isEmpty()) {
+            message(Text.literal("No active script to export").formatted(Formatting.RED));
+            return;
+        }
+        this.client.keyboard.setClipboard(script.rawJson());
+        message(Text.literal("Script copied to clipboard").formatted(Formatting.GREEN));
+    }
+
     private void importCustomRoles() {
         Optional<Script> parsed = readClipboardScript();
         if (parsed.isEmpty()) return;
@@ -956,6 +980,23 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         // active script" without needing a message to explain it.
         if (this.saveButton != null) {
             this.saveButton.active = isDirty();
+        }
+
+        if (this.importButton != null && hasShiftDown() != this.importShowingExport) {
+            this.importShowingExport = hasShiftDown();
+            if (this.importShowingExport) {
+                this.importButton.setMessage(Text.literal(importRoomy ? "Export Script" : "Export")
+                        .formatted(Formatting.AQUA));
+                this.importButton.setTooltip(Tooltip.of(Text.literal("Copy the saved script to your clipboard")));
+            } else {
+                this.importButton.setMessage(Text.literal(importRoomy ? "Import Script" : "Import"));
+                this.importButton.setTooltip(Tooltip.of(Text.literal("Load the script in your clipboard")
+                        .append(Text.literal("\nShift to export script")
+                                .formatted(Formatting.GRAY, Formatting.ITALIC))));
+            }
+        }
+        if (this.importButton != null) {
+            this.importButton.active = !this.importShowingExport || ClientState.currentScript != null;
         }
 
         // Only rebuilt when shift actually changes, so the tooltip object isn't reallocated
