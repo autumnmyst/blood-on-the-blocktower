@@ -105,33 +105,27 @@ public final class SetupStick {
 
     // ========== Commands ==========
 
-    /** /botb setup: hands over the stick and starts (or restarts) the walkthrough. */
+    /**
+     * /botb setup (also the Storyteller Tools "World Setup" button): sets the
+     * gamerules and hands over the stick and starts (or restarts) the walkthrough.
+     */
     public static int startCommand(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null) {
             source.sendError(Text.literal("Only a player can run map setup."));
             return 0;
         }
+        GameRules rules = source.getServer().getGameRules();
+        rules.get(GameRules.DO_IMMEDIATE_RESPAWN).set(true, source.getServer());
+        rules.get(GameRules.DO_DAYLIGHT_CYCLE).set(false, source.getServer());
+        rules.get(GameRules.DO_MOB_SPAWNING).set(false, source.getServer());
+        rules.get(GameRules.KEEP_INVENTORY).set(true, source.getServer());
         giveStick(player);
         reportGamerules(player);
         SESSIONS.put(player.getUuid(), new Session());
         sendControls(player);
         prompt(player);
         return 1;
-    }
-
-    /**
-     * /botb setup world (the Storyteller Tools "World Setup" button): sets the gamerules the
-     * mod relies on, then starts the walkthrough. Set directly rather than through the
-     * gamerule command so the only feedback is the list printed by the start.
-     */
-    public static int worldCommand(ServerCommandSource source) {
-        GameRules rules = source.getServer().getGameRules();
-        rules.get(GameRules.DO_IMMEDIATE_RESPAWN).set(true, source.getServer());
-        rules.get(GameRules.DO_DAYLIGHT_CYCLE).set(false, source.getServer());
-        rules.get(GameRules.DO_MOB_SPAWNING).set(false, source.getServer());
-        rules.get(GameRules.KEEP_INVENTORY).set(true, source.getServer());
-        return startCommand(source);
     }
 
     /** /botb setup help: the map positions and the other map settings, with current values. */

@@ -411,7 +411,7 @@ public class StorytellerToolsScreen extends Screen {
                         if (this.client.player != null) {
                             // Server-side so the gamerules are set without vanilla's per-rule
                             // feedback; the setup start lists them instead
-                            this.client.player.networkHandler.sendCommand("botb setup world");
+                            this.client.player.networkHandler.sendCommand("botb setup");
                             this.client.setScreen(null);
                         }
                     }
