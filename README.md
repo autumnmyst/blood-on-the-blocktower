@@ -1,4 +1,8 @@
-Modrinth | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/blood-on-the-blocktower)
+Modrinth
+|
+[CurseForge](https://www.curseforge.com/minecraft/mc-mods/blood-on-the-blocktower)
+|
+[Discord](https://discord.gg/xC6R88PVjC)
 |
 Wiki
 |
