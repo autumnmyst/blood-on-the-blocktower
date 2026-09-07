@@ -1,4 +1,4 @@
-CurseForge
+Modrinth | [CurseForge](https://www.curseforge.com/minecraft/mc-mods/blood-on-the-blocktower)
 |
 Wiki
 |
@@ -11,13 +11,13 @@ Wiki
 # Overview
 Blood on the Blocktower is a Minecraft adaptation of the fantastic social deduction game **Blood on the *Clocktower***. It allows you to easily setup and run the game on any map with your friends!
 
-> Blood on the Blocktower is an UNOFFICIAL fan project, not affiliated with or endorsed by The Pandemonium Institute. [Credits](#credits).
+> Blood on the Blocktower is an UNOFFICIAL fan project, not affiliated with or endorsed by The Pandemonium Institute.
 
 ## Download
 
-[GitHub Releases](https://github.com/autumnmyst/blood-on-the-blocktower/releases/latest)
+[CurseForge](https://www.curseforge.com/minecraft/mc-mods/blood-on-the-blocktower/files)
 
-Currently working on getting approval from mod hosting sites, downloads will be available from there soon!
+Currently working on getting approval from other mod hosting sites.
 
 ## Dependencies
 [Fabric API](https://modrinth.com/mod/fabric-api)
