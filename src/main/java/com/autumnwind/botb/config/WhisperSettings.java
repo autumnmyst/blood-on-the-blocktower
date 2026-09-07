@@ -39,10 +39,10 @@ public record WhisperSettings(
 
     public static final WhisperSettings DEFAULT = new WhisperSettings(
             true,             // allowWhispering
-            true,             // broadcast
-            VisualMode.OFF,   // visual
-            false,            // audio
-            0.0,              // range (0 = unlimited)
+            false,            // broadcast
+            VisualMode.RUNES, // visual
+            true,             // audio
+            7.0,              // range (0 = unlimited)
             true              // vcEnforced
     );
 

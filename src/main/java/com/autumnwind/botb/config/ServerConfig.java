@@ -63,13 +63,13 @@ public class ServerConfig {
     public static final Map<Integer, String> EXECUTION_COMMANDS = new HashMap<>();
 
     // Execution delays (in milliseconds)
-    public static int EXECUTION_SOUND_DELAY = 0;
-    public static int EXECUTION_SURVIVED_SOUND_DELAY = 0; // Separate delay for failed executions
-    public static int EXECUTION_DEATH_TITLE_DELAY = 0;
+    public static int EXECUTION_SOUND_DELAY = 2100;
+    public static int EXECUTION_SURVIVED_SOUND_DELAY = 3500; // Separate delay for failed executions
+    public static int EXECUTION_DEATH_TITLE_DELAY = 3500;
 
     // Execution position and anvil settings
     public static BlockPos EXECUTION_POSITION = null;
-    public static int ANVIL_HEIGHT = 0; // Height above execution position to spawn anvil (0 = no anvil)
+    public static int ANVIL_HEIGHT = 70; // Height above execution position to spawn anvil (0 = no anvil)
     public static boolean LOCK_IN_EXECUTION_POSITION = true; // Whether to lock player in place during execution
 
     // Voting system - global settings
@@ -93,7 +93,7 @@ public class ServerConfig {
 
     // Clock hands settings
     public static BlockPos CLOCK_CENTER = null;  // Center position for clock hands
-    public static float CLOCK_HAND_SCALE = 1.0f; // Scale multiplier for clock hands
+    public static float CLOCK_HAND_SCALE = 4.0f; // Scale multiplier for clock hands
 
     // Custom names players have set via /botb setName, keyed by UUID string. Loaded into
     // CustomNames on startup, which the player name mixins read, so names survive rejoins
@@ -124,18 +124,18 @@ public class ServerConfig {
         // Exile support indicator blocks
         String exileSupportIndicatorBlockOn = "minecraft:pearlescent_froglight";
         String exileSupportIndicatorBlockOff = "minecraft:amethyst_block";
-        Integer executionSoundDelay = 0;
-        Integer executionSurvivedSoundDelay = 0;
-        Integer executionDeathTitleDelay = 0;
+        Integer executionSoundDelay = 2100;
+        Integer executionSurvivedSoundDelay = 3500;
+        Integer executionDeathTitleDelay = 3500;
         String executionPosition = null;
-        Integer anvilHeight = 0;
+        Integer anvilHeight = 70;
         Boolean lockInExecutionPosition = true;
         Integer timeDawn = 0;
         Integer timeEvening = 13000;
         Integer timeDusk = 18000;
         // Clock hands settings
         String clockCenter = null;
-        Float clockHandScale = 1.0f;
+        Float clockHandScale = 4.0f;
         Integer maxNameLength = 16;
         // UUID string → custom display name (set via /botb setName).
         Map<String, String> customPlayerNames = new HashMap<>();
@@ -173,11 +173,11 @@ public class ServerConfig {
         SEAT_SWITCH_POSITIONS.clear();
         SEAT_VOTE_INDICATOR_POSITIONS.clear();
         EXECUTION_COMMANDS.clear();
-        EXECUTION_SOUND_DELAY = 0;
-        EXECUTION_SURVIVED_SOUND_DELAY = 0;
-        EXECUTION_DEATH_TITLE_DELAY = 0;
+        EXECUTION_SOUND_DELAY = 2100;
+        EXECUTION_SURVIVED_SOUND_DELAY = 3500;
+        EXECUTION_DEATH_TITLE_DELAY = 3500;
         EXECUTION_POSITION = null;
-        ANVIL_HEIGHT = 0;
+        ANVIL_HEIGHT = 70;
         LOCK_IN_EXECUTION_POSITION = true;
         VOTE_INDICATOR_BLOCK_ON = "minecraft:shroomlight";
         VOTE_INDICATOR_BLOCK_OFF = "minecraft:waxed_copper_block";
@@ -193,7 +193,7 @@ public class ServerConfig {
         TIME_EVENING = 13000;
         TIME_DUSK = 18000;
         CLOCK_CENTER = null;
-        CLOCK_HAND_SCALE = 1.0f;
+        CLOCK_HAND_SCALE = 4.0f;
         MAX_NAME_LENGTH = 16;
         CUSTOM_PLAYER_NAMES.clear();
         CustomNames.replaceAll(new HashMap<>());

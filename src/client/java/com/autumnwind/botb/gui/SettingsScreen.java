@@ -165,19 +165,19 @@ public class SettingsScreen extends Screen {
         int whisperButtonWidth = 100;
         int buttonSpacingBottom = 5;
 
-        // Whisper Rules button: read-only view for non-storytellers, editable for ops
-        boolean canEditWhispers = this.client != null && this.client.player != null
+        // Whisper Rules button: read-only view for players. Storytellers edit this elsewhere.
+        boolean isStoryteller = this.client != null && this.client.player != null
                 && this.client.player.hasPermissionLevel(2);
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Whisper Rules").formatted(Formatting.LIGHT_PURPLE),
-                button -> this.client.setScreen(new WhisperSettingsScreen(this, canEditWhispers))
-        ).dimensions(
-                this.width - backButtonWidth - glossaryButtonWidth - whisperButtonWidth - 2 * buttonSpacingBottom - 10,
-                this.height - 30, whisperButtonWidth, 20)
-        .tooltip(Tooltip.of(Text.literal(canEditWhispers
-                ? "Configure whisper rules"
-                : "View the active whisper rules (set by the storyteller)")))
-        .build());
+        if (!isStoryteller) {
+            this.addDrawableChild(ButtonWidget.builder(
+                    Text.literal("Whisper Rules").formatted(Formatting.LIGHT_PURPLE),
+                    button -> this.client.setScreen(new WhisperSettingsScreen(this, false))
+            ).dimensions(
+                    this.width - backButtonWidth - glossaryButtonWidth - whisperButtonWidth - 2 * buttonSpacingBottom - 10,
+                    this.height - 30, whisperButtonWidth, 20)
+            .tooltip(Tooltip.of(Text.literal("View the whisper rules set by the storyteller")))
+            .build());
+        }
 
         // Glossary button
         this.addDrawableChild(ButtonWidget.builder(
