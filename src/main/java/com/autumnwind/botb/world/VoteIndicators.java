@@ -22,46 +22,24 @@ public final class VoteIndicators {
 
     private VoteIndicators() {}
 
-    /**
-     * Reconciles the vote indicator for a player at their new seat position.
-     * Handles ghost votes, death status, and Organ Grinder secret ghost votes.
-     * NEVER removes pistons - only places them when needed.
-     */
+    /** Repaints a player's indicator for their seat. Never removes a piston. */
     public static void reconcileVoteIndicator(MinecraftServer server, UUID playerUuid, int seat, boolean isDead) {
-        // Check ghost vote state
         boolean ghostVoteUsed = DaytimeState.hasUsedGhostVote(playerUuid);
         boolean ghostVoteSecretlyUsed = DaytimeState.hasSecretlyUsedGhostVote(playerUuid);
         boolean isBansheeAbility = DaytimeState.hasBansheeDoubleVote(playerUuid);
 
         if (isDead && !isBansheeAbility && ghostVoteUsed && !ghostVoteSecretlyUsed) {
-            // Dead player with used ghost vote (not secret) - place ghost used block + piston
             VotingManager.setUsedGhostVoteIndicator(server, seat);
-        } else if (isDead && !isBansheeAbility && ghostVoteSecretlyUsed) {
-            // Dead player with SECRETLY used ghost vote (Organ Grinder mode) - don't reveal!
-            // Just show normal dead indicator without ghost used block
-            VotingManager.updatePlayerDeathIndicator(server, playerUuid);
         } else {
-            // Normal case: use standard indicator update
-            // This handles: alive players, dead players without used ghost votes,
-            // banshee players (treated as alive for voting)
+            // A secretly used ghost vote (Organ Grinder) must not show the ghost-used block
             VotingManager.updatePlayerDeathIndicator(server, playerUuid);
         }
     }
 
     /**
-     * Paints vote-indicator stacks: piston (bottom) -> middle slot -> indicator (top).
-     *
-     * Every seated seat gets its sticky piston written if missing, a leftover cage cleared
-     * from the middle slot, and the indicator painted for the player's current state. The
-     * unseated sync only rebuilds stacks on occupancy changes, so without this a seat that
-     * was already taken at game start kept whatever the map had.
-     *
-     * With {@code includeEmptySeats}, every configured seat without a player is painted as a
-     * fresh, votable seat too: piston if missing, cage or ghost-used block cleared from the
-     * middle slot, and the OFF block as the indicator. Game start and reset pass false (the
-     * unseated sync owns empty seats there, caging them at boot); map setup passes true.
-     *
-     * Run before the pistons are powered.
+     * Paints each seated seat's stack: piston if missing, cage cleared, indicator for the
+     * player's state. With {@code includeEmptySeats} every empty seat is painted fresh too
+     * (map setup and the game resets). Run before the pistons are powered.
      */
     public static void paintVoteIndicatorStacks(MinecraftServer server, boolean includeEmptySeats) {
         ServerWorld world = server.getOverworld();
@@ -91,8 +69,7 @@ public final class VoteIndicators {
             BlockPos middle = indicatorPos.down();
 
             ensurePiston(world, middle.down(), pistonState);
-            // The middle slot has to be air for the piston to extend: on a freshly built map
-            // it's usually still floor. Only an already-extended piston's head stays put.
+            // Clear the middle so the piston can extend, but never knock out an extended head
             Block middleBlock = world.getBlockState(middle).getBlock();
             if (!(middleBlock instanceof PistonHeadBlock)
                     && !middleBlock.equals(Blocks.MOVING_PISTON)) {
@@ -102,10 +79,7 @@ public final class VoteIndicators {
         }
     }
 
-    /**
-     * Writes the piston only when none is there; rewriting an extended one would orphan its
-     * head in the middle slot.
-     */
+    /** Writes the piston only when missing; rewriting an extended one orphans its head. */
     public static void ensurePiston(ServerWorld world, BlockPos pistonPos, BlockState pistonState) {
         if (!(world.getBlockState(pistonPos).getBlock() instanceof PistonBlock)) {
             world.setBlockState(pistonPos, pistonState);
@@ -113,21 +87,9 @@ public final class VoteIndicators {
     }
 
     /**
-     * Reconciles each seat's vote-indicator stack with the new occupancy. The stack is
-     * piston (bottom) -> middle slot -> indicator (top).
-     *
-     * - Seat transitioned <em>unassigned → assigned</em>: clear the cage's middle slot
-     *   and refresh the indicator. The piston is left alone, since during normal play of a
-     *   seated player nothing destroys it.
-     * - Seat transitioned <em>assigned → unassigned</em> (only when {@code currentNight >= 1}):
-     *   place the cage and rewrite the piston and its power block. An extended piston could
-     *   have been destroyed by extending into the previously-occupied middle slot, so we
-     *   always rewrite it on this transition.
-     * - Seat unchanged: nothing.
-     *
-     * For the night-0 → night-1 boot, pass every configured seat number as
-     * {@code previouslySeatedSeats}, and the diff then treats every currently-empty seat
-     * as a fresh assigned→unassigned transition and the cage gets placed.
+     * Updates seats whose occupancy changed: a newly taken seat loses its cage, a newly
+     * vacated seat gets caged (from night 1). Pass every seat as {@code previouslySeatedSeats}
+     * at the night-1 boot so all empty seats get caged.
      */
     public static void syncUnseatedVoteIndicators(MinecraftServer server, Set<Integer> previouslySeatedSeats) {
         ServerWorld world = server.getOverworld();
@@ -152,10 +114,7 @@ public final class VoteIndicators {
             boolean isNowSeated = nowSeatedSeats.contains(seatNumber);
 
             if (isNowSeated && !wasSeated) {
-                // Player just took this seat, so clear the cage middle (only if the bedrock
-                // cage block is actually there) and refresh indicator. Writing AIR
-                // unconditionally would destroy an extended piston head occupying the
-                // middle slot, which breaks the piston body below.
+                // Only clear an actual cage block; clearing an extended piston head breaks the piston
                 if (world.getBlockState(belowIndicator).getBlock().equals(unseatedBlock)) {
                     world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
                 }
@@ -164,10 +123,8 @@ public final class VoteIndicators {
                     VotingManager.updatePlayerDeathIndicator(server, playerUuid);
                 }
             } else if (!isNowSeated && wasSeated && cagePhase) {
-                // Player just left this seat, so rebuild the cage. The piston is written first
-                // and retracted: that lets an extended head in the middle slot vanish on its own,
-                // whereas overwriting the head with the cage would break the base and drop it.
-                // Cage before power block, so the piston jams instead of extending into it.
+                // Piston first so an extended head retracts rather than being overwritten,
+                // cage before power so the piston jams instead of extending into it
                 world.setBlockState(pistonPos, pistonState);
                 world.setBlockState(belowIndicator, unseatedBlock.getDefaultState());
                 world.setBlockState(pistonPos.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
@@ -176,37 +133,19 @@ public final class VoteIndicators {
         }
     }
 
-    /**
-     * Restores vote indicators for all unseated seats back to normal state.
-     * Called during game reset.
-     */
+    /** Clears a leftover ghost-used block from every empty seat and paints it off. */
     public static void restoreUnseatedVoteIndicators(MinecraftServer server) {
         ServerWorld world = server.getOverworld();
-
-        // Get all seated player seat numbers
         Set<Integer> seatedSeatNumbers = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.values());
+        Block ghostUsedBlock = VotingManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
+        Block offBlock = VotingManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
 
-        // Loop through all configured vote indicator positions
         for (Map.Entry<Integer, BlockPos> entry : ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.entrySet()) {
-            int seatNumber = entry.getKey();
+            if (seatedSeatNumbers.contains(entry.getKey())) continue;
             BlockPos indicatorPos = entry.getValue();
-
-            // Skip if this seat has a player assigned
-            if (seatedSeatNumbers.contains(seatNumber)) {
-                continue;
-            }
-
-            // Check if ghost used block is present below indicator
             BlockPos belowIndicator = indicatorPos.down();
-            BlockState blockState = world.getBlockState(belowIndicator);
-            Block ghostUsedBlock = VotingManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
-
-            if (blockState.getBlock().equals(ghostUsedBlock)) {
-                // Remove ghost used block
+            if (world.getBlockState(belowIndicator).getBlock().equals(ghostUsedBlock)) {
                 world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
-
-                // Restore vote indicator block to default off state
-                Block offBlock = VotingManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
                 world.setBlockState(indicatorPos, offBlock.getDefaultState());
             }
         }

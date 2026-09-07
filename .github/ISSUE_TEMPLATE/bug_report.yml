@@ -56,18 +56,13 @@ body:
         - Dedicated server
     validations:
       required: true
-  - type: input
-    id: script
-    attributes:
-      label: Script and characters involved
-      description: If the bug involves specific characters or a homebrew script, name them.
   - type: textarea
     id: logs
     attributes:
-      label: Log
-      description: Paste the relevant part of `logs/latest.log`, or link a paste. Client log for HUD or screen problems, server log for everything else.
+      label: Log (optional)
+      description: If needed, paste the relevant part of `logs/latest.log`. Client log for HUD or screen problems, server log for everything else.
       render: text
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots
+      label: Screenshots (optional)

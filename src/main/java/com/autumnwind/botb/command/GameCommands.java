@@ -220,9 +220,9 @@ final class GameCommands {
             // Restore vote indicators for unseated seats to normal state (before seats are cleared)
             VoteIndicators.restoreUnseatedVoteIndicators(server);
 
-            // Rebuild seated seats' indicator stacks, then re-power every seat's vote piston
-            // (redstone block below the piston)
-            VoteIndicators.paintVoteIndicatorStacks(server, false);
+            // Rebuild every seat's indicator stack, empty seats included, then re-power every
+            // seat's vote piston (redstone block below the piston)
+            VoteIndicators.paintVoteIndicatorStacks(server, true);
             ElectionManager.powerAllSeatPistons(server);
 
             // Reset lever states (physically and in state) and broadcast to clients
@@ -378,9 +378,9 @@ final class GameCommands {
             // Restore vote indicators for unseated seats to normal state
             VoteIndicators.restoreUnseatedVoteIndicators(server);
 
-            // Rebuild seated seats' indicator stacks, then re-power every seat's vote piston
-            // (redstone block below the piston)
-            VoteIndicators.paintVoteIndicatorStacks(server, false);
+            // Rebuild every seat's indicator stack, empty seats included, then re-power every
+            // seat's vote piston (redstone block below the piston)
+            VoteIndicators.paintVoteIndicatorStacks(server, true);
             ElectionManager.powerAllSeatPistons(server);
 
             // Reset lever states (physically and in state) and broadcast to clients
