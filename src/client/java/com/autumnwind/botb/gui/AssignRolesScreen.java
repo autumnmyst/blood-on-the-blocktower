@@ -1332,22 +1332,26 @@ public class AssignRolesScreen extends Screen {
                     } else if (Screen.hasControlDown() && Screen.hasAltDown()) {
                         boolean playerIsDead = ClientState.playerDeathStatus.getOrDefault(widget.uuid, false);
                         boolean hasUsedGhostVote = ClientState.hasUsedGhostVote.getOrDefault(widget.uuid, false);
+                        Text sendRolesLine = Text.literal("Right-click: ").formatted(Formatting.GREEN).append(Text.literal("send roles to player").formatted(Formatting.WHITE));
                         if (playerIsDead) {
                             if (hasUsedGhostVote) {
                                 nameHoverTextList = Arrays.asList(
                                     Text.literal(widget.playerName),
-                                    Text.literal("Left-click: ").formatted(Formatting.GREEN).append(Text.literal("restore ghost vote").formatted(Formatting.WHITE))
+                                    Text.literal("Left-click: ").formatted(Formatting.AQUA).append(Text.literal("restore ghost vote").formatted(Formatting.WHITE)),
+                                    sendRolesLine
                                 );
                             } else {
                                 nameHoverTextList = Arrays.asList(
                                     Text.literal(widget.playerName),
-                                    Text.literal("Left-click: ").formatted(Formatting.GRAY).append(Text.literal("mark ghost vote used").formatted(Formatting.WHITE))
+                                    Text.literal("Left-click: ").formatted(Formatting.GRAY).append(Text.literal("mark ghost vote used").formatted(Formatting.WHITE)),
+                                    sendRolesLine
                                 );
                             }
                         } else {
                             nameHoverTextList = Arrays.asList(
                                 Text.literal(widget.playerName),
-                                Text.literal("(Player must be dead to toggle ghost vote)").formatted(Formatting.DARK_GRAY)
+                                Text.literal("(Player must be dead to toggle ghost vote)").formatted(Formatting.DARK_GRAY),
+                                sendRolesLine
                             );
                         }
                     } else if (Screen.hasControlDown() && Screen.hasShiftDown()) {
@@ -2337,6 +2341,12 @@ public class AssignRolesScreen extends Screen {
         if (button == 1 && isOperator) { // Right-click (Operator only)
             for (ClickablePlayer widget : this.playerWidgets) {
                 if (widget.isMouseOverHead(mouseX, mouseY)) {
+                    if (isCtrlDown && isAltDown && !isShiftDown) {
+                        // CTRL+ALT+Right-click: Send roles to just this player (no seat needed)
+                        AssignRolesActions.sendRolesToPlayer(widget.uuid);
+                        return true;
+                    }
+
                     int seat = StorytellerState.PENDING_SEAT_NUMBERS.getOrDefault(widget.uuid, -1);
                     if (seat <= 0) {
                         return true; // No seat assigned

@@ -446,6 +446,24 @@ public class AssignRolesActions {
     }
 
     /**
+     * Targeted Send Roles: the same data as {@link #sendRolesWithReminderChecks()}, but the
+     * server only updates the named player's client. Everyone else is left alone.
+     */
+    public static void sendRolesToPlayer(UUID targetPlayer) {
+        int activePlayerCount = StorytellerState.PENDING_ROLES.size();
+        Map<UUID, PendingRoleAssignment> rolesToSend = buildRolesToSendMap();
+
+        ClientPlayNetworking.send(new SendRolesToPlayerC2SPayload(
+                targetPlayer,
+                rolesToSend,
+                StorytellerState.PENDING_SEAT_NUMBERS,
+                activePlayerCount,
+                Optional.ofNullable(ClientState.currentScript),
+                StorytellerState.REMINDERS
+        ));
+    }
+
+    /**
      * Sends only the current script to all players. Roles, seats, and reminders are untouched.
      */
     public static void sendScriptOnly() {

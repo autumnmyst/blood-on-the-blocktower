@@ -221,6 +221,70 @@ final class RoleHandlers {
             }
         });
 
+        // Targeted Send Roles: the full send for one player and server state updated for only them
+        ModPackets.registerGuarded(SendRolesToPlayerC2SPayload.ID, (payload, context) -> {
+            if (!context.player().hasPermissionLevel(2)) {
+                return;
+            }
+            UUID targetUuid = payload.targetPlayer();
+            ServerPlayerEntity target = context.server().getPlayerManager().getPlayer(targetUuid);
+            if (target == null) {
+                context.player().sendMessage(Text.literal("Cannot send roles: player is offline").formatted(Formatting.RED), true);
+                return;
+            }
+
+            Map<UUID, PendingRoleAssignment> pendingRoles = payload.roles();
+            Map<UUID, Integer> seatNumbers = payload.seatNumbers();
+            int activePlayerCount = payload.activePlayerCount();
+            Script script = payload.script().orElse(null);
+
+            // Same traveler derivation as the full send, so the counts the player sees match.
+            Set<UUID> travelerUuids = new HashSet<>();
+            for (Map.Entry<UUID, PendingRoleAssignment> entry : pendingRoles.entrySet()) {
+                PendingRoleAssignment resolved = script != null ? entry.getValue().resolveCustomRole(script) : entry.getValue();
+                if (resolved.getRoleType() == RoleType.TRAVELER) {
+                    travelerUuids.add(entry.getKey());
+                }
+            }
+            int travelerCount = travelerUuids.size();
+
+            if (script != null) {
+                ServerState.currentScript = script;
+                ServerPlayNetworking.send(target, new SendScriptS2CPayload(script));
+            }
+
+            // The seat HUD needs the whole table, so send every seat like the full send does.
+            Integer seatNumber = seatNumbers.get(targetUuid);
+            if (seatNumber != null) {
+                ServerState.PLAYER_SEAT_NUMBERS.put(targetUuid, seatNumber);
+            } else {
+                ServerState.PLAYER_SEAT_NUMBERS.remove(targetUuid);
+            }
+            ServerPlayNetworking.send(target, new SendSeatsS2CPayload(seatNumbers));
+
+            PendingRoleAssignment assignment = pendingRoles.get(targetUuid);
+            if (assignment == null) {
+                ServerState.PLAYER_ROLES.remove(targetUuid);
+                DaytimeState.removeTraveler(targetUuid);
+                ServerPlayNetworking.send(target, SendRoleS2CPayload.ofRole(Role.NO_ROLE, true, activePlayerCount, travelerCount, false));
+                MadnessSync.sendMadnessesToPlayer(context.server(), targetUuid, payload.reminders(), pendingRoles);
+                context.player().sendMessage(Text.literal("Cleared role for " + target.getGameProfile().getName()).formatted(Formatting.YELLOW), true);
+                return;
+            }
+
+            ServerState.PLAYER_ROLES.put(targetUuid, assignment);
+            if (travelerUuids.contains(targetUuid)) {
+                DaytimeState.addTraveler(targetUuid);
+            } else {
+                DaytimeState.removeTraveler(targetUuid);
+            }
+
+            ServerPlayNetworking.send(target, SendRoleS2CPayload.ofAssignment(assignment, activePlayerCount, travelerCount, false));
+
+            MadnessSync.sendMadnessesToPlayer(context.server(), targetUuid, payload.reminders(), pendingRoles);
+            context.player().sendMessage(Text.literal("Sent roles to " + target.getGameProfile().getName()).formatted(Formatting.GREEN), true);
+        });
+
         ModPackets.registerGuarded(DistributeItemsC2SPayload.ID, (payload, context) -> {
             ServerPlayerEntity player = context.player();
             if (player.hasPermissionLevel(2)) {

@@ -49,6 +49,22 @@ public final class MadnessSync {
         }
     }
 
+    /** Single-recipient version of {@link #sendMadnessesToPlayers}. */
+    public static void sendMadnessesToPlayer(MinecraftServer server,
+                                             UUID targetPlayer,
+                                             Map<UUID, List<Reminder>> remindersMap,
+                                             Map<UUID, PendingRoleAssignment> pendingRoles) {
+        ServerPlayerEntity player = server.getPlayerManager().getPlayer(targetPlayer);
+        if (player == null) {
+            return;
+        }
+        Map<UUID, List<Madness>> playerMadnesses = detectMadnessesServerSide(remindersMap, pendingRoles);
+        List<Madness> filteredMadnesses = playerMadnesses.getOrDefault(targetPlayer, Collections.emptyList()).stream()
+                .filter(m -> m.getType() != Madness.MadnessType.MUTANT)
+                .toList();
+        ServerPlayNetworking.send(player, new SendMadnessS2CPayload(filteredMadnesses));
+    }
+
     /**
      * Server-side version of madness detection logic.
      */

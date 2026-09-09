@@ -792,6 +792,16 @@ public class DaytimeState {
         }
     }
 
+    /** Adds one traveler without touching the others; an existing entry keeps its eligibility. */
+    public static void addTraveler(UUID traveler) {
+        canBeExiled.putIfAbsent(traveler, true);
+    }
+
+    /** Drops one player from the traveler set, if present. */
+    public static void removeTraveler(UUID player) {
+        canBeExiled.remove(player);
+    }
+
     /**
      * Resets exile eligibility for all current travelers at dawn/dusk. Preserves the
      * keyset (= travelers) and just flips every value back to true.

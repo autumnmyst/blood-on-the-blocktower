@@ -678,6 +678,7 @@ public class StorytellerToolsScreen extends Screen {
             addColoredAction("\u2022 ", "Ctrl+Shift", "MB2", ": Execute (survive)");
             addColoredAction("\u2022 ", "Ctrl+Shift+Alt", "MB1", ": Send grimoire");
             addColoredAction("\u2022 ", "Ctrl+Alt", "MB1", ": Toggle ghost vote (dead only)");
+            addColoredAction("\u2022 ", "Ctrl+Alt", "MB2", ": Targeted player role update");
             this.addEntry(DocumentEntry.spacer());
 
             // Role icon actions

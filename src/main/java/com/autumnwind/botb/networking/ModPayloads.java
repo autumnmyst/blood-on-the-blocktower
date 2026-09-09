@@ -75,6 +75,9 @@ public final class ModPayloads {
         // Send grimoire to specific player (for roles like Spy)
         PayloadTypeRegistry.playC2S().register(SendGrimoireToPlayerC2SPayload.ID, SendGrimoireToPlayerC2SPayload.CODEC);
 
+        // Send roles to a single player (targeted Send Roles)
+        PayloadTypeRegistry.playC2S().register(SendRolesToPlayerC2SPayload.ID, SendRolesToPlayerC2SPayload.CODEC);
+
         // Clock hands payload
         PayloadTypeRegistry.playS2C().register(ClockHandsStateS2CPayload.ID, ClockHandsStateS2CPayload.CODEC);
 
