@@ -78,8 +78,9 @@ final class RoleHandlers {
                     // Tools "Distribute Items" button.
                 });
 
-                Set<UUID> previouslySeated = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.keySet());
-                Set<Integer> previouslySeatedSeats = new HashSet<>(ServerState.PLAYER_SEAT_NUMBERS.values());
+                Map<UUID, Integer> previousSeats = new HashMap<>(ServerState.PLAYER_SEAT_NUMBERS);
+                Set<UUID> previouslySeated = previousSeats.keySet();
+                Set<Integer> previouslySeatedSeats = new HashSet<>(previousSeats.values());
                 ServerState.updateSeats(seatNumbers);
 
                 // Stored whole rather than reduced to (role, alignment): a homebrew assignment
@@ -162,21 +163,17 @@ final class RoleHandlers {
                         // Travelers only go to botb_traveler team when called for exile (for purple glow color)
                         scoreboard.addScoreHolderToTeam(player.getGameProfile().getName(), finalPlayerTeam);
 
-                        // Execute seat assignment command for this player
+                        // Seat command and spawnpoint only when the seat is new or changed
                         Integer seatNumber = seatNumbers.get(uuid);
-                        if (seatNumber != null) {
+                        if (seatNumber != null && !seatNumber.equals(previousSeats.get(uuid))) {
                             String seatCommand = ServerConfig.SEAT_ASSIGNMENT_COMMANDS.get(seatNumber);
                             if (seatCommand != null && !seatCommand.isEmpty()) {
-                                // Execute command with server permissions targeting the player
                                 ServerCommands.runAs(context.server(), player.getUuidAsString(), seatCommand);
                             }
-
-                            // Set spawn point to player's home location (seat home)
                             BlockPos seatHome = ServerConfig.SEAT_HOMES.get(seatNumber);
                             if (seatHome != null) {
-                                String spawnpointCommand = String.format("spawnpoint @s %d %d %d",
-                                    seatHome.getX(), seatHome.getY(), seatHome.getZ());
-                                ServerCommands.runAs(context.server(), player.getUuidAsString(), spawnpointCommand);
+                                ServerCommands.runAs(context.server(), player.getUuidAsString(),
+                                        String.format("spawnpoint @s %d %d %d", seatHome.getX(), seatHome.getY(), seatHome.getZ()));
                             }
                         }
                     }
