@@ -1676,6 +1676,9 @@ public class AssignRolesScreen extends Screen {
                 List<Text> tooltipTextLines = wrappedLines.stream()
                         .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
                         .collect(Collectors.toList());
+                if (ClientState.hintsEnabled) {
+                    tooltipTextLines.add(Text.literal("Click for full description").formatted(Formatting.GRAY, Formatting.ITALIC));
+                }
                 context.drawTooltip(this.textRenderer, tooltipTextLines, mouseX, mouseY);
             } else {
                 // Wrap role name if needed
@@ -1693,6 +1696,10 @@ public class AssignRolesScreen extends Screen {
                     tooltipTextLines = new ArrayList<>(tooltipTextLines);
                     tooltipTextLines.add(Text.literal("Ctrl+Click").withColor(0xFFA500)
                             .append(Text.literal(" to toggle mark").formatted(Formatting.GRAY)));
+                }
+                if (ClientState.hintsEnabled && hoveredRoleWidget != null && hoveredRoleWidget.hasRole()) {
+                    tooltipTextLines = new ArrayList<>(tooltipTextLines);
+                    tooltipTextLines.add(Text.literal("Shift: details").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 }
                 context.drawTooltip(this.textRenderer, tooltipTextLines, mouseX, mouseY);
             }
