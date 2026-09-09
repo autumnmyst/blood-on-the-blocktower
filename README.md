@@ -15,7 +15,7 @@ Wiki
 # Overview
 Blood on the Blocktower is a Minecraft adaptation of the fantastic social deduction game **Blood on the *Clocktower***. It allows you to easily setup and run the game on any map with your friends!
 
-> Blood on the Blocktower is an UNOFFICIAL fan project, not affiliated with or endorsed by The Pandemonium Institute.
+> Blood on the Blocktower is an unofficial fan project, not affiliated with or endorsed by The Pandemonium Institute.
 
 ## Download
 
@@ -30,7 +30,7 @@ There is also voice chat integration, so **Highly Recommended:**
 - [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat)
 - [Simple Voice Chat Enhanced Groups](https://modrinth.com/mod/enhanced-groups) (for isolated chat rooms)
 
-This mod is serverside, so every player needs it.
+This mod is client and serverside, so every player needs it.
 
 ## Videos
 
