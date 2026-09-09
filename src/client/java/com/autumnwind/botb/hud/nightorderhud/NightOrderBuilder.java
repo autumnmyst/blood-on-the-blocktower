@@ -52,8 +52,7 @@ public class NightOrderBuilder {
                 .anyMatch(list -> list.stream().anyMatch(r -> r.text().equals("Is The Demon") && r.role().isPresent() && r.role().get() == Role.LIL_MONSTA));
 
         // Check for Xaan X reminder
-        UUID xaanXPlayer = findXaanXPlayer();
-        boolean xaanXActive = xaanXPlayer != null || isXaanPoisonActive();
+        boolean xaanXActive = isXaanPoisonActive();
 
         // Map all players to their special associated role reminders
         Map<UUID, List<Reminder>> associatedRoleRemindersMap = new HashMap<>();

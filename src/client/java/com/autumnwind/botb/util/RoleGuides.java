@@ -78,7 +78,7 @@ public final class RoleGuides {
         guide(Role.WITCH, "Skipped once 3 or fewer players are alive.");
         guide(Role.WIZARD, "Marked by default (ctrl-click to unmark). Their Other Nights visit appears every night until you unmark them.");
         guide(Role.WRAITH, "When you move to any evil player's visit, the Wraith gets teleported there too. Mark the Wraith (ctrl-click) to supress teleports, and add a visit just after dusk to inform them not visit other players. Dying doesn't unmark them.");
-        guide(Role.XAAN, "The outsider count gets recorded on the Xaan as a \"Night N\" reminder at the first dusk, a custom reminder with the same format works too. On that night and the following day, every townsfolk counts as poisoned. You can manually cause the X icon by adding the Xaan's \"X\" reminder to any player, though it won't poison anyone on its own.");
+        guide(Role.XAAN, "The outsider count gets recorded on the Xaan as a \"Night N\" reminder at the first dusk, a custom reminder with the same format works too. On that night and the following day, every townsfolk counts as poisoned. You can cause this manually by adding the Xaan's \"X\" reminder to any player.");
 
         // Demons
         guide(Role.AL_HADIKHIA, "The \"AH\" button in storyteller tools turns on the homebrew version, which asks every player if they want to live or die each night. The 1, 2, and 3 reminders count as demon kills for triggers.");

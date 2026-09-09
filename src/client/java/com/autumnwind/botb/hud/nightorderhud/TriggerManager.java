@@ -232,6 +232,9 @@ public class TriggerManager {
         // If so, and they died to the demon, create a triggered visit for the Grandmother
         createGrandmotherTriggerIfGrandchildDied(playerUUID);
 
+        // Special case: the King dying to the demon wakes the Choirboy
+        createChoirboyTriggerIfKingDied(playerUUID);
+
         // Special case: Check if this dying player is a Demon
         // If so, and conditions are met, create a triggered visit for the Scarlet Woman
         createScarletWomanTriggerIfDemonDied(playerUUID);
@@ -272,62 +275,59 @@ public class TriggerManager {
             return; // Didn't die to the demon
         }
 
-        // Find the Grandmother player (the player with GRANDMOTHER role or associated GRANDMOTHER)
+        createOtherDeathTrigger(Role.GRANDMOTHER, grandchildUUID);
+    }
+
+    /** The King dying to the demon wakes the Choirboy. */
+    private static void createChoirboyTriggerIfKingDied(UUID kingUUID) {
+        // Only an assigned King counts. An associated king has the ability but isn't a king
+        PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(kingUUID);
+        if (assignment == null || assignment.role() != Role.KING) {
+            return;
+        }
+        if (!doesDeathQualifyForTrigger(kingUUID, NightOrder.DeathTriggerType.DEMON)) {
+            return;
+        }
+        createOtherDeathTrigger(Role.CHOIRBOY, kingUUID);
+    }
+
+    /**
+     * Triggers {@code triggeredRole}'s OTHER-type visit for its first holder with outward effect,
+     * recording {@code sourceUUID} (the player whose death caused it) as the trigger source.
+     */
+    private static void createOtherDeathTrigger(Role triggeredRole, UUID sourceUUID) {
         for (Map.Entry<UUID, PendingRoleAssignment> entry : StorytellerState.PENDING_ROLES.entrySet()) {
-            UUID potentialGrandmother = entry.getKey();
-            PendingRoleAssignment assignment = entry.getValue();
-
-            boolean isGrandmother = assignment.role() == Role.GRANDMOTHER;
-
-            // Also check for associated Grandmother
-            if (!isGrandmother) {
-                List<Reminder> gmReminders = StorytellerState.REMINDERS.getOrDefault(potentialGrandmother, Collections.emptyList());
-                isGrandmother = gmReminders.stream()
-                        .anyMatch(r -> r.role().isPresent() &&
-                                  r.role().get() == Role.GRANDMOTHER &&
-                                  r.text().equals(Role.GRANDMOTHER.name().replace('_', ' ')));
+            UUID holder = entry.getKey();
+            // A droisoned or fake holder doesn't react to someone else's death
+            if (!holdsRole(holder, triggeredRole) || !hasOutwardEffect(holder, triggeredRole)) {
+                continue;
             }
+            Role assignedRole = entry.getValue().role();
+            Optional<Role> associatedRole = assignedRole == triggeredRole ? Optional.empty() : Optional.of(triggeredRole);
 
-            // A droisoned Grandmother doesn't die with her grandchild, so no visit
-            if (isGrandmother && hasOutwardEffect(potentialGrandmother, Role.GRANDMOTHER)) {
-                // Find the Grandmother's night order info
-                NightOrder.getOtherNightOrder().stream()
-                        .filter(info -> info.isRole() && info.getRole() == Role.GRANDMOTHER && info.isTriggered())
-                        .findFirst()
-                        .ifPresent(info -> {
-                            // Build triggered visit for the Grandmother, with grandchild as the trigger source
-                            Role grandmotherAssignedRole = assignment.role();
-                            Optional<Role> associatedRole = grandmotherAssignedRole == Role.GRANDMOTHER
-                                    ? Optional.empty()
-                                    : Optional.of(Role.GRANDMOTHER);
-
-                            RoleVisit triggerVisit = buildTriggeredVisit(
-                                    potentialGrandmother,
-                                    grandmotherAssignedRole,
-                                    info,
-                                    associatedRole
-                            );
-                            if (triggerVisit != null) {
-                                // Override the trigger source player to be the grandchild (for tracking)
-                                RoleVisit visitWithGrandchildSource = new RoleVisit(
-                                        triggerVisit.role(),
-                                        triggerVisit.customRole(),
-                                        triggerVisit.staticAction(),
-                                        triggerVisit.players(),
-                                        triggerVisit.seatTeleport(),
-                                        triggerVisit.instruction(),
-                                        triggerVisit.iconReminders(),
-                                        triggerVisit.associatedRole(),
-                                        triggerVisit.associatedCustomRole(),
-                                        triggerVisit.triggered(),
-                                        triggerVisit.sourceNightOrderIndex(),
-                                        Optional.of(grandchildUUID) // The grandchild is the trigger source
-                                );
-                                addTriggeredVisit(visitWithGrandchildSource);
-                            }
-                        });
-                break; // Found the Grandmother, done
-            }
+            NightOrder.getOtherNightOrder().stream()
+                    .filter(info -> info.isRole() && info.getRole() == triggeredRole && info.isTriggered())
+                    .findFirst()
+                    .ifPresent(info -> {
+                        RoleVisit triggerVisit = buildTriggeredVisit(holder, assignedRole, info, associatedRole);
+                        if (triggerVisit != null) {
+                            addTriggeredVisit(new RoleVisit(
+                                    triggerVisit.role(),
+                                    triggerVisit.customRole(),
+                                    triggerVisit.staticAction(),
+                                    triggerVisit.players(),
+                                    triggerVisit.seatTeleport(),
+                                    triggerVisit.instruction(),
+                                    triggerVisit.iconReminders(),
+                                    triggerVisit.associatedRole(),
+                                    triggerVisit.associatedCustomRole(),
+                                    triggerVisit.triggered(),
+                                    triggerVisit.sourceNightOrderIndex(),
+                                    Optional.of(sourceUUID)
+                            ));
+                        }
+                    });
+            return;
         }
     }
 
@@ -339,10 +339,9 @@ public class TriggerManager {
      * - 5+ alive players (excluding travelers) before the demon's death
      * Creates a visit with no seat teleport.
      */
-    /** Whether any player carries the Fang Gu's "Once" reminder, the mark of a jump. */
-    private static boolean fangGuOnceReminderPlaced() {
-        return StorytellerState.REMINDERS.values().stream()
-                .flatMap(List::stream)
+    /** Whether this player carries the Fang Gu's "Once" reminder, the mark of a jump. */
+    private static boolean hasFangGuOnceReminder(UUID uuid) {
+        return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
                 .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.FANG_GU && r.text().equals("Once"));
     }
 
@@ -367,8 +366,8 @@ public class TriggerManager {
 
         // A Fang Gu jump (an Outsider became the new Fang Gu) is not a demon death, so the
         // Scarlet Woman doesn't take over. The storyteller records the jump with the Fang Gu's
-        // "Once" reminder; without it, a dead Fang Gu counts like any other demon.
-        if (demonAssignment.role() == Role.FANG_GU && fangGuOnceReminderPlaced()) {
+        // "Once" reminder on the old Fang Gu; without it, a dead Fang Gu counts like any other demon.
+        if (demonAssignment.role() == Role.FANG_GU && hasFangGuOnceReminder(demonUUID)) {
             return;
         }
 
@@ -954,8 +953,7 @@ public class TriggerManager {
         // Find global effects for icon reminders
         UUID minstrelPlayer = findMinstrelPlayer();
         boolean vortoxInPlay = isVortoxInPlay();
-        UUID xaanXPlayer = findXaanXPlayer();
-        boolean xaanXActive = xaanXPlayer != null || isXaanPoisonActive();
+        boolean xaanXActive = isXaanPoisonActive();
 
         // Determine visit targets (special cases for Barber, Hatter, Poppy Grower)
         List<UUID> visitTargets = List.of(playerUUID);
@@ -1035,8 +1033,7 @@ public class TriggerManager {
         // Find global effects for icon reminders
         UUID minstrelPlayer = findMinstrelPlayer();
         boolean vortoxInPlay = isVortoxInPlay();
-        UUID xaanXPlayer = findXaanXPlayer();
-        boolean xaanXActive = xaanXPlayer != null || isXaanPoisonActive();
+        boolean xaanXActive = isXaanPoisonActive();
 
         // Target is the player themselves
         List<UUID> visitTargets = List.of(playerUUID);

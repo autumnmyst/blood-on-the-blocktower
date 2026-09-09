@@ -289,7 +289,7 @@ public class NightOrder {
             NightOrderInfo.onRole(Role.SAGE, true, false, true, true, DeathTriggerType.DEMON,"If the Sage was killed by a Demon: Tell them two players, one of which is that Demon."),
             NightOrderInfo.onRole(Role.BANSHEE, true, false, true, true, DeathTriggerType.DEMON,"If the Banshee was killed by the Demon, announce that the Banshee has died."),
             NightOrderInfo.onRole(Role.PROFESSOR, true, false, false, true, "If the Professor has not used their ability: The Professor may choose a player. If that player is a Townsfolk, they are now alive."),
-            NightOrderInfo.onRole(Role.CHOIRBOY, true, false, true, true, DeathTriggerType.DEMON,"If the King was killed by the Demon, wake the Choirboy and tell them who the Demon player is."),
+            NightOrderInfo.onRole(Role.CHOIRBOY, true, false, true, true, DeathTriggerType.OTHER, "If the King was killed by the Demon, wake the Choirboy and tell them who the Demon player is."),
             NightOrderInfo.onRole(Role.HUNTSMAN, true, false, false, true, "The Huntsman may choose a player. If they choose the Damsel, wake that player, and inform them which not not-in-play Townsfolk they have become."),
             NightOrderInfo.onRole(Role.DAMSEL, true, false, "If selected by the Huntsman, wake the Damsel, and inform them which not not-in-play Townsfolk they have become."),
             NightOrderInfo.onRole(Role.AMNESIAC, true, true, "If the Amnesiac's ability causes them to wake tonight: Wake the Amnesiac and run their ability."),

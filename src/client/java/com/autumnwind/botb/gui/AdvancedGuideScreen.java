@@ -216,13 +216,15 @@ public class AdvancedGuideScreen extends Screen {
             addSpacer();
 
             addSubtitle("DEMON Kill Only");
-            addRoleList("Sage, Banshee, Choirboy", textWidth);
+            addRoleList("Sage, Banshee", textWidth);
             addBody("Only triggers if killed by the demon at night. To mark a demon kill, place the demon's \"Dead\" reminder on the victim (e.g., Imp's \"Dead\" reminder). Al-Hadikhia's \"1\"/\"2\"/\"3\" reminders also count.", textWidth);
             addSpacer();
 
             addSubtitle("OTHER Player Death");
-            addRoleList("Grandmother, Scarlet Woman", textWidth);
+            addRoleList("Grandmother, Choirboy, Scarlet Woman", textWidth);
             addBody("Grandmother triggers when her GRANDCHILD dies to the demon, not when Grandmother herself dies. The grandchild must have the \"Grandchild\" reminder from Grandmother AND die to a demon kill.", textWidth);
+            addSpacer();
+            addBody("Choirboy triggers when the King dies to a demon kill, not when the Choirboy does.", textWidth);
             addSpacer();
             addBody("Scarlet Woman triggers automatically when a Demon dies with 5 or more living non-travelers. Use the Fang Gu's \"Once\" reminder to suppress a Fang Gu jump.", textWidth);
             addSpacer();

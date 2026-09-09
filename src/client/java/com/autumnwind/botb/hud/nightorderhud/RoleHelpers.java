@@ -508,10 +508,12 @@ public class RoleHelpers {
 
     /**
      * Checks if the Xaan is poisoning townsfolk right now: it is night X or the day after it
-     * (until dusk), and a living Xaan with outward effect exists.
+     * (until dusk) and a living Xaan with outward effect exists, or the storyteller has placed
+     * the Xaan's "X" reminder on someone as a manual override.
      */
     public static boolean isXaanPoisonActive() {
         if (evaluatingXaan) return false;
+        if (findXaanXPlayer() != null) return true;
         evaluatingXaan = true;
         try {
             int night = getXaanNight();
@@ -554,6 +556,9 @@ public class RoleHelpers {
 
         if (minstrelPlayer != null && !isMinstrel) {
             if (!reminderTexts.contains("Drunk")) reminderTexts.add("Drunk");
+        }
+        if (isAssignedTownsfolk(uuid) && isXaanPoisonActive()) {
+            if (!reminderTexts.contains("Poisoned")) reminderTexts.add("Poisoned");
         }
 
         if (reminderTexts.isEmpty()) return "";
