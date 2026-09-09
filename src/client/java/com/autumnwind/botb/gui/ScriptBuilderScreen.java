@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Locale;
 import net.minecraft.client.gui.tooltip.Tooltip;
 
 /**
@@ -532,10 +533,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
     private void refreshPalette() {
         if (palette == null) return;
-        String query = searchField == null ? "" : searchField.getText().toLowerCase();
+        String query = searchField == null ? "" : searchField.getText().toLowerCase(Locale.ROOT);
         List<ScriptRole> filtered = paletteSource.stream()
-                .filter(role -> role.getDisplayName().toLowerCase().contains(query)
-                        || role.getTeam().name().toLowerCase().contains(query))
+                .filter(role -> role.getDisplayName().toLowerCase(Locale.ROOT).contains(query)
+                        || role.getTeam().name().toLowerCase(Locale.ROOT).contains(query))
                 .collect(Collectors.toList());
 
         // Adding or removing a character shouldn't yank the palette back to the top. Only a

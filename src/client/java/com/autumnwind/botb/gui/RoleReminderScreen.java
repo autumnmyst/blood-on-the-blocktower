@@ -88,10 +88,10 @@ public class RoleReminderScreen extends Screen {
     }
 
     private void filterRoles(String searchText) {
-        String lowerCaseText = searchText.toLowerCase();
+        String lowerCaseText = searchText.toLowerCase(Locale.ROOT);
         this.filteredRoles = this.sourceRoles.stream()
-                .filter(role -> role.getDisplayName().toLowerCase().contains(lowerCaseText) ||
-                        role.getTeam().name().toLowerCase().contains(lowerCaseText))
+                .filter(role -> role.getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText) ||
+                        role.getTeam().name().toLowerCase(Locale.ROOT).contains(lowerCaseText))
                 .collect(Collectors.toList());
         this.roleGridWidget.populateRoles(this.filteredRoles);
         this.roleGridWidget.setScrollAmount(0);

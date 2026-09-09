@@ -81,7 +81,7 @@ public record PendingRoleAssignment(
         if (isCustomRole()) {
             return customRole.get().id();
         }
-        return role.name().toLowerCase().replace("_", "");
+        return role.getId();
     }
 
     /**

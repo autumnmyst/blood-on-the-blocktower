@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
 
 /**
  * Reads and writes raw Blood on the Clocktower script JSON.
@@ -41,7 +42,7 @@ public final class ScriptJson {
      * (lowercase, no underscores/spaces/dashes) so ids agree across both classes.
      */
     public static String normalizeId(String id) {
-        return id == null ? "" : id.toLowerCase().replaceAll("[_\\s-]", "");
+        return id == null ? "" : id.toLowerCase(Locale.ROOT).replaceAll("[_\\s-]", "");
     }
 
     /**

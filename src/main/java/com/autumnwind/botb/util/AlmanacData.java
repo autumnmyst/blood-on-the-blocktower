@@ -2,6 +2,7 @@ package com.autumnwind.botb.util;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
 
 /**
  * Contains almanac data for a custom script, including script-level info and per-role details.
@@ -101,7 +102,7 @@ public record AlmanacData(
      * Normalize a role ID for lookup (lowercase, no underscores/spaces/dashes).
      */
     public static String normalizeRoleId(String id) {
-        return id.toLowerCase().replaceAll("[_\\s-]", "");
+        return id.toLowerCase(Locale.ROOT).replaceAll("[_\\s-]", "");
     }
 
     /**

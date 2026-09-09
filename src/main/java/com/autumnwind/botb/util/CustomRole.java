@@ -3,6 +3,7 @@ package com.autumnwind.botb.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * Represents a custom (homebrew) role parsed from a script JSON.
@@ -97,7 +98,7 @@ public record CustomRole(
     }
 
     private static RoleType parseTeam(String team) {
-        return switch (team.toLowerCase()) {
+        return switch (team.toLowerCase(Locale.ROOT)) {
             case "townsfolk" -> RoleType.TOWNSFOLK;
             case "outsider" -> RoleType.OUTSIDER;
             case "minion" -> RoleType.MINION;
@@ -120,7 +121,7 @@ public record CustomRole(
      * Returns the display name in uppercase for consistency with official roles.
      */
     public String getDisplayName() {
-        return name.toUpperCase();
+        return name.toUpperCase(Locale.ROOT);
     }
 
     /**

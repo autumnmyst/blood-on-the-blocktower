@@ -72,7 +72,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
         @Override
         public String getId() {
             // Underscores are used for official role ids
-            return role.name().toLowerCase().replace("_", "");
+            return role.getId();
         }
 
         @Override
@@ -137,7 +137,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
             if (customRole.imageUrls().isEmpty()) {
                 // Try to find matching official role by ID
                 for (Role role : Role.values()) {
-                    String normalizedRoleId = role.name().toLowerCase().replace("_", "");
+                    String normalizedRoleId = role.getId();
                     if (normalizedRoleId.equals(customRole.id())) {
                         return role.getIcon();
                     }
@@ -188,7 +188,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
             if (imageUrl == null || imageUrl.isEmpty()) {
                 // Try to find matching official role by ID
                 for (Role role : Role.values()) {
-                    String normalizedRoleId = role.name().toLowerCase().replace("_", "");
+                    String normalizedRoleId = role.getId();
                     if (normalizedRoleId.equals(fabledCharacter.id())) {
                         return role.getIcon();
                     }

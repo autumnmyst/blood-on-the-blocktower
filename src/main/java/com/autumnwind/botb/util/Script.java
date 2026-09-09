@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.Locale;
 
 /**
  * Represents a Blood on the Clocktower script with both official and custom roles.
@@ -303,7 +304,7 @@ public record Script(
      * Normalize a role ID for comparison (lowercase, no underscores/spaces/dashes).
      */
     private static String normalizeRoleId(String id) {
-        return id.toLowerCase().replaceAll("[_\\s-]", "");
+        return id.toLowerCase(Locale.ROOT).replaceAll("[_\\s-]", "");
     }
 
     /**

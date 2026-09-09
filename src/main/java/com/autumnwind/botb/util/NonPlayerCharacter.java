@@ -3,6 +3,7 @@ package com.autumnwind.botb.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * Represents a non-player character (Fabled or Loric) from a custom script.
@@ -68,7 +69,7 @@ public record NonPlayerCharacter(
      * Returns the display name in uppercase for consistency.
      */
     public String getDisplayName() {
-        return name.toUpperCase();
+        return name.toUpperCase(Locale.ROOT);
     }
 
     /**

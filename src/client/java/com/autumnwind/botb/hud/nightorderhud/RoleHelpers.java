@@ -82,7 +82,7 @@ public class RoleHelpers {
                 }
             }
             // Case 2: All-caps custom reminder matching a role name
-            else if (text.equals(text.toUpperCase()) && text.length() > 0) {
+            else if (text.equals(text.toUpperCase(Locale.ROOT)) && text.length() > 0) {
                 // Try to find a matching role (case-insensitive with trim)
                 for (Role role : Role.values()) {
                     if (text.trim().equalsIgnoreCase(role.name().replace('_', ' '))) {
@@ -142,7 +142,7 @@ public class RoleHelpers {
 
         for (Reminder r : StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList())) {
             if (isIdentityReminder(r)) continue;
-            String lowerText = r.text().toLowerCase();
+            String lowerText = r.text().toLowerCase(Locale.ROOT);
 
             if (lowerText.contains("drunk")) {
                 if (lowerText.equals("everyone is drunk") && isMinstrel) {
@@ -282,7 +282,7 @@ public class RoleHelpers {
             // Get first night instructions for this role
             String roleInstructions = getFirstNightInstructions(role);
             if (!roleInstructions.isBlank()) {
-                result.append("\n\n").append(role.getDisplayName().toUpperCase()).append(": ").append(roleInstructions);
+                result.append("\n\n").append(role.getDisplayName().toUpperCase(Locale.ROOT)).append(": ").append(roleInstructions);
             }
         }
 
@@ -322,7 +322,7 @@ public class RoleHelpers {
         }
         for (Reminder r : StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList())) {
             if (isIdentityReminder(r)) continue;
-            String lowerText = r.text().toLowerCase();
+            String lowerText = r.text().toLowerCase(Locale.ROOT);
             if (lowerText.equals("everyone is drunk")) continue;
             if (lowerText.contains("drunk") || lowerText.contains("poisoned")) {
                 return true;
@@ -435,7 +435,7 @@ public class RoleHelpers {
     /** Whether an official fabled or loric character is on the current script. */
     public static boolean isFabledOrLoricOnScript(Role role) {
         return ClientState.currentScript != null
-                && ClientState.currentScript.hasFabledOrLoric(role.name().toLowerCase().replace("_", ""));
+                && ClientState.currentScript.hasFabledOrLoric(role.getId());
     }
 
     // ========== Xaan ==========
@@ -542,7 +542,7 @@ public class RoleHelpers {
 
         for (Reminder r : StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList())) {
             if (isIdentityReminder(r)) continue;
-            String lowerText = r.text().toLowerCase();
+            String lowerText = r.text().toLowerCase(Locale.ROOT);
             if (lowerText.contains("drunk")) {
                 if (lowerText.equals("everyone is drunk") && isMinstrel) continue;
                 if (!reminderTexts.contains("Drunk")) reminderTexts.add("Drunk");

@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Locale;
 
 public class RoleCatalogScreen extends Screen {
 
@@ -116,12 +117,12 @@ public class RoleCatalogScreen extends Screen {
     }
 
     private void filterRoles(String searchText) {
-        String lowerCaseText = searchText.toLowerCase();
+        String lowerCaseText = searchText.toLowerCase(Locale.ROOT);
         List<Role> sourceRoles = showingExtraRoles ? EXTRA_ROLES : MAIN_ROLES;
 
         this.filteredRoles = sourceRoles.stream()
-                .filter(role -> role.getDisplayName().toLowerCase().contains(lowerCaseText) ||
-                        role.getType().name().toLowerCase().contains(lowerCaseText))
+                .filter(role -> role.getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText) ||
+                        role.getType().name().toLowerCase(Locale.ROOT).contains(lowerCaseText))
                 .collect(Collectors.toList());
         this.roleListWidget.populateRoles(this.filteredRoles);
 

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * Screen for displaying custom script details from the almanac.
@@ -183,12 +184,12 @@ public class CustomScriptDetailsScreen extends Screen {
             }
 
             // Add a title
-            String title = page.name().charAt(0) + page.name().substring(1).toLowerCase();
+            String title = page.name().charAt(0) + page.name().substring(1).toLowerCase(Locale.ROOT);
             this.addEntry(new TitleEntry(title));
             this.addEntry(new SpacerEntry());
 
             if (content == null || content.isEmpty()) {
-                this.addEntry(new TextEntry(Text.literal("No " + page.name().toLowerCase() + " available.").formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(Text.literal("No " + page.name().toLowerCase(Locale.ROOT) + " available.").formatted(Formatting.ITALIC, Formatting.GRAY)));
                 return;
             }
 

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -279,6 +280,11 @@ public enum Role {
 
     public String getDescription() {
         return description;
+    }
+
+    /** Script-file id: lowercase name without underscores, e.g. SCARLET_WOMAN -> scarletwoman. */
+    public String getId() {
+        return name().toLowerCase(Locale.ROOT).replace("_", "");
     }
 
     public RoleType getType() {

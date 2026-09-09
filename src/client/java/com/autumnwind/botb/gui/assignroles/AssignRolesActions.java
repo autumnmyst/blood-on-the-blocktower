@@ -102,9 +102,9 @@ public class AssignRolesActions {
             for (PendingRoleAssignment assignment : StorytellerState.PENDING_ROLES.values()) {
                 if (assignment == null) continue;
                 if (assignment.isCustomRole() && assignment.customRole().isPresent()) {
-                    inPlayIds.add(assignment.customRole().get().id().toLowerCase());
+                    inPlayIds.add(assignment.customRole().get().id().toLowerCase(Locale.ROOT));
                 } else if (assignment.role() != null) {
-                    inPlayIds.add(assignment.role().name().toLowerCase().replace("_", ""));
+                    inPlayIds.add(assignment.role().getId());
                 }
             }
         }
@@ -114,7 +114,7 @@ public class AssignRolesActions {
         for (ScriptRole scriptRole : script.allRoles()) {
             RoleType team = scriptRole.getTeam();
             if (team != RoleType.TOWNSFOLK && team != RoleType.OUTSIDER) continue;
-            String id = scriptRole.getId().toLowerCase();
+            String id = scriptRole.getId().toLowerCase(Locale.ROOT);
             if (inPlayIds.contains(id) || !pooledIds.add(id)) continue;
             pool.add(scriptRole);
         }

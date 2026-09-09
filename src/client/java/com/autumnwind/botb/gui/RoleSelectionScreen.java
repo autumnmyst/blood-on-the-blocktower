@@ -86,7 +86,7 @@ public class RoleSelectionScreen extends Screen {
 
         // Pope allows duplicate character claims, so assigned roles stay selectable.
         boolean popeActive = ClientState.currentScript != null
-                && ClientState.currentScript.hasFabledOrLoric(Role.POPE.name().toLowerCase().replace("_", ""));
+                && ClientState.currentScript.hasFabledOrLoric(Role.POPE.getId());
 
         if (this.bluffIndex != null) {
             // Bluff slot: filter out any roles already in play or used as other bluffs.
@@ -100,7 +100,7 @@ public class RoleSelectionScreen extends Screen {
                     : StorytellerState.PENDING_ROLES.values().stream()
                             .map(a -> a.isCustomRole() && a.customRole().isPresent()
                                     ? a.customRole().get().id()
-                                    : a.role().name().toLowerCase().replace("_", ""))
+                                    : a.role().getId())
                             .collect(Collectors.toSet());
 
             // Collect other bluff role IDs (unified ScriptRole list)
@@ -109,7 +109,7 @@ public class RoleSelectionScreen extends Screen {
                 if (i != this.bluffIndex) {
                     ScriptRole bluffRole = StorytellerState.DEMON_BLUFFS.get(i);
                     if (bluffRole != null) {
-                        otherBluffRoleIds.add(bluffRole.getId().toLowerCase());
+                        otherBluffRoleIds.add(bluffRole.getId().toLowerCase(Locale.ROOT));
                     }
                 }
             }
@@ -117,7 +117,7 @@ public class RoleSelectionScreen extends Screen {
             // Filter out assigned roles and other bluffs (both official and custom)
             this.sourceRoles = this.sourceRoles.stream()
                     .filter(sr -> {
-                        String roleId = sr.getId().toLowerCase();
+                        String roleId = sr.getId().toLowerCase(Locale.ROOT);
                         return !assignedRoleIds.contains(roleId) && !otherBluffRoleIds.contains(roleId);
                     })
                     .collect(Collectors.toList());
@@ -137,13 +137,13 @@ public class RoleSelectionScreen extends Screen {
                         if (r == Role.NO_ROLE || Role.ALLOWS_DUPLICATES_AT_SETUP.contains(r)) {
                             return null;
                         }
-                        return r.name().toLowerCase().replace("_", "");
+                        return r.getId();
                     })
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
             this.sourceRoles = this.sourceRoles.stream()
-                    .filter(sr -> !assignedRoleIds.contains(sr.getId().toLowerCase()))
+                    .filter(sr -> !assignedRoleIds.contains(sr.getId().toLowerCase(Locale.ROOT)))
                     .collect(Collectors.toList());
         }
 
@@ -218,10 +218,10 @@ public class RoleSelectionScreen extends Screen {
     }
 
     private void filterRoles(String searchText) {
-        String lowerCaseText = searchText.toLowerCase();
+        String lowerCaseText = searchText.toLowerCase(Locale.ROOT);
         this.filteredRoles = this.sourceRoles.stream()
-                .filter(sr -> sr.getDisplayName().toLowerCase().contains(lowerCaseText) ||
-                        sr.getTeam().name().toLowerCase().contains(lowerCaseText))
+                .filter(sr -> sr.getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText) ||
+                        sr.getTeam().name().toLowerCase(Locale.ROOT).contains(lowerCaseText))
                 .collect(Collectors.toList());
         this.roleListWidget.populateRoles(this.filteredRoles);
         this.roleListWidget.setScrollAmount(0);

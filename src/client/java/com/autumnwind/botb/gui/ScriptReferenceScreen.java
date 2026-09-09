@@ -239,7 +239,7 @@ public class ScriptReferenceScreen extends Screen {
 
         public String getRoleId() {
             if (customRole != null) return customRole.id();
-            if (info != null && info.isRole()) return info.getRole().name().toLowerCase().replace("_", "");
+            if (info != null && info.isRole()) return info.getRole().getId();
             return "";
         }
     }
@@ -354,7 +354,7 @@ public class ScriptReferenceScreen extends Screen {
             for (CustomRole customRole : script.allCustomRoles()) {
                 // Skip if this is an official traveler (already handled above)
                 boolean isOfficialTraveler = officialTravelersInScript.stream()
-                        .anyMatch(r -> r.name().toLowerCase().replace("_", "").equals(customRole.id()));
+                        .anyMatch(r -> r.getId().equals(customRole.id()));
                 if (isOfficialTraveler) continue;
 
                 if (customRole.wakesFirstNight()) {
@@ -454,7 +454,7 @@ public class ScriptReferenceScreen extends Screen {
                     titleString = "No Jinxes for this script.";
                 }
                 else {
-                    titleString = type.name().substring(0, 1) + type.name().substring(1).toLowerCase() + "s";
+                    titleString = type.name().substring(0, 1) + type.name().substring(1).toLowerCase(Locale.ROOT) + "s";
                 }
                 this.text = Text.literal(titleString).formatted(Formatting.UNDERLINE);
             }

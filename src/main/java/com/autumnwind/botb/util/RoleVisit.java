@@ -194,7 +194,7 @@ public record RoleVisit(
      */
     public String getRoleId() {
         if (isRole()) {
-            return role.name().toLowerCase().replace("_", "");
+            return role.getId();
         }
         if (isCustomRole()) {
             return customRole.id();

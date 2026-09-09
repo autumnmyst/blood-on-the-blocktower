@@ -139,13 +139,13 @@ public class ReminderChooseScreen extends Screen {
                 }
             } else if (def.role() != null && (def.role().getType() == RoleType.FABLED || def.role().getType() == RoleType.LORIC)) {
                 // Official fabled/loric reminder - available if the fabled is on the script
-                String fabledId = def.role().name().toLowerCase().replace("_", "");
+                String fabledId = def.role().getId();
                 if (ClientState.currentScript != null && ClientState.currentScript.hasFabledOrLoric(fabledId)) {
                     valid.add(def);
                 }
             } else if (def.role() != null && def.role().getType() == RoleType.TRAVELER) {
                 // Official traveler reminder - check if traveler is assigned
-                String travelerId = def.role().name().toLowerCase().replace("_", "");
+                String travelerId = def.role().getId();
                 if (assignedRoles.contains(def.role()) || assignedCustomRoleIds.contains(travelerId)) {
                     valid.add(def);
                 }
@@ -534,7 +534,7 @@ public class ReminderChooseScreen extends Screen {
 
         // Check if custom text matches a role name (case-insensitive)
         Optional<Role> matchedRole = Optional.empty();
-        if (text.equals(text.toUpperCase()) && text.length() > 0) {
+        if (text.equals(text.toUpperCase(Locale.ROOT)) && text.length() > 0) {
             for (Role role : Role.values()) {
                 if (text.trim().equalsIgnoreCase(role.name().replace('_', ' '))) {
                     RoleType type = role.getType();
@@ -910,7 +910,7 @@ public class ReminderChooseScreen extends Screen {
                             description = customRole != null ? customRole.ability() : "Custom role";
                         } else if (role == Role.NO_ROLE) {
                             // Good/Evil alignment markers sit on the placeholder role
-                            description = "Marks this player as " + def.text().toLowerCase() + ".";
+                            description = "Marks this player as " + def.text().toLowerCase(Locale.ROOT) + ".";
                         } else {
                             description = role.getDescription();
                         }
