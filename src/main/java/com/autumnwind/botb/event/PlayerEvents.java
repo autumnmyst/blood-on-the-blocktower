@@ -3,6 +3,8 @@ package com.autumnwind.botb.event;
 import com.autumnwind.botb.config.WhisperSettingsManager;
 import com.autumnwind.botb.daytime.DaytimeState;
 import com.autumnwind.botb.daytime.VotingManager;
+import com.autumnwind.botb.BloodOnTheBlocktower;
+import com.autumnwind.botb.networking.ModVersionS2CPayload;
 import com.autumnwind.botb.networking.SyncWhisperSettingsS2CPayload;
 import com.autumnwind.botb.setup.SetupStick;
 import com.autumnwind.botb.states.ServerState;
@@ -17,6 +19,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -35,6 +38,16 @@ public final class PlayerEvents {
     public static void register() {
         // Register player join/leave events for timer boss bar and team assignment
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            // The client warns itself if its mod version differs from this one. A client too
+            // old to know the payload can't compare, so it gets a plain chat warning instead.
+            if (ServerPlayNetworking.canSend(handler.getPlayer(), ModVersionS2CPayload.ID)) {
+                ServerPlayNetworking.send(handler.getPlayer(), new ModVersionS2CPayload(BloodOnTheBlocktower.version()));
+            } else {
+                handler.getPlayer().sendMessage(Text.literal("Blood on the Blocktower version mismatch! ").formatted(Formatting.RED)
+                        .append(Text.literal("Server has " + BloodOnTheBlocktower.version() + ", your mod is older. ").formatted(Formatting.YELLOW))
+                        .append(Text.literal("Some features may not work until you update.").formatted(Formatting.GRAY)), false);
+            }
+
             TimerManager.addPlayer(handler.getPlayer());
 
             // Re-applies the correct scoreboard team based on the joining player's UUID:

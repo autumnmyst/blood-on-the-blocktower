@@ -93,6 +93,9 @@ public final class ModPayloads {
         PayloadTypeRegistry.playS2C().register(SyncWhisperSettingsS2CPayload.ID, SyncWhisperSettingsS2CPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(WhisperEffectS2CPayload.ID, WhisperEffectS2CPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(LobbyCountsS2CPayload.ID, LobbyCountsS2CPayload.CODEC);
+
+        // Mod version, sent on join for the client's mismatch warning
+        PayloadTypeRegistry.playS2C().register(ModVersionS2CPayload.ID, ModVersionS2CPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(CustomNamesS2CPayload.ID, CustomNamesS2CPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SetupHudS2CPayload.ID, SetupHudS2CPayload.CODEC);
     }
