@@ -62,7 +62,7 @@ public class NightOrderInfoGenerator {
             PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(entry.getKey());
             if (assignment != null && assignment.role() == Role.BOFFIN) {
                 for (Reminder r : entry.getValue()) {
-                    if (r.role().isPresent() && r.role().get().getType() == RoleType.TOWNSFOLK) {
+                    if (r.role().isPresent() && r.role().get().isDefaultGood()) {
                         return Text.literal("Demon has: ")
                                 .append(Text.literal(r.role().get().getDisplayName())
                                         .formatted(Formatting.AQUA));
@@ -74,7 +74,7 @@ public class NightOrderInfoGenerator {
             if (getAssignmentType(entry.getValue()) == RoleType.DEMON) {
                 List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(entry.getKey(), Collections.emptyList());
                 for (Reminder r : reminders) {
-                    if (r.role().isPresent() && r.role().get().getType() == RoleType.TOWNSFOLK &&
+                    if (r.role().isPresent() && r.role().get().isDefaultGood() &&
                             r.text().equals(r.role().get().name().replace('_', ' '))) {
                         return Text.literal("Demon has: ")
                                 .append(Text.literal(r.role().get().getDisplayName())

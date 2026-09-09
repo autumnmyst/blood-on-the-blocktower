@@ -1782,8 +1782,10 @@ public class AssignRolesScreen extends Screen {
         // Render hints for non-operators (if enabled)
         if (!isOperator && ClientState.hintsEnabled) {
             int hintY = this.height - 25;
-            Text hintText = Text.literal("Click role: assign | Click head: reminders").formatted(Formatting.GRAY, Formatting.ITALIC);
-            Text hideText = Text.literal("(hide in settings)").formatted(Formatting.DARK_GRAY, Formatting.ITALIC);
+            Text hintText = Text.literal("Click role: assign ").formatted(Formatting.GRAY, Formatting.ITALIC)
+                    .append(Text.literal("|").formatted(Formatting.GRAY))
+                    .append(Text.literal(" Click head: reminders").formatted(Formatting.GRAY, Formatting.ITALIC));
+            Text hideText = Text.literal("(hide hints in settings)").formatted(Formatting.DARK_GRAY, Formatting.ITALIC);
             context.drawCenteredTextWithShadow(this.textRenderer, hintText, this.width / 2, hintY, 0xFFFFFF);
             context.drawCenteredTextWithShadow(this.textRenderer, hideText, this.width / 2, hintY + 10, 0xFFFFFF);
         }

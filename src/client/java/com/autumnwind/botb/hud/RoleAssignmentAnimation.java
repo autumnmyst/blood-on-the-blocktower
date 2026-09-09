@@ -1,7 +1,5 @@
 package com.autumnwind.botb.hud;
 
-import com.autumnwind.botb.event.KeyInputHandler;
-import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleType;
@@ -10,7 +8,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 /**
@@ -125,24 +122,12 @@ public class RoleAssignmentAnimation {
     }
 
     /**
-     * Stops the animation, resets state, and shows the keybind hint (if hints enabled).
+     * Stops the animation and resets state.
      */
     private static void stopAnimation() {
         isAnimating = false;
         animatingRole = null;
         animatingAssignment = null;
-
-        // Show overlay message with the keybind to hide role HUD (only if hints enabled)
-        if (ClientState.hintsEnabled) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client != null && client.inGameHud != null) {
-                String keyName = KeyInputHandler.toggleShowRole.getBoundKeyLocalizedText().getString();
-                Text message = Text.literal("Press [")
-                        .append(Text.literal(keyName).formatted(Formatting.YELLOW))
-                        .append(Text.literal("] to hide role HUD"));
-                client.inGameHud.setOverlayMessage(message, false);
-            }
-        }
     }
 
     /**

@@ -191,9 +191,14 @@ public class RoleHUD {
         if (!showExtraInfo && ClientState.hintsEnabled) {
             String keyName = KeyInputHandler.openMyRoleDetailsKey
                     .getBoundKeyLocalizedText().getString();
-            descText.append(Text.literal("\n\n[").formatted(Formatting.GRAY))
-                    .append(Text.literal(keyName).formatted(Formatting.YELLOW))
-                    .append(Text.literal("] for details").formatted(Formatting.GRAY));
+            String hideKeyName = KeyInputHandler.toggleShowRole
+                    .getBoundKeyLocalizedText().getString();
+            descText.append(Text.literal("\n\n[").formatted(Formatting.GRAY, Formatting.ITALIC))
+                    .append(Text.literal(keyName).formatted(Formatting.YELLOW, Formatting.ITALIC))
+                    .append(Text.literal("] details").formatted(Formatting.GRAY, Formatting.ITALIC))
+                    .append(Text.literal(" / [").formatted(Formatting.GRAY, Formatting.ITALIC))
+                    .append(Text.literal(hideKeyName).formatted(Formatting.YELLOW, Formatting.ITALIC))
+                    .append(Text.literal("] hide").formatted(Formatting.GRAY, Formatting.ITALIC));
         }
         List<OrderedText> wrappedDesc = client.textRenderer.wrapLines(descText, 200);
 

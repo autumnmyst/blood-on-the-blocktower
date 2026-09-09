@@ -520,7 +520,7 @@ public class AdvancedGuideScreen extends Screen {
             // Mutant
             addSubtitle("Mutant Madness");
             addHighlight("Mutant madness is automatic and storyteller-only.", textWidth);
-            addBody("Any player assigned the Mutant role (or with Mutant as an associated role) automatically displays Mutant madness in the storyteller's HUD. This is NOT sent to the player - they already know they're the Mutant and mad from their role assignment.", textWidth);
+            addBody("Any player assigned the Mutant role (or with Mutant as an associated role) automatically displays Mutant madness in the storyteller's HUD. This is not sent to the player, as they already know they're the Mutant (or don't if they're a drunk/lunatic hermit).", textWidth);
             addSpacer();
             addBody("The storyteller sees: \"If [Player] (Mutant) is mad they are an outsider, they might be executed.\"", textWidth);
         }
@@ -546,7 +546,7 @@ public class AdvancedGuideScreen extends Screen {
             addSpacer();
 
             addSubtitle("Team Values");
-            addBody("Valid team values: \"townsfolk\", \"outsider\", \"minion\", \"demon\", \"fabled\", \"loric\". Travellers are not supported and will be ignored.", textWidth);
+            addBody("Valid team values: \"townsfolk\", \"outsider\", \"minion\", \"demon\", \"traveler\" (or \"traveller\"), \"fabled\", \"loric\".", textWidth);
             addSpacer();
 
             addSubtitle("Image Field");
