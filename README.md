@@ -15,7 +15,7 @@ Wiki
 # Overview
 Blood on the Blocktower is a Minecraft adaptation of the fantastic social deduction game **Blood on the *Clocktower***. It allows you to easily setup and run the game on any map with your friends!
 
-> Blood on the Blocktower is an unofficial fan project, not affiliated with or endorsed by The Pandemonium Institute.
+> Blood on the Blocktower is an unofficial fan project, not affiliated with The Pandemonium Institute.
 
 ## Download
 
@@ -101,6 +101,7 @@ Please file bugs as new issues. Currently not accepting PRs at this time, howeve
 ### Blood on the Clocktower
 
 **Game design:** Steven Medway
+
 **Published by:** The Pandemonium Institute
 
 Names, abilities, and almanac text belong to The Pandemonium Institute and are used with permission. This mod is an unofficial and unaffiliated fan project. Play the official game at [bloodontheclocktower.com](https://bloodontheclocktower.com).
