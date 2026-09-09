@@ -87,6 +87,11 @@ public class GlossaryScreen extends Screen {
             addColoredRoleType("Minions", RoleType.MINION.getColor(), ": Evil characters who support the Demon.", textWidth);
             addColoredRoleType("Demons", RoleType.DEMON.getColor(), ": Evil characters who (usually) kill at night.", textWidth);
             this.addEntry(DocumentEntry.spacer());
+            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Extra:").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addColoredRoleType("Travelers", RoleType.TRAVELER.getColor(), ": Good or evil players who may join or leave mid-game.", textWidth);
+            addColoredRoleType("Fabled", RoleType.FABLED.getColor(), ": Extra rules to run more balanced and inclusive games.", textWidth);
+            addColoredRoleType("Loric", RoleType.LORIC.getColor(), ": Extra rules to make the game feel fresh and interesting.", textWidth);
+            this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Nominations ---
