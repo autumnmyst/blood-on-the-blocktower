@@ -122,9 +122,7 @@ public final class SetupStick {
         rules.get(GameRules.KEEP_INVENTORY).set(true, source.getServer());
         giveStick(player);
         reportGamerules(player);
-        SESSIONS.put(player.getUuid(), new Session());
-        sendControls(player);
-        prompt(player);
+        startSession(player);
         return 1;
     }
 
@@ -195,10 +193,7 @@ public final class SetupStick {
 
         Session session = SESSIONS.get(serverPlayer.getUuid());
         if (session == null) {
-            SESSIONS.put(serverPlayer.getUuid(), session = new Session());
-            session.lastClickMs = System.currentTimeMillis();
-            sendControls(serverPlayer);
-            prompt(serverPlayer);
+            startSession(serverPlayer).lastClickMs = now;
             return ActionResult.SUCCESS;
         }
 
@@ -213,6 +208,8 @@ public final class SetupStick {
         BlockPos target = session.step.standing ? pos.offset(side) : pos;
         apply(session, target);
         ServerConfig.save();
+        serverPlayer.sendMessage(Text.literal(title(session) + " set: ").formatted(Formatting.GREEN)
+                .append(Text.literal(target.toShortString()).formatted(Formatting.WHITE)), true);
         advance(serverPlayer, session);
         return ActionResult.SUCCESS;
     }
@@ -374,6 +371,15 @@ public final class SetupStick {
     }
 
     /** Updates the on-screen box for the current step. */
+    /** Starts (or restarts) the walkthrough from the first step and shows the HUD. */
+    private static Session startSession(ServerPlayerEntity player) {
+        Session session = new Session();
+        SESSIONS.put(player.getUuid(), session);
+        send(player, Text.literal("Map setup started: use the setup stick to set locations.").formatted(Formatting.GOLD));
+        prompt(player);
+        return session;
+    }
+
     private static void prompt(ServerPlayerEntity player) {
         Session session = SESSIONS.get(player.getUuid());
         if (session == null) return;
@@ -491,15 +497,6 @@ public final class SetupStick {
     }
 
     // ========== Helpers ==========
-
-    /** The "Map setup started" header and the stick's controls, one per line. */
-    private static void sendControls(ServerPlayerEntity player) {
-        send(player, Text.literal("Map setup started:").formatted(Formatting.GOLD));
-        line(player, "MB1", "set position");
-        line(player, "MB2", "go back");
-        line(player, "Shift + MB1", "skip step");
-        line(player, "Shift + MB2", "finish seats and set homes");
-    }
 
     private static void line(ServerPlayerEntity player, String label, String value) {
         send(player, Text.literal("  " + label + ": ").formatted(Formatting.GRAY)

@@ -64,7 +64,7 @@ public class AssignRolesScreen extends Screen {
                     .append(Text.literal("\nHold Alt to only send the script").formatted(Formatting.GRAY, Formatting.ITALIC)));
     private static final Tooltip SEND_SCRIPT_TOOLTIP =
             Tooltip.of(Text.literal(
-                    "Send only the script to all players (roles untouched)"));
+                    "Send only the script to all players"));
 
     // Current game phase for button visibility
     private GamePhase currentPhase = GamePhase.SETUP;
