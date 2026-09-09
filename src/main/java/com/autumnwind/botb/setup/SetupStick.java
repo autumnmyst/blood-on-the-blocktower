@@ -459,6 +459,7 @@ public final class SetupStick {
         send(player, Text.literal("Other map settings (click a command to fill it in):").formatted(Formatting.GOLD));
         setting(player, "/botb setClockHandScale <scale>", "/botb setClockHandScale ", "clock hand scale", String.valueOf(ServerConfig.CLOCK_HAND_SCALE));
         setting(player, "/botb setNameMaxLength <length>", "/botb setNameMaxLength ", "longest custom name players may set", String.valueOf(ServerConfig.MAX_NAME_LENGTH));
+        setting(player, "/botb setVoteTimePerPlayer <ms>", "/botb setVoteTimePerPlayer ", "time between each vote lock-in", ServerConfig.VOTE_TIME_PER_PLAYER + " ms");
         setting(player, "/botb setAnvilHeight <blocks>", "/botb setAnvilHeight ", "anvil height above execution spot (0 = no anvil)", String.valueOf(ServerConfig.ANVIL_HEIGHT));
         setting(player, "/botb lockInExecutionPosition <true|false>", "/botb lockInExecutionPosition ", "lock the executed player in place", String.valueOf(ServerConfig.LOCK_IN_EXECUTION_POSITION));
         setting(player, "/botb setExecution soundDelay <ms>", "/botb setExecution soundDelay ", "execution sound delay", ServerConfig.EXECUTION_SOUND_DELAY + " ms");

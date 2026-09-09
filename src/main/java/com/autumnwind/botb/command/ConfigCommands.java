@@ -213,6 +213,21 @@ final class ConfigCommands {
         }
     }
 
+    static int setVoteTimePerPlayer(ServerCommandSource source, int millis) {
+        try {
+            ServerConfig.VOTE_TIME_PER_PLAYER = millis;
+            ServerConfig.save();
+
+            source.sendFeedback(() -> Text.literal("Set vote time per player to " + millis + " ms")
+                    .formatted(Formatting.GREEN), true);
+            return 1;
+
+        } catch (Exception e) {
+            source.sendError(Text.literal("Error setting vote time per player: " + e.getMessage()));
+            return 0;
+        }
+    }
+
     static int setExecutionSoundDelay(ServerCommandSource source, int delay) {
         try {
             ServerConfig.EXECUTION_SOUND_DELAY = delay;

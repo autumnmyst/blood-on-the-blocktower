@@ -317,6 +317,16 @@ public final class BotbCommands {
                                     ))
                             )
                     )
+                    // --- Set Vote Time Per Player Command ---
+                    .then(CommandManager.literal("setVoteTimePerPlayer")
+                            .requires(source -> source.hasPermissionLevel(2))
+                            .then(CommandManager.argument("millis", IntegerArgumentType.integer(0))
+                                    .executes(context -> ConfigCommands.setVoteTimePerPlayer(
+                                            context.getSource(),
+                                            IntegerArgumentType.getInteger(context, "millis")
+                                    ))
+                            )
+                    )
                     // --- Set Name Max Length Command ---
                     .then(CommandManager.literal("setNameMaxLength")
                             .requires(source -> source.hasPermissionLevel(2))
