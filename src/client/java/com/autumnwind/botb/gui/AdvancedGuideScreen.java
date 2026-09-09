@@ -73,6 +73,13 @@ public class AdvancedGuideScreen extends Screen {
             currentY += buttonHeight + buttonSpacing;
         }
 
+        // Role Guides opens its own screen rather than a category
+        currentY += buttonSpacing;
+        this.addDrawableChild(ButtonWidget.builder(
+                Text.literal("Role Guides").formatted(Formatting.AQUA),
+                button -> this.client.setScreen(new RoleGuidesScreen(this))
+        ).dimensions(leftColumnX, currentY, buttonWidth, buttonHeight).build());
+
         // Back button
         int backButtonWidth = 60;
         this.addDrawableChild(ButtonWidget.builder(
