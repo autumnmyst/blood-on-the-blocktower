@@ -231,26 +231,21 @@ public class GameEndAnimationHUD {
     }
 
     /**
+     * Whether the local player is on the winning team, judged by their true alignment from the
+     * revealed grimoire. Anyone not in the grimoire, such as the storyteller, counts as winning.
+     */
+    public static boolean localPlayerWon(MinecraftClient client, boolean goodWins) {
+        PendingRoleAssignment playerAssignment = StorytellerState.PENDING_ROLES.get(client.player.getUuid());
+        if (playerAssignment == null) return true;
+        return goodWins == playerAssignment.isFinalGood();
+    }
+
+    /**
      * Renders the Victory/Defeat title and subtitle.
      */
     private static void renderTitle(DrawContext context, MinecraftClient client, int screenWidth, int screenHeight,
                                      float alpha, boolean showTitle, boolean showSubtitle) {
-        // Determine if player is on winning team based on TRUE alignment
-        // Get player's TRUE alignment from grimoire (in case they're Marionette/drunk/etc)
-        UUID playerUuid = client.player.getUuid();
-        PendingRoleAssignment playerAssignment = StorytellerState.PENDING_ROLES.get(playerUuid);
-
-        boolean playerIsGood;
-        if (playerAssignment != null) {
-            // Use TRUE alignment from grimoire
-            playerIsGood = playerAssignment.isFinalGood();
-        } else {
-            // Fallback to what they think they are (for storytellers not in game)
-            playerIsGood = ClientState.myAlignment != null && ClientState.myAlignment;
-        }
-
-        // Storytellers (no alignment/not in grimoire) always see "Victory" since they're not on a team
-        boolean playerWon = playerAssignment == null || (goodWins && playerIsGood) || (!goodWins && !playerIsGood);
+        boolean playerWon = localPlayerWon(client, goodWins);
 
         // Calculate positions (moved higher to make room for player entries)
         int titleY = screenHeight / 4 - 30;

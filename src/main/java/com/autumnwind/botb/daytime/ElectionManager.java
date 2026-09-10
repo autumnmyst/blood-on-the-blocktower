@@ -427,9 +427,12 @@ public class ElectionManager {
      * @param server The server instance
      */
     public static void sendStartSounds(MinecraftServer server) {
+        // Organ Grinder votes get their own music slot so a resource pack can score them differently
+        boolean organGrinder = currentConfig != null && currentConfig.applyOrganGrinderMode() && DaytimeState.isOrganGrinderMode();
+        String music = organGrinder ? PlaySoundS2CPayload.VOTE_MUSIC_ORGAN_GRINDER : PlaySoundS2CPayload.VOTE_MUSIC;
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.VOTE_START));
-            ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.VOTE_MUSIC));
+            ServerPlayNetworking.send(player, new PlaySoundS2CPayload(music));
         }
     }
 

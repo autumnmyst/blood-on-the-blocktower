@@ -2,6 +2,7 @@ package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.daytime.VotingManager;
 import com.autumnwind.botb.hud.GameEndAnimationHUD;
+import com.autumnwind.botb.sound.CustomSounds;
 import com.autumnwind.botb.sound.ModSounds;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
@@ -55,13 +56,10 @@ final class GameEndReceivers {
                 // Start the game end animation
                 GameEndAnimationHUD.startAnimation(payload.goodWins());
 
-                // Play game end sound
+                // Play game end sound, with the pack's victory or defeat track if it has one
                 if (context.client().player != null && context.client().world != null) {
-                    context.client().player.playSound(
-                        ModSounds.GAME_END,
-                        1.0f,
-                        1.0f
-                    );
+                    boolean won = GameEndAnimationHUD.localPlayerWon(context.client(), payload.goodWins());
+                    CustomSounds.playOneShot(context.client(), CustomSounds.gameEndCandidates(won), ModSounds.GAME_END, 1.0f);
                 }
             });
         });

@@ -100,7 +100,7 @@ public class WhisperSoundInstance extends MovingSoundInstance {
      * envelope returns 0 at age 0. Without this, vanilla {@code SoundSystem.play()}
      * short-circuits zero-volume sounds before the per-tick envelope can ever
      * ramp them up, and the whisper would be silently dropped at submit time.
-     * The same pattern is used by {@code RepeatingSound} elsewhere in this mod.
+     * The same pattern is used by {@code CustomSoundInstance} elsewhere in this mod.
      */
     @Override
     public boolean shouldAlwaysPlay() {

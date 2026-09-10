@@ -30,6 +30,7 @@ public record PlaySoundS2CPayload(String soundType) implements CustomPayload {
     public static final String NOMINATION = "nomination";
     public static final String VOTE_START = "vote_start";
     public static final String VOTE_MUSIC = "vote_music";
+    public static final String VOTE_MUSIC_ORGAN_GRINDER = "vote_music_organ_grinder";
     public static final String VOTE_MUSIC_STOP = "vote_music_stop";
     public static final String CLOCK_TICKING = "clock_ticking";
     public static final String CLOCK_TICKING_STOP = "clock_ticking_stop";

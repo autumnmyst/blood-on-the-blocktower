@@ -1,8 +1,9 @@
 package com.autumnwind.botb.networking;
 
+import com.autumnwind.botb.sound.CustomSounds;
 import com.autumnwind.botb.sound.ModSounds;
-import com.autumnwind.botb.sound.RepeatingSound;
 import com.autumnwind.botb.states.ClientState;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -57,13 +58,15 @@ final class SoundReceivers {
                         float volume = ClientState.BASE_VOLUME_DOORBELL * ClientState.volumeDoorbell;
                         if (volume > 0) client.player.playSound(ModSounds.of(type), volume, 1.0f);
                     }
-                    case PlaySoundS2CPayload.VOTE_MUSIC -> {
-                        voteMusicInstance = restartLoop(client, voteMusicInstance, ModSounds.VOTE_MUSIC,
+                    case PlaySoundS2CPayload.VOTE_MUSIC, PlaySoundS2CPayload.VOTE_MUSIC_ORGAN_GRINDER -> {
+                        boolean organGrinder = type.equals(PlaySoundS2CPayload.VOTE_MUSIC_ORGAN_GRINDER);
+                        voteMusicInstance = restartLoop(client, voteMusicInstance,
+                                CustomSounds.voteMusicCandidates(organGrinder), ModSounds.VOTE_MUSIC,
                                 ClientState.BASE_VOLUME_VOTE_MUSIC * ClientState.volumeNominations);
                     }
                     case PlaySoundS2CPayload.VOTE_MUSIC_STOP -> voteMusicInstance = stopLoop(client, voteMusicInstance);
                     case PlaySoundS2CPayload.CLOCK_TICKING -> {
-                        clockTickingInstance = restartLoop(client, clockTickingInstance, ModSounds.CLOCK_TICKING,
+                        clockTickingInstance = restartLoop(client, clockTickingInstance, List.of(), ModSounds.CLOCK_TICKING,
                                 ClientState.BASE_VOLUME_CLOCK_TICKING * ClientState.volumeNominations);
                     }
                     case PlaySoundS2CPayload.CLOCK_TICKING_STOP -> clockTickingInstance = stopLoop(client, clockTickingInstance);
@@ -80,10 +83,11 @@ final class SoundReceivers {
     }
 
     /** Stops the running loop if any, then starts a new one when the volume is audible. */
-    private static SoundInstance restartLoop(MinecraftClient client, SoundInstance running, SoundEvent sound, float volume) {
+    private static SoundInstance restartLoop(MinecraftClient client, SoundInstance running, List<String> customCandidates,
+                                             SoundEvent sound, float volume) {
         stopLoop(client, running);
         if (volume <= 0) return null;
-        SoundInstance loop = new RepeatingSound(sound, volume, 1.0f);
+        SoundInstance loop = CustomSounds.loop(client, customCandidates, sound, volume);
         client.getSoundManager().play(loop);
         return loop;
     }

@@ -1,6 +1,9 @@
 package com.autumnwind.botb.config;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
+import com.autumnwind.botb.sound.CustomSounds;
+import com.autumnwind.botb.util.Role;
+import com.autumnwind.botb.util.RoleType;
 import net.fabricmc.loader.api.FabricLoader;
 
 import javax.imageio.ImageIO;
@@ -56,6 +59,9 @@ public final class AssetPackTemplate {
             Path assets = packDir.resolve(ASSET_ROOT);
             for (Asset asset : textures) Files.createDirectories(assets.resolve(asset.path()).getParent());
             for (Asset asset : sounds) Files.createDirectories(assets.resolve(asset.path()).getParent());
+            for (String dir : List.of(CustomSounds.ROLE_RECEIVE_DIR, CustomSounds.VOTE_MUSIC_DIR, CustomSounds.GAME_END_DIR)) {
+                Files.createDirectories(assets.resolve("sounds/" + dir));
+            }
             Files.writeString(packDir.resolve("pack.mcmeta"),
                     "{\n  \"pack\": {\n    \"pack_format\": " + PACK_FORMAT
                             + ",\n    \"description\": \"Blood on the Blocktower asset overrides\"\n  }\n}\n");
@@ -78,6 +84,65 @@ public final class AssetPackTemplate {
         for (Asset asset : textures) sb.append("| `").append(asset.path()).append("` | ").append(asset.detail()).append(" |\n");
         sb.append("\n## Sounds\n\n| Path | Duration |\n|---|---|\n");
         for (Asset asset : sounds) sb.append("| `").append(asset.path()).append("` | ").append(asset.detail()).append(" |\n");
+        sb.append("\n## Extra sounds\n\n");
+        sb.append("These have no built-in file, but a custom ogg at the path overrides the default sound. ");
+        sb.append("Role receive plays the first of these that exists: the role, then its type, then its alignment, then the default.\n\n");
+        sb.append("| Path | Plays when |\n|---|---|\n");
+        sb.append("| `sounds/").append(CustomSounds.VOTE_MUSIC_DIR).append("organ_grinder.ogg` | Vote music during an Organ Grinder vote |\n");
+        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("victory.ogg` | Game end, for players on the winning team and the storyteller |\n");
+        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("defeat.ogg` | Game end, for players on the losing team |\n");
+        sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("good.ogg` | Role receive, any good role |\n");
+        sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("evil.ogg` | Role receive, any evil role |\n");
+        for (RoleType type : RoleType.values()) {
+            if (type == RoleType.NONE || type == RoleType.FABLED || type == RoleType.LORIC) continue;
+            String name = type.name().toLowerCase(Locale.ROOT);
+            sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append(name).append(".ogg` | Role receive, any ").append(name).append(" |\n");
+        }
+        for (Role role : Role.values()) {
+            if (role == Role.NO_ROLE || role.getType() == RoleType.FABLED || role.getType() == RoleType.LORIC) continue;
+            sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append(role.getId()).append(".ogg` | Role receive, ").append(role.getDisplayName()).append(" |\n");
+        }
+        sb.append("\nCustom roles from a script use their id the same way.\n");
+
+        sb.append("\n## sounds.json reference\n\n");
+        sb.append("Optionally, if you want sounds.json features such as random variants, volume, or pitch adjustment, declare an event in sounds.json whose name is the path ");
+        sb.append("without `sounds/` and `.ogg`, for example `custom/role_receive/imp`. The event is checked before the bare file.\n\n");
+        sb.append("Every setting sounds.json supports, in `").append(ASSET_ROOT).append("/sounds.json`:\n\n");
+        sb.append("```json\n");
+        sb.append("{\n");
+        sb.append("  \"custom/role_receive/imp\": {\n");
+        sb.append("    \"replace\": true,\n");
+        sb.append("    \"subtitle\": \"subtitles.botb.imp_reveal\",\n");
+        sb.append("    \"sounds\": [\n");
+        sb.append("      {\n");
+        sb.append("        \"name\": \"blood-on-the-blocktower:custom/role_receive/imp\",\n");
+        sb.append("        \"weight\": 3,\n");
+        sb.append("        \"volume\": 1.0,\n");
+        sb.append("        \"pitch\": 1.0,\n");
+        sb.append("        \"stream\": false,\n");
+        sb.append("        \"preload\": false,\n");
+        sb.append("        \"attenuation_distance\": 16\n");
+        sb.append("      },\n");
+        sb.append("      {\n");
+        sb.append("        \"name\": \"blood-on-the-blocktower:custom/role_receive/imp_alt\",\n");
+        sb.append("        \"weight\": 1,\n");
+        sb.append("        \"volume\": 0.8,\n");
+        sb.append("        \"pitch\": 0.9\n");
+        sb.append("      },\n");
+        sb.append("      {\n");
+        sb.append("        \"name\": \"blood-on-the-blocktower:role_receive\",\n");
+        sb.append("        \"type\": \"event\"\n");
+        sb.append("      }\n");
+        sb.append("    ]\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+        sb.append("```\n\n");
+        sb.append("Each play picks one entry at random by `weight` (default 1). `name` is a file under `sounds/` without the extension, ");
+        sb.append("or another event when `type` is `event`. `volume` and `pitch` multiply the mod's own values. ");
+        sb.append("`stream` plays from disk instead of memory, use it for music. `preload` loads at resource load instead of first play. ");
+        sb.append("`attenuation_distance` has no effect here since these sounds are not positional. ");
+        sb.append("`replace` makes this list replace any lower pack's instead of merging with it. ");
+        sb.append("`subtitle` is a translation key shown when subtitles are on. Only `name` is required.\n");
         return sb.toString();
     }
 

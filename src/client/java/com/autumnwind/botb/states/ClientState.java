@@ -2,6 +2,8 @@ package com.autumnwind.botb.states;
 
 import com.autumnwind.botb.config.PlayerConfig;
 import com.autumnwind.botb.hud.RoleAssignmentAnimation;
+import com.autumnwind.botb.sound.CustomSounds;
+import com.autumnwind.botb.sound.ModSounds;
 import com.autumnwind.botb.util.*;
 import net.minecraft.client.MinecraftClient;
 
@@ -12,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
 
 public class ClientState {
     public static Role myRole = null;  // For backwards compatibility - use myAssignment for full info
@@ -207,13 +207,8 @@ public class ClientState {
             if (!gameEnding && !silent && roleReceiveVolume > 0) {
                 MinecraftClient client = MinecraftClient.getInstance();
                 if (client.player != null && client.world != null) {
-                    client.player.playSound(
-                        SoundEvent.of(
-                            Identifier.of("blood-on-the-blocktower", "role_receive")
-                        ),
-                        roleReceiveVolume,
-                        1.0f
-                    );
+                    CustomSounds.playOneShot(client, CustomSounds.roleReceiveCandidates(resolvedAssignment),
+                            ModSounds.ROLE_RECEIVE, roleReceiveVolume);
                 }
             }
 
