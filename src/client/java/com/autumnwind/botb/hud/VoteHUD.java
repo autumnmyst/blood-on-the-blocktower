@@ -59,7 +59,8 @@ public class VoteHUD {
                 .count();
 
         // Calculate votes required
-        int votesRequired = (int) Math.ceil(aliveCount / 2.0);
+        // Voudon mode: any vote marks the nominee, as long as it beats the current mark
+        int votesRequired = ClientState.voudonModeActive ? 1 : (int) Math.ceil(aliveCount / 2.0);
 
         // Check if there's a tie scenario (hidden in Organ Grinder mode for non-operators)
         int votesForTie = hideVoteInfo ? 0 : ClientState.votesForMarkedPlayer;
