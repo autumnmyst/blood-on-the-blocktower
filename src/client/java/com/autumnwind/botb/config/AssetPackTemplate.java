@@ -34,6 +34,9 @@ public final class AssetPackTemplate {
 
     private record Asset(String path, String detail) {}
 
+    /** Left out of the readme: the mod icon and title art aren't meant to be replaced. */
+    private static final List<String> UNLISTED = List.of("icon.png", "textures/botb_title.png");
+
     public static void generate() {
         Path packDir = BotbConfigDir.resolve("asset_pack_template");
         Path bundled = FabricLoader.getInstance().getModContainer(BloodOnTheBlocktower.MOD_ID)
@@ -49,6 +52,7 @@ public final class AssetPackTemplate {
         try (Stream<Path> files = Files.walk(bundled)) {
             for (Path file : (Iterable<Path>) files.filter(Files::isRegularFile).sorted()::iterator) {
                 String relative = bundled.relativize(file).toString().replace('\\', '/');
+                if (UNLISTED.contains(relative)) continue;
                 if (relative.endsWith(".png")) {
                     textures.add(new Asset(relative, imageSize(file)));
                 } else if (relative.endsWith(".ogg")) {
