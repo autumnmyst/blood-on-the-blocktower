@@ -439,10 +439,6 @@ public class AssignRolesActions {
                 StorytellerState.REMINDERS
         ));
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player != null && client.player.hasPermissionLevel(2)) {
-            ClientState.activePlayerCount = activePlayerCount;
-        }
     }
 
     /**

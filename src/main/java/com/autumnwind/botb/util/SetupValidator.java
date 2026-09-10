@@ -666,6 +666,12 @@ public class SetupValidator {
     ) {
         if (pendingReminders == null) return;
 
+        // The official rules, due to the physical nature, prevent the drunk and marionette from being told an in play role
+        Set<String> inPlayRoleIds = new HashSet<>();
+        for (PendingRoleAssignment assignment : pendingRoles.values()) {
+            if (hasAssignedRole(assignment)) inPlayRoleIds.add(assignment.getRoleId());
+        }
+
         for (Map.Entry<UUID, PendingRoleAssignment> entry : pendingRoles.entrySet()) {
             UUID uuid = entry.getKey();
             Integer seat = pendingSeatNumbers.get(uuid);
@@ -677,7 +683,7 @@ public class SetupValidator {
 
             Role role = assignment.role();
             if (role == Role.HERMIT) {
-                validateHermitReminders(uuid, seat, pendingReminders, script, errors);
+                validateHermitReminders(uuid, seat, pendingReminders, script, inPlayRoleIds, errors);
                 continue;
             }
             if (role != Role.DRUNK && role != Role.MARIONETTE && role != Role.LUNATIC) continue;
@@ -699,6 +705,11 @@ public class SetupValidator {
                 if (reminder.role().isPresent() && reminder.role().get() == role) continue;
                 if (requiredTypes.contains(reminder.getRoleType(script))) {
                     hasFakeRoleReminder = true;
+                    // The Lunatic may match the real demon
+                    if (role != Role.LUNATIC && inPlayRoleIds.contains(reminderRoleId(reminder))) {
+                        errors.add(role.getDisplayName() + " (seat " + seat + ") fake role "
+                                + reminderDisplayName(reminder, script) + " is already in play");
+                    }
                     break;
                 }
             }
@@ -730,6 +741,7 @@ public class SetupValidator {
             int seat,
             Map<UUID, List<Reminder>> pendingReminders,
             Script script,
+            Set<String> inPlayRoleIds,
             List<String> errors
     ) {
         boolean hasDrunkAbility = false;
@@ -746,6 +758,10 @@ public class SetupValidator {
             RoleType type = reminder.getRoleType(script);
             if (type == RoleType.TOWNSFOLK) hasTownsfolkReminder = true;
             if (type == RoleType.DEMON) hasDemonReminder = true;
+            // Only the Hermit's Drunk townsfolk is shown as a token; minion and demon abilities are told, so they may match
+            if (type == RoleType.TOWNSFOLK && inPlayRoleIds.contains(reminderRoleId(reminder))) {
+                errors.add("Hermit (seat " + seat + ") fake role " + reminderDisplayName(reminder, script) + " is already in play");
+            }
         }
 
         if (hasDrunkAbility && !hasTownsfolkReminder) {
@@ -815,6 +831,19 @@ public class SetupValidator {
     private static boolean hasAssignedRole(PendingRoleAssignment assignment) {
         if (assignment == null) return false;
         return assignment.role() != Role.NO_ROLE || assignment.isCustomRole();
+    }
+
+    /** Script id of the role a reminder points at, official or custom. */
+    private static String reminderRoleId(Reminder reminder) {
+        return reminder.role().map(Role::getId).orElseGet(() -> reminder.customRoleId().orElse(""));
+    }
+
+    private static String reminderDisplayName(Reminder reminder, Script script) {
+        if (reminder.role().isPresent()) return reminder.role().get().getDisplayName();
+        return reminder.customRoleId()
+                .flatMap(id -> script == null ? Optional.<CustomRole>empty() : script.getCustomRole(id))
+                .map(CustomRole::getDisplayName)
+                .orElse(reminder.text());
     }
 
     /**

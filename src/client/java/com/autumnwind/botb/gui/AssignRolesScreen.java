@@ -947,10 +947,6 @@ public class AssignRolesScreen extends Screen {
                 StorytellerState.REMINDERS
         ));
 
-        // Only operators should update activePlayerCount based on grimoire changes
-        if (this.client.player != null && this.client.player.hasPermissionLevel(2)) {
-            ClientState.activePlayerCount = activePlayerCount;
-        }
         this.close();
     }
 

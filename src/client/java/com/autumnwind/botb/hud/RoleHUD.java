@@ -35,8 +35,8 @@ public class RoleHUD {
         if (client.player == null) return;
 
         // Get player count and role info
-        int playerCount = ClientState.activePlayerCount;
-        int travelerCount = ClientState.travelerCount;
+        int playerCount = PlayerCountsDisplay.playerCount();
+        int travelerCount = PlayerCountsDisplay.travelerCount();
         int nonTravelerCount = playerCount - travelerCount;
         // Use non-traveler count for role counts lookup (like SetupValidator does)
         RoleCounts.RoleCountInfo counts = RoleCounts.getCounts(nonTravelerCount);

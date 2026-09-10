@@ -1,6 +1,8 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.states.ClientState;
+import com.autumnwind.botb.states.StorytellerState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -13,14 +15,29 @@ public class PlayerCountsDisplay {
 
     private PlayerCountsDisplay() {} // Prevent instantiation
 
+    private static boolean isOperator() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return client.player != null && client.player.hasPermissionLevel(2);
+    }
+
+    /** Storytellers count from their own grimoire; players use what the server sent them. */
+    public static int playerCount() {
+        return isOperator() ? StorytellerState.PENDING_ROLES.size() : ClientState.activePlayerCount;
+    }
+
+    public static int travelerCount() {
+        if (!isOperator()) return ClientState.travelerCount;
+        return (int) StorytellerState.PENDING_ROLES.keySet().stream().filter(StorytellerState::isTraveler).count();
+    }
+
     /**
      * Builds the player counts text in the appropriate format.
      * @param fullFormat true for expanded format, false for compressed format
      * @return The formatted Text, or null if counts are unavailable
      */
     public static Text buildPlayerCountsText(boolean fullFormat) {
-        int playerCount = ClientState.activePlayerCount;
-        int travelerCount = ClientState.travelerCount;
+        int playerCount = playerCount();
+        int travelerCount = travelerCount();
         int nonTravelerCount = playerCount - travelerCount;
 
         // Use non-traveler count for role counts lookup (like SetupValidator does)

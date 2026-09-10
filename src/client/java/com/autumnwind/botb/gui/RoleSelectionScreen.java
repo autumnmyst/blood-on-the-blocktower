@@ -312,11 +312,6 @@ public class RoleSelectionScreen extends Screen {
                 }
             }
 
-            // Only operators should update activePlayerCount based on grimoire changes
-            if (!wasAssigned && this.client.player != null && this.client.player.hasPermissionLevel(2)) {
-                ClientState.activePlayerCount = StorytellerState.PENDING_ROLES.size();
-            }
-
             if (StorytellerState.PENDING_SEAT_NUMBERS.getOrDefault(targetPlayerUUID, -1) <= 0) {
                 StorytellerState.PENDING_SEAT_NUMBERS.put(targetPlayerUUID, StorytellerState.nextSeatNumber);
                 StorytellerState.nextSeatNumber++;
@@ -397,18 +392,12 @@ public class RoleSelectionScreen extends Screen {
     private void unassignAndClose() {
         if (this.targetPlayerUUID == null) return; // Safety check
 
-        boolean wasAssigned = StorytellerState.PENDING_ROLES.containsKey(targetPlayerUUID);
         boolean isOperator = this.client.player != null && this.client.player.hasPermissionLevel(2);
 
         StorytellerState.PENDING_ROLES.remove(this.targetPlayerUUID);
 
         // Drop any stale evil-traveler MINION_INFO trigger for this player.
         TriggerManager.removeEvilTravelerDemonInfoTrigger(targetPlayerUUID);
-
-        // Only operators should update activePlayerCount based on grimoire changes
-        if (wasAssigned && isOperator) {
-            ClientState.activePlayerCount = StorytellerState.PENDING_ROLES.size();
-        }
 
         if (isOperator) {
             StorytellerState.markedPlayers.remove(this.targetPlayerUUID);
