@@ -12,7 +12,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,9 +43,7 @@ import java.util.Optional;
  */
 public final class CustomRoleLibrary {
 
-    private static final Path FILE = FabricLoader.getInstance()
-            .getConfigDir()
-            .resolve("blood-on-the-blocktower-custom-roles.json");
+    private static final Path FILE = BotbConfigDir.resolve("custom_roles.json");
 
     private static final int VERSION = 1;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

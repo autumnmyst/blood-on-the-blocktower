@@ -1,7 +1,6 @@
 package com.autumnwind.botb.config;
 
 import com.autumnwind.botb.states.ClientState;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,9 +11,7 @@ import com.autumnwind.botb.util.FetchLimits;
 import com.autumnwind.botb.util.FloatingRoleIconMode;
 
 public class PlayerConfig {
-    private static final Path CONFIG_FILE = FabricLoader.getInstance()
-            .getConfigDir()
-            .resolve("blood-on-the-blocktower.properties");
+    private static final Path CONFIG_FILE = BotbConfigDir.resolve("player.properties");
 
     // Called when the game starts
     public static void load() {

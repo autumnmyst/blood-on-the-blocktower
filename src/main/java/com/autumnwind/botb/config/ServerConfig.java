@@ -4,7 +4,6 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.util.math.BlockPos;
@@ -27,10 +26,6 @@ public class ServerConfig {
      */
     private static Path configFile = null;
 
-    /** Pre-world-scoped installs kept the config here; copied into a world once, see {@link #load}. */
-    private static final Path LEGACY_CONFIG_FILE = FabricLoader.getInstance()
-            .getConfigDir()
-            .resolve("botb_server.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     // Map of seat number to BlockPos
@@ -204,18 +199,6 @@ public class ServerConfig {
     public static void load(MinecraftServer server) {
         configFile = server.getSavePath(WorldSavePath.ROOT).resolve("botb_server.json");
         resetToDefaults();
-
-        // A world without its own file inherits a copy of the legacy config-folder file,
-        // so an install from before the config was world-scoped keeps its setup.
-        if (!Files.exists(configFile) && Files.exists(LEGACY_CONFIG_FILE)) {
-            try {
-                Files.copy(LEGACY_CONFIG_FILE, configFile);
-                BloodOnTheBlocktower.LOGGER.info("Copied legacy config {} into world as {}",
-                        LEGACY_CONFIG_FILE, configFile);
-            } catch (IOException e) {
-                BloodOnTheBlocktower.LOGGER.error("Failed to copy legacy config into world", e);
-            }
-        }
 
         if (Files.exists(configFile)) {
             try (var in = Files.newBufferedReader(configFile)) {

@@ -15,7 +15,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,9 +45,7 @@ import com.autumnwind.botb.util.RoleType;
  * full {@link CustomRole} on demand from the script, so no resolution step is needed.
  */
 public class GrimoirePersistence {
-    private static final Path FILE = FabricLoader.getInstance()
-            .getConfigDir()
-            .resolve("blood-on-the-blocktower-grimoire.json");
+    private static final Path FILE = BotbConfigDir.resolve("grimoire.json");
 
     private static final int VERSION = 1;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

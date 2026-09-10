@@ -7,7 +7,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,9 +27,7 @@ import java.util.Set;
  */
 public final class RandomBanList {
 
-    private static final Path FILE = FabricLoader.getInstance()
-            .getConfigDir()
-            .resolve("blood-on-the-blocktower-random-bans.json");
+    private static final Path FILE = BotbConfigDir.resolve("random_bans.json");
 
     private static final int VERSION = 1;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
