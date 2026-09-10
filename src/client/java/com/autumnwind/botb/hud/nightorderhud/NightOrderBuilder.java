@@ -17,13 +17,13 @@ import static com.autumnwind.botb.hud.nightorderhud.RoleHelpers.*;
  */
 public class NightOrderBuilder {
 
+    private static boolean checkingWraiths = false;
+
     /**
      * Rebuilds the 'StorytellerState.activeNightOrder' list based on current settings.
      * Triggered visits are read from {@code StorytellerState.triggeredVisits} and spliced in
      * after their source index.
      */
-    private static boolean checkingWraiths = false;
-
     public static void rebuildActiveNightOrder() {
         // Any change that rebuilds the order may have cost a Wraith their ability. The trigger
         // this creates rebuilds again on its own, so guard against re-entering the check.
@@ -419,7 +419,7 @@ public class NightOrderBuilder {
         if (infoRole == Role.WRAITH) {
             playersForVisit = new ArrayList<>();
             for (UUID p : assignedPlayers) {
-                if (!ClientState.playerDeathStatus.getOrDefault(p, false) && !wraithAbilityIntact(p)) {
+                if (!ClientState.playerDeathStatus.getOrDefault(p, false) && !wraithHasAbility(p)) {
                     playersForVisit.add(p);
                 }
             }
@@ -803,7 +803,7 @@ public class NightOrderBuilder {
 
             // Special case: the Wraith wakes only while alive without their ability, to be told they can't roam
             if (infoRole == Role.WRAITH) {
-                if (!ClientState.playerDeathStatus.getOrDefault(p, false) && !wraithAbilityIntact(p)) {
+                if (!ClientState.playerDeathStatus.getOrDefault(p, false) && !wraithHasAbility(p)) {
                     associatedPlayersForVisit.add(p);
                 }
                 continue;

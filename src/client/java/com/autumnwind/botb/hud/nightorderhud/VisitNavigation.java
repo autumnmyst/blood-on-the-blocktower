@@ -600,7 +600,7 @@ public class VisitNavigation {
         // Target is evil: every Wraith holder who can still roam comes along. The target
         // themselves is already being teleported by the visit.
         for (UUID playerUUID : StorytellerState.PENDING_ROLES.keySet()) {
-            if (!playerUUID.equals(targetPlayerUUID) && holdsRole(playerUUID, Role.WRAITH) && wraithCanRoam(playerUUID)) {
+            if (!playerUUID.equals(targetPlayerUUID) && wraithHasAbility(playerUUID)) {
                 wraithsToTeleport.add(playerUUID);
             }
         }

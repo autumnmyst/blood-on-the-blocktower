@@ -121,8 +121,18 @@ public class TriggerManager {
             }
             boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
             boolean couldRoam = StorytellerState.wraithsWithAbility.remove(uuid);
-            if (!dead && wraithAbilityIntact(uuid)) {
+            if (wraithHasAbility(uuid)) {
                 StorytellerState.wraithsWithAbility.add(uuid);
+                // Regained ability (e.g. "Has Ability" placed after the kill was marked) so
+                // remove any pending lost-ability visit that would tell them the wrong thing
+                if (!couldRoam) {
+                    for (List<RoleVisit> chain : StorytellerState.triggeredVisits.values()) {
+                        chain.removeIf(visit -> visit.triggered()
+                                && visit.triggerSourcePlayer().map(uuid::equals).orElse(false)
+                                && visit.associatedRole().orElse(visit.role()) == Role.WRAITH);
+                    }
+                    StorytellerState.triggeredVisits.entrySet().removeIf(chainEntry -> chainEntry.getValue().isEmpty());
+                }
                 continue;
             }
             boolean tellNow = couldRoam && (dead ? isNight : pastWraithSlot);
