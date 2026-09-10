@@ -37,7 +37,7 @@ public class SetupHUD {
                     .append(Text.literal(s.current()).formatted(Formatting.AQUA)));
         }
         if (!s.description().isEmpty()) {
-            lines.add(Text.literal(s.description()).formatted(Formatting.GRAY, Formatting.ITALIC));
+            lines.add(description(s.description()));
         }
         lines.add(control("Set", "MB1")
                 .append("  ").append(control("Back", "MB2"))
@@ -45,6 +45,18 @@ public class SetupHUD {
                 .append("  ").append(control(s.finishLabel(), "Shift+MB2")));
 
         CenteredHudBox.draw(context, client, MIN_WIDTH, CenteredHudBox.IDLE_BORDER, false, lines);
+    }
+
+    /** Grey italic, with "floor" in bold so it's clear the click goes on the ground block. */
+    private static MutableText description(String text) {
+        MutableText line = Text.empty();
+        String[] parts = text.split("(?i)(?=floor)|(?i)(?<=floor)");
+        for (String part : parts) {
+            MutableText piece = Text.literal(part).formatted(Formatting.GRAY, Formatting.ITALIC);
+            if (part.equalsIgnoreCase("floor")) piece.formatted(Formatting.BOLD);
+            line.append(piece);
+        }
+        return line;
     }
 
     private static MutableText control(String label, String keys) {

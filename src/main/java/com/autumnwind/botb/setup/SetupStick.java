@@ -52,8 +52,8 @@ public final class SetupStick {
     private SetupStick() {}
 
     private enum Step {
-        TOWN_SQUARE("Town Square", "where you teleport at dawn", true),
-        EXECUTION("Execution spot", "where the executed player stands", true),
+        TOWN_SQUARE("Town Square", "floor where you teleport to at dawn", true),
+        EXECUTION("Execution spot", "floor where the executed player stands", true),
         CLOCK_CENTER("Clock center", "floor block under the clock center", true),
         TOWN_SQUARE_SEAT("Seat %d town square seat", "floor block where the player sits and votes from", true),
         SWITCH("Seat %d lever", "lever to toggle vote", false),
