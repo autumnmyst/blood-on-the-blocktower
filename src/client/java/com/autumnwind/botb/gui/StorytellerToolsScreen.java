@@ -47,6 +47,13 @@ public class StorytellerToolsScreen extends Screen {
     private ButtonWidget executeFailButton;
     private ButtonWidget resetGameButton;
     private ButtonWidget fullResetButton;
+    private ButtonWidget sendRolesButton;
+
+    private static final Tooltip SEND_ROLES_TOOLTIP =
+            Tooltip.of(Text.literal("Send role assignments to all players")
+                    .append(Text.literal("\nHold Alt to only send script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC)));
+    private static final Tooltip SEND_SCRIPT_TOOLTIP =
+            Tooltip.of(Text.literal("Send only the script to all players"));
 
     public StorytellerToolsScreen(Screen parent) {
         super(Text.literal("Storyteller Tools"));
@@ -90,7 +97,7 @@ public class StorytellerToolsScreen extends Screen {
             currentY += labelHeight + categorySpacing;
 
             // Row 1: Send Roles, Distribute Items
-            this.addDrawableChild(ButtonWidget.builder(
+            sendRolesButton = this.addDrawableChild(ButtonWidget.builder(
                     Text.literal("Send Roles").formatted(Formatting.GREEN),
                     button -> {
                         if (Screen.hasAltDown()) {
@@ -100,8 +107,7 @@ public class StorytellerToolsScreen extends Screen {
                         }
                     }
             ).dimensions(leftColumnX, currentY, buttonWidth, buttonHeight)
-            .tooltip(Tooltip.of(Text.literal(
-                    "Send role assignments to all players (with reminder checks)\nHold Alt to send only the script")))
+            .tooltip(SEND_ROLES_TOOLTIP)
             .build());
 
             this.addDrawableChild(ButtonWidget.builder(
@@ -587,6 +593,15 @@ public class StorytellerToolsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Send Roles doubles as Send Script while Alt is held, like the grimoire's button
+        if (sendRolesButton != null) {
+            boolean scriptOnly = Screen.hasAltDown();
+            sendRolesButton.setMessage(scriptOnly
+                    ? Text.literal("Send Script").formatted(Formatting.AQUA)
+                    : Text.literal("Send Roles").formatted(Formatting.GREEN));
+            sendRolesButton.setTooltip(scriptOnly ? SEND_SCRIPT_TOOLTIP : SEND_ROLES_TOOLTIP);
+            sendRolesButton.active = !scriptOnly || ClientState.currentScript != null;
+        }
         // Update button states (only for page 1)
         if (currentPage == 1) {
             if (runVoteButton != null) {

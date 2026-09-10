@@ -98,9 +98,9 @@ public final class RoleGuides {
         guide(Role.BEGGAR, "Ctrl-alt-click a dead player's head to toggle their ghost vote for whether they gave theirs away or were given an extra one.");
         guide(Role.BISHOP, "Only you can nominate. Alt-click the Storyteller head in the middle, then the player.");
         guide(Role.BONE_COLLECTOR, "Put the Bone Collector's \"Has Ability\" on the dead player to restore their ability.");
-        guide(Role.BUREAUCRAT, "Put \"3 Votes\" on the player to make their vote counts triple.");
+        guide(Role.BUREAUCRAT, "Put \"3 Votes\" on the player to make their vote count triple.");
         guide(Role.BUTCHER, "After an execution, nominations stay open and only the Butcher can nominate.");
-        guide(Role.THIEF, "Put \"Negative Vote\" on the player and their vote counts as negative.");
+        guide(Role.THIEF, "Put \"Negative Vote\" on the player to make their vote count as negative.");
         guide(Role.VOUDON, "While the Voudon has their ability, only dead players and the Voudon can vote, and ghost votes don't get used up. Exiles aren't affected.");
 
         // Fabled
@@ -114,7 +114,7 @@ public final class RoleGuides {
         guide(Role.TOYMAKER, "Minion Info and Demon Info run even under 7 players. Put \"Final Night: No Attack\" on the demon and the Role HUD will display that.");
 
         // Loric
-        guide(Role.GOD_OF_UG, "Put \"Ug hat\" on the player and their vote counts double.");
+        guide(Role.GOD_OF_UG, "Put \"Ug hat\" on the player to make their vote count double.");
         guide(Role.POPE, "Lets you assign the same role twice and use in-play roles as bluffs.");
         guide(Role.TOR, "Send roles sends every living player no role. There's a reminder visit just before dawn for the Storyteller to send roles to inform dead players who they are. You can also inform them individually by alt-ctrl right clicking a specific dead player.");
     }

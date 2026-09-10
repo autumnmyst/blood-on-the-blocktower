@@ -440,7 +440,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                         + FULL_COUNTS[2] + "/" + FULL_COUNTS[3] + "\nShift for Teensyville: "
                         + TEENSYVILLE_COUNTS[0] + "/" + TEENSYVILLE_COUNTS[1] + "/"
                         + TEENSYVILLE_COUNTS[2] + "/" + TEENSYVILLE_COUNTS[3])
-                        .append(Text.literal("\nCtrl+Click ban/unban all").formatted(Formatting.GRAY, Formatting.ITALIC)),
+                        .append(Text.literal("\nCtrl+Click ban/unban all").formatted(Formatting.DARK_GRAY, Formatting.ITALIC)),
                 button -> {
                     if (hasControlDown()) {
                         toggleBanAll();
@@ -996,7 +996,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                 this.importButton.setMessage(Text.literal(importRoomy ? "Import Script" : "Import"));
                 this.importButton.setTooltip(Tooltip.of(Text.literal("Load the script in your clipboard")
                         .append(Text.literal("\nShift to export script")
-                                .formatted(Formatting.GRAY, Formatting.ITALIC))));
+                                .formatted(Formatting.DARK_GRAY, Formatting.ITALIC))));
             }
         }
         if (this.importButton != null) {
@@ -1018,7 +1018,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                 this.customsButton.setTooltip(Tooltip.of(Text.literal(
                         "Add every homebrew character in the clipboard script to your custom role library")
                         .append(Text.literal("\nShift to clear the library")
-                                .formatted(Formatting.GRAY, Formatting.ITALIC))));
+                                .formatted(Formatting.DARK_GRAY, Formatting.ITALIC))));
             }
         }
 

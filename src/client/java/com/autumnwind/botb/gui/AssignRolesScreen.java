@@ -61,7 +61,7 @@ public class AssignRolesScreen extends Screen {
     private ButtonWidget sendRolesButton = null;
     private static final Tooltip SEND_ROLES_TOOLTIP =
             Tooltip.of(Text.literal("Send roles, seats, reminders, and the script to all players")
-                    .append(Text.literal("\nHold Alt to only send the script").formatted(Formatting.GRAY, Formatting.ITALIC)));
+                    .append(Text.literal("\nHold Alt to only send script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC)));
     private static final Tooltip SEND_SCRIPT_TOOLTIP =
             Tooltip.of(Text.literal(
                     "Send only the script to all players"));
@@ -1677,7 +1677,7 @@ public class AssignRolesScreen extends Screen {
                         .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
                         .collect(Collectors.toList());
                 if (ClientState.hintsEnabled) {
-                    tooltipTextLines.add(Text.literal("Click for full description").formatted(Formatting.GRAY, Formatting.ITALIC));
+                    tooltipTextLines.add(Text.literal("Click for full description").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 }
                 context.drawTooltip(this.textRenderer, tooltipTextLines, mouseX, mouseY);
             } else {
@@ -1733,7 +1733,7 @@ public class AssignRolesScreen extends Screen {
                 }
                 errorLines.add(Text.literal("")); // Empty line
                 errorLines.add(Text.literal("Hold Shift to override").formatted(Formatting.YELLOW, Formatting.ITALIC));
-                errorLines.add(Text.literal("Hold Alt to only send script").formatted(Formatting.GRAY, Formatting.ITALIC));
+                errorLines.add(Text.literal("Hold Alt to only send script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 context.drawTooltip(this.textRenderer, errorLines, mouseX, mouseY);
             }
         }
