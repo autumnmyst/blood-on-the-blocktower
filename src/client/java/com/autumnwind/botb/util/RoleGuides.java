@@ -37,11 +37,12 @@ public final class RoleGuides {
         guide(Role.JUGGLER, "Marked by default (ctrl-click to unmark). Their Other Nights visit appears every night until you unmark them.");
         guide(Role.KING, "The first night, Demon Info gets a King icon and the Role HUD tells you to show the demon who they are. After that, the King only wakes when there are at least as many dead players as living ones.");
         guide(Role.KNIGHT, "Put \"Know\" on the two players and the Role HUD lists them.");
+        guide(Role.MINSTREL, "Put \"Everyone Is Drunk\" on the Minstrel and every other player counts as drunk, with a Drunk icon on their visits. The Minstrel themselves is not made drunk.");
         guide(Role.LIBRARIAN, "Put \"Outsider\" on the real outsider and \"Wrong\" on the decoy. The Role HUD lists both players and which outsider they are.");
         guide(Role.MAGICIAN, "No visit of their own. Minion Info and Demon Info get a Magician icon and the Role HUD lists the Magician alongside the demon and minions.");
         guide(Role.NOBLE, "Put \"Know\" on the three players and the Role HUD lists them.");
         guide(Role.PHILOSOPHER, "Add the role they chose as a role reminder. Their own visit goes away and they get that role's visits instead, with a triggered visit right away if the role only acts on the first night. If the chosen role is in play, give that player the drunk reminder.");
-        guide(Role.PIXIE, "Add the townsfolk as a role reminder, which will enable the Pixie's madness HUD once you send roles again. If they've been mad and that townsfolk dies, add \"Has Ability\" to turn on the townsfolk visits.");
+        guide(Role.PIXIE, "Add the townsfolk as a role reminder, which will enable the Pixie's madness HUD once you send roles again, telling them they gain that ability if they are mad about it when that townsfolk dies. If they've been mad and that townsfolk dies, add \"Has Ability\" to turn on the visits.");
         guide(Role.POPPY_GROWER, "No visit of their own. Minion Info and Demon Info get a Poppy Grower icon instead. When they die, a visit triggers targeting the demon and all the minions.");
         guide(Role.PREACHER, "Put the Preacher's \"No Ability\" reminder on a minion to disable their visits and other ability effects.");
         guide(Role.RAVENKEEPER, "Triggers when the Ravenkeeper dies at night.");
@@ -54,25 +55,26 @@ public final class RoleGuides {
         // Outsiders
         guide(Role.BARBER, "Triggers when the Barber dies, targeting the demon. If you swap two players' roles, alt-ctrl right click each of them to send their new role individually as you visit them.");
         guide(Role.DAMSEL, "No first night visit, Minion Info gets a Damsel icon instead. A Huntsman on the script lets the validator accept an extra outsider.");
-        guide(Role.DRUNK, "Add a not-in-play townsfolk as a role reminder, and the player will be sent that role instead. They get the fake role's visits, but it doesn't affect anything else.");
+        guide(Role.DRUNK, "Add a not-in-play townsfolk as a role reminder, and the player will be sent that role instead. They get the fake role's visits, but it doesn't affect anything else. Any townsfolk or minion ability on a Drunk is fake.");
         guide(Role.HATTER, "When the Hatter dies, a visit triggers targeting the demon and all the minions.");
         guide(Role.HERMIT, "Assigning the Hermit adds every outsider on the script as a role reminder. Outsider abilities are real, anything else is fake.\nIf you give them the Drunk, add a townsfolk too and that's what gets sent (same for the Lunatic and a demon).");
         guide(Role.LUNATIC, "Add a demon as a role reminder, and the player will be sent that role instead. The first night they get the demon's first night instructions, and on other nights the demon's instructions are added onto the Lunatic's own visit. With the Zombuul, they're skipped if someone has the Zombuul's \"Died Today\" reminder.");
-        guide(Role.MUTANT, "Shows up in your madness HUD automatically, but not the player's.");
+        guide(Role.MUTANT, "Shows up in your madness HUD automatically as a reminder they might be executed for claiming outsider, but not the player's, since they already know (or don't, if they're a drunk or lunatic Hermit).");
         guide(Role.OGRE, "Always sent as good no matter what alignment you set. The real alignment is only sent at game end.");
         guide(Role.PLAGUE_DOCTOR, "When they die, a visit triggers. Add \"Storyteller Ability\", then pick the minion from their reminders, and you get that minion's visit with no teleport (works with the Organ Grinder).");
         guide(Role.SWEETHEART, "Triggers when the Sweetheart dies, unless they're droisoned.");
 
         // Minions
         guide(Role.BOFFIN, "Open the demon's reminders and pick the good ability. The Boffin's visit targets both of them and the Role HUD tells you what ability the demon has.");
-        guide(Role.CERENOVUS, "Put \"Mad\" on the player, then open their reminders again and give them \"Mad: [Role]\". Send roles again to update their madness HUD.");
+        guide(Role.CERENOVUS, "Put \"Mad\" on the player, then open their reminders again and give them \"Mad: [Role]\" from the list of good roles and the Goblin. Send roles again to update their madness HUD, which tells them they must be mad they are that role or they might be executed.");
         guide(Role.EVIL_TWIN, "Put \"Twin\" on the good twin and the Role HUD tells you who it is.");
         guide(Role.GODFATHER, "The first night Role HUD lists the outsiders in play. Put the Godfather's \"Died Today\" reminder on an outsider that died to enable the Godfather's night visit.");
-        guide(Role.HARPY, "Put \"Mad\" on the first player, then open their reminders again and add a reminder for the second player. Send roles again to update their madness HUD.");
-        guide(Role.MARIONETTE, "Add a not-in-play good role as a role reminder, and the player will be sent that role instead. They don't wake for Minion Info, and Demon Info tells the demon who they are.");
+        guide(Role.HARPY, "Put \"Mad\" on the first player, then open their reminders again and add a reminder for the second player. Send roles again to update their madness HUD, which tells them they must be mad the second player is evil or one or both might die.");
+        guide(Role.MARIONETTE, "Add a not-in-play good role as a role reminder, and the player will be sent that role instead. They don't wake for Minion Info, and Demon Info tells the demon who they are. Any townsfolk, outsider, or minion ability on a Marionette is fake.");
         guide(Role.MEZEPHELES, "Marked by default (ctrl-click to unmark). Their Other Nights visit appears every night until you unmark them.");
+        guide(Role.PRINCESS, "Put the Princess's \"Doesn't Kill\" reminder on the demon, not the Princess, and the demon's visit gets a Princess icon with the Role HUD saying they don't kill tonight. The Princess's own visit isn't marked by default (ctrl-click to mark).");
         guide(Role.ORGAN_GRINDER, "While the Organ Grinder has their ability, votes are secret. Players are blinded and levers are muted during the vote. Only Storytellers see the results and the player marked for execution.");
-        guide(Role.SCARLET_WOMAN, "Triggers when the demon dies with 5 or more players alive. Put the Fang Gu's \"Once\" reminder on the old Fang Gu when they jump to suppress this trigger.");
+        guide(Role.SCARLET_WOMAN, "Triggers when the demon dies with 5 or more non-travelers alive. Put the Fang Gu's \"Once\" reminder on the old Fang Gu when they jump to suppress this trigger.");
         guide(Role.SUMMONER, "The validator expects no demon and an extra minion. The Summoner only wakes on night 3.");
         guide(Role.VIZIER, "There's a first day visit as a reminder to announce them.");
         guide(Role.WITCH, "Skipped once 3 or fewer players are alive.");
@@ -81,11 +83,11 @@ public final class RoleGuides {
         guide(Role.XAAN, "The outsider count gets recorded on the Xaan as a \"Night N\" reminder at the first dusk, a custom reminder with the same format works too. On that night and the following day, every townsfolk counts as poisoned. You can cause this manually by adding the Xaan's \"X\" reminder to any player.");
 
         // Demons
-        guide(Role.AL_HADIKHIA, "The \"AH\" button in storyteller tools turns on the homebrew version, which asks every player if they want to live or die each night. The 1, 2, and 3 reminders count as demon kills for triggers.");
+        guide(Role.AL_HADIKHIA, "The \"AH\" button in storyteller tools turns on the homebrew version, which adds a visit right after dusk asking every player if they want to live or die. The 1, 2, and 3 reminders count as demon kills for triggers.");
         guide(Role.FANG_GU, "The validator expects an extra outsider. Put \"Once\" on the old Fang Gu when they jump to suppress the Scarlet Woman's trigger.");
         guide(Role.LEGION, "The validator needs most of the players to be Legion. When only evil players vote, you're told the vote counts for zero, but players aren't.");
-        guide(Role.LEVIATHAN, "There's a first day visit as a reminder to announce them. From day 5 on you get a game over visit after nominations.");
-        guide(Role.LIL_MONSTA, "The validator lets you send no demon and an extra minion. Put the global \"Is The Demon\" reminder on whoever's babysitting and the minions will get the Lil' Monsta visit.");
+        guide(Role.LEVIATHAN, "There's a first day visit as a reminder to announce them. From day 5 on, if the Leviathan is alive with their ability, you get a game over visit after nominations.");
+        guide(Role.LIL_MONSTA, "The validator lets you send no demon and an extra minion. Put the global \"Is The Demon\" reminder on whoever's babysitting and the minions wake together for the Lil' Monsta visit instead of Minion Info and Demon Info.");
         guide(Role.LORD_OF_TYPHON, "The validator checks that evil players are seated in a line with the Lord of Typhon in the middle.");
         guide(Role.RIOT, "Night 3 you get a visit to change every minion to Riot. On day 3, nominations gets the Riot instructions. The deaths and the countdown are managed by the Storyteller.");
         guide(Role.VIGORMORTIS, "Put \"Has Ability\" on a killed minion to have them keep their ability.");
@@ -93,7 +95,7 @@ public final class RoleGuides {
         guide(Role.ZOMBUUL, "Wakes even when dead, unless someone has the Zombuul's \"Died Today\" reminder.");
 
         // Travelers
-        guide(Role.BEGGAR, "Ctrl-alt-click a dead player's head to toggle their ghost vote.");
+        guide(Role.BEGGAR, "Ctrl-alt-click a dead player's head to toggle their ghost vote for whether they gave theirs away or were given an extra one.");
         guide(Role.BISHOP, "Only you can nominate. Alt-click the Storyteller head in the middle, then the player.");
         guide(Role.BONE_COLLECTOR, "Put the Bone Collector's \"Has Ability\" on the dead player to restore their ability.");
         guide(Role.BUREAUCRAT, "Put \"3 Votes\" on the player to make their vote counts triple.");
@@ -102,7 +104,7 @@ public final class RoleGuides {
         guide(Role.VOUDON, "While the Voudon has their ability, only dead players and the Voudon can vote, and ghost votes don't get used up. Exiles aren't affected.");
 
         // Fabled
-        guide(Role.BOOTLEGGER, "Ctrl-click the Bootlegger in the script builder to write the script's special rules. They replace the ability text wherever it's shown.");
+        guide(Role.BOOTLEGGER, "Ctrl-click the Bootlegger in the script builder to write the script's special rules. They will replace the ability text wherever it's shown.");
         guide(Role.BUDDHIST, "Dawn gets a Buddhist icon as a reminder.");
         guide(Role.DJINN, "Jinxes are added to the script reference automatically, but are not enforced. The script reference has a ? next to the jinxes that opens the Djinn's details page.");
         guide(Role.DUCHESS, "Put \"Visitor\" or \"False Info\" on the players and the Duchess visit targets them.");
@@ -122,6 +124,10 @@ public final class RoleGuides {
         List<Role> roles = new ArrayList<>(GUIDES.keySet());
         roles.sort(Comparator.comparing((Role r) -> r.getType().ordinal()).thenComparing(Role::getDisplayName));
         return roles;
+    }
+
+    public static boolean has(Role role) {
+        return GUIDES.containsKey(role);
     }
 
     public static String get(Role role) {
