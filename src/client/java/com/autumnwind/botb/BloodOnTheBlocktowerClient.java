@@ -1,6 +1,7 @@
 package com.autumnwind.botb;
 
 import com.autumnwind.botb.clockhands.ClockHandsRenderer;
+import com.autumnwind.botb.config.AssetPackTemplate;
 import com.autumnwind.botb.config.PlayerConfig;
 import com.autumnwind.botb.event.KeyInputHandler;
 import com.autumnwind.botb.gui.AssignRolesScreen;
@@ -40,6 +41,7 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         PlayerConfig.load();
+        AssetPackTemplate.generate();
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             // Restore the saved grimoire BEFORE asking the server for the script. Order
