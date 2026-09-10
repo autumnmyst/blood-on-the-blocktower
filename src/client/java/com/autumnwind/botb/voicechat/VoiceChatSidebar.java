@@ -26,7 +26,8 @@ public class VoiceChatSidebar {
     private static final int ENTRY_HEIGHT = 16;
     private static final int PADDING = 5;
     private static final int MAX_SIDEBAR_WIDTH = 120;
-    private static final int COLLAPSED_WIDTH = 40;
+    /** Collapsed: head, gap, then the seat label with room for outer nomination border. */
+    private static final int COLLAPSED_HEAD_TO_SEAT_GAP = 6;
     private static final Identifier SKULL_ICON = Identifier.of("blood-on-the-blocktower", "textures/icons/skull.png");
 
     // Vote state indicator constants
@@ -142,10 +143,10 @@ public class VoiceChatSidebar {
             // Calculate dynamic width based on longest player name
             // Show indicators during nominations OR exile calls
             boolean showVoteIndicators = ClientState.hasActiveElection();
-            int calculatedWidth = COLLAPSED_WIDTH;
+            int calculatedWidth = calculateCollapsedWidth(client, entries);
             if (showVoteIndicators) {
                 // Add space for vote indicators even when collapsed
-                calculatedWidth = COLLAPSED_WIDTH + INDICATOR_SIZE + INDICATOR_SPACING;
+                calculatedWidth += INDICATOR_SIZE + INDICATOR_SPACING;
             }
             if (!isCollapsed) {
                 calculatedWidth = calculateSidebarWidth(client, entries);
@@ -165,6 +166,15 @@ public class VoiceChatSidebar {
                 y += ENTRY_HEIGHT;
             }
         }
+    }
+
+    /** Collapsed width that fits the widest seat label. */
+    private static int calculateCollapsedWidth(MinecraftClient client, List<PlayerEntry> entries) {
+        int maxSeatWidth = 0;
+        for (PlayerEntry entry : entries) {
+            maxSeatWidth = Math.max(maxSeatWidth, client.textRenderer.getWidth("#" + entry.seat));
+        }
+        return PADDING * 2 + HEAD_SIZE + COLLAPSED_HEAD_TO_SEAT_GAP + maxSeatWidth;
     }
 
     /**
