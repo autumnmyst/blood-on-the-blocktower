@@ -112,8 +112,6 @@ final class RoleReceivers {
                             // Unmark player when they die, unless they have triggered ability
                             if (!NightOrderHudManager.hasAnyTriggeredRole(playerUuid)) {
                                 StorytellerState.markedPlayers.remove(playerUuid);
-                                // Also remove their mark-based triggers
-                                NightOrderHudManager.removeTriggeredVisit(playerUuid, false);
                             }
 
                             // If this was an execution (executionToday is true), track executed role and add Cannibal reminder
@@ -137,7 +135,7 @@ final class RoleReceivers {
 
                         // Storyteller: Remove death-based triggers and create resurrection trigger
                         if (isOperator) {
-                            NightOrderHudManager.removeTriggeredVisit(playerUuid, true);
+                            NightOrderHudManager.removeDeathTriggers(playerUuid);
                             NightOrderHudManager.createResurrectionTrigger(playerUuid);
                         }
                     }

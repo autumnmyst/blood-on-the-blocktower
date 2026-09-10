@@ -309,6 +309,8 @@ public class StorytellerState {
     }
 
     public static final Set<UUID> markedPlayers = new HashSet<>();
+    /** Wraith holders who could roam at the last night order rebuild; dropping off it fires their lost-ability visit. */
+    public static final Set<UUID> wraithsWithAbility = new HashSet<>();
 
     // Storyteller toggle: when on, a mid-game role change for a player automatically
     // enqueues a "You are now the X" triggered visit so the night order surfaces the
@@ -345,6 +347,7 @@ public class StorytellerState {
         storytellerMFEVotes = 0;
         markedPlayers.clear();
         triggeredVisits.clear();
+        wraithsWithAbility.clear();
         currentVisitSourceIndex = null;
         currentVisitIsTriggered = false;
         currentTriggerChainIndex = 0;

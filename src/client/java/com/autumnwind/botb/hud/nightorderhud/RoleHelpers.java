@@ -375,6 +375,16 @@ public class RoleHelpers {
         return !isDroisoned(uuid) && !isFakeRoleHolder(uuid, role);
     }
 
+    /** A Wraith's ability is intact unless droisoned, fake, or blocked by a "No Ability" reminder. */
+    public static boolean wraithAbilityIntact(UUID uuid) {
+        return hasOutwardEffect(uuid, Role.WRAITH) && !AbilityChecker.isRoleAbilityBlocked(uuid, Role.WRAITH);
+    }
+
+    /** Whether a Wraith holder follows the storyteller to evil visits: alive with their ability intact. */
+    public static boolean wraithCanRoam(UUID uuid) {
+        return !ClientState.playerDeathStatus.getOrDefault(uuid, false) && wraithAbilityIntact(uuid);
+    }
+
     /** Associated-role reminders (chooser-placed or hand-typed all-caps DRUNK) name an identity, not impairment. */
     private static boolean isIdentityReminder(Reminder r) {
         return isSpecialReminder(r) || r.text().equals("DRUNK");

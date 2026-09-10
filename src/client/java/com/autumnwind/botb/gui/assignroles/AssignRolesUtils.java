@@ -58,26 +58,6 @@ public class AssignRolesUtils {
     }
 
     /**
-     * Checks if a player has Wraith as their assigned role or as an associated role.
-     */
-    public static boolean hasWraith(UUID playerUuid) {
-        PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(playerUuid);
-        if (assignment != null && assignment.role() == Role.WRAITH) {
-            return true;
-        }
-
-        // Check for Wraith as an associated role
-        List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(playerUuid, Collections.emptyList());
-        for (Reminder reminder : reminders) {
-            if (isSpecialReminder(reminder) && reminder.role().isPresent() && reminder.role().get() == Role.WRAITH) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Checks if a player should be markable based on their assigned role
      * OR any special reminders they have.
      * Players with only deathBased roles are not markable.

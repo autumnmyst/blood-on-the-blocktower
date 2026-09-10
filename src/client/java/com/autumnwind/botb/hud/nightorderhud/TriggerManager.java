@@ -80,91 +80,58 @@ public class TriggerManager {
         NightOrderBuilder.rebuildActiveNightOrder();
     }
 
-    /**
-     * Removes triggered visits from the map that match the given player.
-     * @param playerUUID The player whose triggers to remove
-     * @param deathBased If true, only remove death-based triggers. If false, only remove mark-based triggers. If null, remove all.
-     */
-    public static void removeTriggeredVisit(UUID playerUUID, Boolean deathBased) {
-        // Search all trigger chains
+    /** Removes the death-triggered visits sourced from a player, for when they are revived. */
+    public static void removeDeathTriggers(UUID playerUUID) {
         for (List<RoleVisit> triggerChain : StorytellerState.triggeredVisits.values()) {
             triggerChain.removeIf(visit -> {
-                // Must be triggered and match source player
                 if (!visit.triggered() || visit.triggerSourcePlayer().isEmpty() || !visit.triggerSourcePlayer().get().equals(playerUUID)) {
                     return false;
                 }
-
-                // If deathBased filter is specified, check if trigger matches
-                if (deathBased != null) {
-                    // Find the role that triggered this visit
-                    Role triggerRole = visit.associatedRole().orElse(visit.role());
-
-                    // Check if this role has a death-based or mark-based trigger
-                    boolean isTriggerDeathBased = NightOrder.getOtherNightOrder().stream()
-                        .filter(info -> info.isRole() && info.isTriggered() && info.getRole() == triggerRole)
-                        .findFirst()
-                        .map(NightOrder.NightOrderInfo::isDeathBased)
-                        .orElse(false);
-
-                    // Only remove if trigger type matches filter
-                    return isTriggerDeathBased == deathBased;
-                }
-
-                // No filter specified, remove all triggers for this player
-                return true;
+                Role triggerRole = visit.associatedRole().orElse(visit.role());
+                return NightOrder.getOtherNightOrder().stream()
+                    .filter(info -> info.isRole() && info.isTriggered() && info.getRole() == triggerRole)
+                    .findFirst()
+                    .map(NightOrder.NightOrderInfo::isDeathBased)
+                    .orElse(false);
             });
         }
-
-        // Clean up empty lists
         StorytellerState.triggeredVisits.entrySet().removeIf(entry -> entry.getValue().isEmpty());
     }
 
     /**
-     * Creates and adds all mark-based triggered visits for a player who was just marked.
-     * Call this immediately after adding player to markedPlayers set.
+     * The Wraith's regular visit, just after dusk, covers every night they're alive without their
+     * ability. A holder who loses it once the night is already past that slot, or who dies at
+     * night (they won't learn that until dawn), gets it as a triggered visit instead so they're
+     * told tonight rather than tomorrow.
      */
-    public static void createMarkTriggersForPlayer(UUID playerUUID) {
-        PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(playerUUID);
-        if (assignment == null) return;
+    public static void createWraithLostAbilityTriggers() {
+        NightOrder.NightOrderInfo wraithInfo = NightOrder.getOtherNightOrder().stream()
+                .filter(info -> info.isRole() && info.getRole() == Role.WRAITH)
+                .findFirst().orElse(null);
+        if (wraithInfo == null) return;
+        boolean isNight = ClientState.currentDay != ClientState.currentNight;
+        boolean pastWraithSlot = isNight && StorytellerState.currentVisitSourceIndex != null
+                && StorytellerState.currentVisitSourceIndex > NightOrder.getOtherNightOrder().indexOf(wraithInfo);
 
-        Role assignedRole = assignment.role();
-        List<Reminder> associatedRoles = getAssociatedRoleReminders(playerUUID);
-
-        // Check if assigned role has mark-based trigger
-        NightOrder.getOtherNightOrder().stream()
-            .filter(info -> info.isRole() && info.isTriggered() && !info.isDeathBased() && info.getRole() == assignedRole)
-            .forEach(info -> {
-                RoleVisit triggerVisit = buildTriggeredVisit(playerUUID, assignedRole, info, Optional.empty());
-                if (triggerVisit != null) {
-                    addTriggeredVisit(triggerVisit);
-                }
-            });
-
-        // Check if any associated roles have mark-based triggers
-        // Pixie special case: only create triggers if they have "Has Ability" reminder
-        boolean isPixieWithAbility = false;
-        if (assignedRole == Role.PIXIE) {
-            isPixieWithAbility = StorytellerState.REMINDERS.getOrDefault(playerUUID, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
-        }
-
-        for (Reminder reminder : associatedRoles) {
-            if (reminder.role().isEmpty()) continue;
-            Role associatedRole = reminder.role().get();
-
-            // Skip Pixie associated triggers if they don't have "Has Ability"
-            if (assignedRole == Role.PIXIE && !isPixieWithAbility) {
+        for (Map.Entry<UUID, PendingRoleAssignment> entry : StorytellerState.PENDING_ROLES.entrySet()) {
+            UUID uuid = entry.getKey();
+            if (!holdsRole(uuid, Role.WRAITH)) {
+                StorytellerState.wraithsWithAbility.remove(uuid);
                 continue;
             }
-
-            NightOrder.getOtherNightOrder().stream()
-                .filter(info -> info.isRole() && info.isTriggered() && !info.isDeathBased() && info.getRole() == associatedRole)
-                .forEach(info -> {
-                    RoleVisit triggerVisit = buildTriggeredVisit(playerUUID, assignedRole, info, Optional.of(associatedRole));
-                    if (triggerVisit != null) {
-                        addTriggeredVisit(triggerVisit);
-                    }
-                });
+            boolean dead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
+            boolean couldRoam = StorytellerState.wraithsWithAbility.remove(uuid);
+            if (!dead && wraithAbilityIntact(uuid)) {
+                StorytellerState.wraithsWithAbility.add(uuid);
+                continue;
+            }
+            boolean tellNow = couldRoam && (dead ? isNight : pastWraithSlot);
+            if (tellNow) {
+                Role assignedRole = entry.getValue().role();
+                Optional<Role> associatedRole = assignedRole == Role.WRAITH ? Optional.empty() : Optional.of(Role.WRAITH);
+                RoleVisit triggerVisit = buildTriggeredVisit(uuid, assignedRole, wraithInfo, associatedRole);
+                if (triggerVisit != null) addTriggeredVisit(triggerVisit);
+            }
         }
     }
 

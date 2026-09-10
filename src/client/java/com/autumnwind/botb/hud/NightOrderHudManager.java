@@ -46,15 +46,8 @@ public class NightOrderHudManager {
     /**
      * Removes triggered visits from the map that match the given player.
      */
-    public static void removeTriggeredVisit(UUID playerUUID, Boolean deathBased) {
-        TriggerManager.removeTriggeredVisit(playerUUID, deathBased);
-    }
-
-    /**
-     * Creates and adds all mark-based triggered visits for a player who was just marked.
-     */
-    public static void createMarkTriggersForPlayer(UUID playerUUID) {
-        TriggerManager.createMarkTriggersForPlayer(playerUUID);
+    public static void removeDeathTriggers(UUID playerUUID) {
+        TriggerManager.removeDeathTriggers(playerUUID);
     }
 
     /**

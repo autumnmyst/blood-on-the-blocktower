@@ -72,14 +72,14 @@ public final class RoleGuides {
         guide(Role.HARPY, "Put \"Mad\" on the first player, then open their reminders again and add a reminder for the second player. Send roles again to update their madness HUD, which tells them they must be mad the second player is evil or one or both might die.");
         guide(Role.MARIONETTE, "Add a not-in-play good role as a role reminder, and the player will be sent that role instead. They don't wake for Minion Info, and Demon Info tells the demon who they are. Any townsfolk, outsider, or minion ability on a Marionette is fake.");
         guide(Role.MEZEPHELES, "Marked by default (ctrl-click to unmark). Their Other Nights visit appears every night until you unmark them.");
-        guide(Role.PRINCESS, "Put the Princess's \"Doesn't Kill\" reminder on the demon, not the Princess, and the demon's visit gets a Princess icon with the Role HUD saying they don't kill tonight. The Princess's own visit isn't marked by default (ctrl-click to mark).");
+        guide(Role.PRINCESS, "Put the Princess's \"Doesn't Kill\" reminder on the demon, not the Princess, and the demon's visit gets a Princess icon with the Role HUD saying they don't kill tonight. Unmark the Princess's after her first night (ctrl-click to mark).\nNote: the reason this is handled with a mark and not always night 2 is because a Princess could appear mid game or be revived, restoring the ability.");
         guide(Role.ORGAN_GRINDER, "While the Organ Grinder has their ability, votes are secret. Players are blinded and levers are muted during the vote. Only Storytellers see the results and the player marked for execution.");
         guide(Role.SCARLET_WOMAN, "Triggers when the demon dies with 5 or more non-travelers alive. Put the Fang Gu's \"Once\" reminder on the old Fang Gu when they jump to suppress this trigger.");
         guide(Role.SUMMONER, "The validator expects no demon and an extra minion. The Summoner only wakes on night 3.");
         guide(Role.VIZIER, "There's a first day visit as a reminder to announce them.");
         guide(Role.WITCH, "Skipped once 3 or fewer players are alive.");
         guide(Role.WIZARD, "Marked by default (ctrl-click to unmark). Their Other Nights visit appears every night until you unmark them.");
-        guide(Role.WRAITH, "When you move to any evil player's visit, the Wraith gets teleported there too. Mark the Wraith (ctrl-click) to supress teleports, and add a visit just after dusk to inform them not visit other players. Dying doesn't unmark them.");
+        guide(Role.WRAITH, "When you move to any evil player's visit, every Wraith with their ability gets teleported there too. While a Wraith is alive without their ability, whether droisoned, fake, or with a \"No Ability\" reminder, they get a visit just after dusk every night so you can inform them they can't visit other players. If they lose it mid-night, or die at night, the visit triggers right away instead.");
         guide(Role.XAAN, "The outsider count gets recorded on the Xaan as a \"Night N\" reminder at the first dusk, a custom reminder with the same format works too. On that night and the following day, every townsfolk counts as poisoned. You can cause this manually by adding the Xaan's \"X\" reminder to any player.");
 
         // Demons

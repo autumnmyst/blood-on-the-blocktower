@@ -597,44 +597,10 @@ public class VisitNavigation {
             return wraithsToTeleport; // Target is good or not assigned, no wraiths teleport
         }
 
-        // Target is evil - determine which wraiths to teleport
-        boolean targetIsWraith = targetAssignment.role() == Role.WRAITH;
-        boolean targetIsMarked = StorytellerState.markedPlayers.contains(targetPlayerUUID);
-        boolean visitingMarkedWraith = targetIsWraith && targetIsMarked;
-
-        // Check all players for wraith ability
-        for (Map.Entry<UUID, PendingRoleAssignment> entry : StorytellerState.PENDING_ROLES.entrySet()) {
-            UUID playerUUID = entry.getKey();
-            PendingRoleAssignment assignment = entry.getValue();
-
-            // Check if player has wraith as their assigned role
-            boolean hasAssignedWraith = assignment.role() == Role.WRAITH;
-
-            // Check if player has wraith as an associated role
-            boolean hasAssociatedWraith = getAssociatedRoleReminders(playerUUID).stream()
-                    .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.WRAITH);
-
-            // A droisoned or fake Wraith doesn't visit evil wakes
-            if ((hasAssignedWraith || hasAssociatedWraith) && !hasOutwardEffect(playerUUID, Role.WRAITH)) {
-                continue;
-            }
-
-            if (hasAssignedWraith) {
-                // Assigned wraith logic
-                if (visitingMarkedWraith) {
-                    // Only teleport the specific marked wraith being visited
-                    if (playerUUID.equals(targetPlayerUUID)) {
-                        wraithsToTeleport.add(playerUUID);
-                    }
-                } else {
-                    // Teleport if unmarked
-                    boolean isMarked = StorytellerState.markedPlayers.contains(playerUUID);
-                    if (!isMarked) {
-                        wraithsToTeleport.add(playerUUID);
-                    }
-                }
-            } else if (hasAssociatedWraith) {
-                // Associated wraith: always teleport (treated as unmarked)
+        // Target is evil: every Wraith holder who can still roam comes along. The target
+        // themselves is already being teleported by the visit.
+        for (UUID playerUUID : StorytellerState.PENDING_ROLES.keySet()) {
+            if (!playerUUID.equals(targetPlayerUUID) && holdsRole(playerUUID, Role.WRAITH) && wraithCanRoam(playerUUID)) {
                 wraithsToTeleport.add(playerUUID);
             }
         }

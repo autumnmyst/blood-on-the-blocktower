@@ -61,7 +61,6 @@ public class AssignRolesActions {
 
                 if (markedByDefault) {
                     StorytellerState.markedPlayers.add(playerUUID);
-                    NightOrderHudManager.createMarkTriggersForPlayer(playerUUID);
                 }
             }
         }
@@ -355,7 +354,6 @@ public class AssignRolesActions {
 
                     if (markedByDefault) {
                         StorytellerState.markedPlayers.add(playerUuid);
-                        NightOrderHudManager.createMarkTriggersForPlayer(playerUuid);
                     }
                 }
 

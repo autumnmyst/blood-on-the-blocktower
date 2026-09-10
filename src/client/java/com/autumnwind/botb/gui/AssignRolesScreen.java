@@ -2189,13 +2189,9 @@ public class AssignRolesScreen extends Screen {
                         NightOrderHudManager.updateSemanticTracking();
 
                         if (wasMarked) {
-                            // Unmarking: Remove mark-based triggers for this player
                             StorytellerState.markedPlayers.remove(widget.uuid);
-                            NightOrderHudManager.removeTriggeredVisit(widget.uuid, false); // Remove only mark-based triggers
                         } else {
-                            // Marking: Add mark-based triggers for this player
                             StorytellerState.markedPlayers.add(widget.uuid);
-                            NightOrderHudManager.createMarkTriggersForPlayer(widget.uuid);
                         }
 
                         NightOrderHudManager.rebuildActiveNightOrder(); // Always rebuild after mark change
@@ -2279,7 +2275,7 @@ public class AssignRolesScreen extends Screen {
                         if (isDead) {
                             // Reviving: Remove death-based triggers for this player
                             ClientState.playerDeathStatus.put(widget.uuid, false);
-                            NightOrderHudManager.removeTriggeredVisit(widget.uuid, true); // Remove only death-based triggers
+                            NightOrderHudManager.removeDeathTriggers(widget.uuid);
 
                             // Add resurrection trigger if they have first night only abilities
                             NightOrderHudManager.createResurrectionTrigger(widget.uuid);
@@ -2293,11 +2289,9 @@ public class AssignRolesScreen extends Screen {
                             ClientState.playerDeathStatus.put(widget.uuid, true);
                             NightOrderHudManager.createDeathTriggersForPlayer(widget.uuid);
 
-                            // Unmark player when they die, unless they have Wraith or any triggered ability
-                            if (!AssignRolesUtils.hasWraith(widget.uuid) && !NightOrderHudManager.hasAnyTriggeredRole(widget.uuid)) {
+                            // Unmark player when they die, unless they have a triggered ability
+                            if (!NightOrderHudManager.hasAnyTriggeredRole(widget.uuid)) {
                                 StorytellerState.markedPlayers.remove(widget.uuid);
-                                // Also remove their mark-based triggers
-                                NightOrderHudManager.removeTriggeredVisit(widget.uuid, false); // Remove only mark-based triggers
                             }
 
                             // Dead travelers cannot be called for exile

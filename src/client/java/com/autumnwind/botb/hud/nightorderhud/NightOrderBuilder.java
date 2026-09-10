@@ -22,7 +22,20 @@ public class NightOrderBuilder {
      * Triggered visits are read from {@code StorytellerState.triggeredVisits} and spliced in
      * after their source index.
      */
+    private static boolean checkingWraiths = false;
+
     public static void rebuildActiveNightOrder() {
+        // Any change that rebuilds the order may have cost a Wraith their ability. The trigger
+        // this creates rebuilds again on its own, so guard against re-entering the check.
+        if (!checkingWraiths) {
+            checkingWraiths = true;
+            try {
+                TriggerManager.createWraithLostAbilityTriggers();
+            } finally {
+                checkingWraiths = false;
+            }
+        }
+
         List<RoleVisit> newActiveNightOrder = new ArrayList<>();
         boolean isFirstNight = ClientState.currentNight <= 1;
 
@@ -402,6 +415,16 @@ public class NightOrderBuilder {
         List<UUID> playersForVisit = buildPlayersForAssignedRole(info, infoRole, assignedPlayers,
                 associatedRoleRemindersMap, isFirstNight);
 
+        // Special case: the Wraith wakes only while alive without their ability, to be told they can't roam
+        if (infoRole == Role.WRAITH) {
+            playersForVisit = new ArrayList<>();
+            for (UUID p : assignedPlayers) {
+                if (!ClientState.playerDeathStatus.getOrDefault(p, false) && !wraithAbilityIntact(p)) {
+                    playersForVisit.add(p);
+                }
+            }
+        }
+
         // Special case: Boffin also targets all demons. A droisoned Boffin doesn't grant
         // the demon an ability, so the demons stay out of the visit.
         if (infoRole == Role.BOFFIN && playersForVisit.stream().anyMatch(p -> hasOutwardEffect(p, Role.BOFFIN))) {
@@ -776,6 +799,14 @@ public class NightOrderBuilder {
                         continue;
                     }
                 }
+            }
+
+            // Special case: the Wraith wakes only while alive without their ability, to be told they can't roam
+            if (infoRole == Role.WRAITH) {
+                if (!ClientState.playerDeathStatus.getOrDefault(p, false) && !wraithAbilityIntact(p)) {
+                    associatedPlayersForVisit.add(p);
+                }
+                continue;
             }
 
             boolean deathBased = info.isDeathBased();

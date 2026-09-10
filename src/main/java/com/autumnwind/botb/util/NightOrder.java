@@ -223,10 +223,11 @@ public class NightOrder {
 
     private static final List<NightOrderInfo> OTHER_NIGHTS_ORDER = List.of(
             NightOrderInfo.staticAction(StaticAction.DUSK, false, ""),
+            // First so a Wraith without their ability is told before any evil player is visited
+            NightOrderInfo.onRole(Role.WRAITH, true, false, false, true, "The Wraith has no ability. Inform them they may not visit other players tonight."),
             // Fabled
             NightOrderInfo.onRole(Role.DUCHESS, true, false, "Wake each player marked 'Visitor' or 'False Info' one at a time. Show them the Duchess token, then fingers (1, 2, 3) equaling the number of evil players marked 'Visitor' or, if you are waking the player marked 'False Info,' show them any number of fingers except the number of evil players marked 'Visitor'."),
             NightOrderInfo.onRole(Role.TOYMAKER, false, false, "If it is a night when a Demon attack could end the game, and the Demon is marked 'Final night: No Attack,' then the Demon does not act tonight. (Do not wake them.)"),
-            NightOrderInfo.onRole(Role.WRAITH, true, false, true, "If the Wraith has no ability, inform them they may not visit other players tonight."),
             // Travelers
             NightOrderInfo.onRole(Role.BARISTA, true, false, false, true, "Choose a player, wake them and tell them which Barista power is affecting them. Treat them accordingly (sober/healthy/true info or activate their ability twice)."),
             NightOrderInfo.onRole(Role.CACKLEJACK, true, false, "Replace the character token of any player (besides the player the Cacklejack chose today) with a different character token. Wake that player and show them the 'You are' card and their new character token."),
@@ -261,7 +262,7 @@ public class NightOrder {
             NightOrderInfo.onRole(Role.LUNATIC, true, false, false, true, "Allow the Lunatic to do the Demon actions. Place their 'chosen' markers. Wake the Demon. Tell them the Lunatic player. If the Lunatic chose players: Tell the Demon each marked player. Remove any Lunatic 'chosen' markers."),
             NightOrderInfo.onRole(Role.EXORCIST, true, false, false, true, "The Exorcist chooses a player, different from the previous night. If that player is the Demon: Wake the Demon. Tell them the player Exorcist and which player it is. The Demon does not act tonight."),
             NightOrderInfo.onRole(Role.LYCANTHROPE, true, false, false, true, "The Lycanthrope chooses a living player: if good, they die and the Demon does not kill tonight."),
-            NightOrderInfo.onRole(Role.PRINCESS, false, false, "If it was the Princess' first day today, and they nominated and executed a player, the Demon doesn't kill."),
+            NightOrderInfo.onRole(Role.PRINCESS, false, true, "If it was the Princess' first day today, and they nominated and executed a player, the Demon doesn't kill."),
             NightOrderInfo.onRole(Role.LEGION, false, false, false, true, "The Storyteller may choose a player, that player dies."),
             NightOrderInfo.onRole(Role.IMP, true, false, false, true, "The Imp chooses a player. That player dies. If the Imp chose themselves: one of the alive Minions becomes the Imp. Inform the new Imp of their character."),
             NightOrderInfo.onRole(Role.ZOMBUUL, true, false, false, true, "If no-one died during the day: The Zombuul chooses a player. That player dies."),
