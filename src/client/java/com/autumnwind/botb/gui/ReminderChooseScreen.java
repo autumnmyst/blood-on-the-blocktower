@@ -759,6 +759,11 @@ public class ReminderChooseScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Enter in the custom reminder field saves it
+        if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) && this.customTextField.isFocused()) {
+            saveCustomReminder(null);
+            return true;
+        }
         // Don't close screen if typing in text field
         if ((KeyInputHandler.openAssignGui.matchesKey(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.customTextField.isFocused()) {
