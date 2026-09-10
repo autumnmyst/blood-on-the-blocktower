@@ -373,7 +373,7 @@ public class VoiceChatSidebar {
             // Dead travelers cannot be called for exile
             boolean isDaytime = ClientState.currentNight == ClientState.currentDay && ClientState.currentNight > 0;
             if (canBeExiled && isDaytime && !entry.isDead) {
-                context.drawBorder(seatX - 4, seatY - 4, seatWidth + 7, seatHeight + 6, 0xFF9932CC);
+                context.drawBorder(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
             }
             int baseColor = entry.isDead ? COLOR_DEAD : COLOR_ALIVE;
             int seatColor = entry.shouldFade ? (baseColor & 0x00FFFFFF) | 0x80000000 : baseColor;

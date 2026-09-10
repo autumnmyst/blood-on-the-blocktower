@@ -330,7 +330,7 @@ public class AssignRolesQuickHUD {
                     // Dead travelers cannot be called for exile
                     boolean isDaytime = ClientState.currentNight == ClientState.currentDay && ClientState.currentNight > 0;
                     if (canBeExiled && isDaytime && !isDead) {
-                        context.drawBorder(seatTextX - 4, seatTextY - 4, seatWidth + 7, seatHeight + 6, 0xFF9932CC);
+                        context.drawBorder(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
                     }
                     int seatColor = shouldFade ? 0x80FFFFFF : 0xFFFFFFFF;
                     context.drawCenteredTextWithShadow(client.textRenderer, Text.literal(seatText), seatX, seatY - 4, seatColor);
