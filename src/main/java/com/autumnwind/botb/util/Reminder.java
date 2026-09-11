@@ -208,11 +208,11 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
         }
 
         if (role.isPresent()) {
-            if (role.get() == Role.VORTOX) {
-                // The global effect does not get a border
-                if (text.equals("Vortox Effect")) {
-                    return RoleType.NONE.getColor();
-                }
+            // The global effects do not get borders
+            boolean isVortoxEffect = role.get() == Role.VORTOX && text.equals("Vortox Effect");
+            boolean isXaanEffect = role.get() == Role.XAAN && text.equals("X");
+            if (isVortoxEffect || isXaanEffect) {
+                return RoleType.NONE.getColor();
             }
             return role.get().getType().getColor();
         }

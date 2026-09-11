@@ -626,28 +626,7 @@ public class NightOrderBuilder {
                                                      UUID minstrelPlayer, boolean vortoxInPlay,
                                                      boolean xaanXActive, boolean isFirstNight) {
         Set<Reminder> iconReminders = new HashSet<>();
-        for (UUID p : playersForVisit) {
-            iconReminders.addAll(getStandardIconReminders(p, minstrelPlayer));
-            if (xaanXActive) {
-                PendingRoleAssignment pAssignment = StorytellerState.PENDING_ROLES.get(p);
-                RoleType pType = pAssignment != null && pAssignment.isCustomRole() && pAssignment.customRole().isPresent()
-                        ? pAssignment.customRole().get().team()
-                        : (pAssignment != null ? pAssignment.role().getType() : RoleType.NONE);
-                if (pType == RoleType.TOWNSFOLK) {
-                    iconReminders.add(new Reminder("X", Optional.of(Role.XAAN)));
-                }
-            }
-        }
-        if (vortoxInPlay && infoRole.getType() == RoleType.TOWNSFOLK) {
-            iconReminders.add(getVortoxReminder());
-        }
-
-        // Reminders on the demon that change tonight's attack (Princess, Toymaker)
-        if (infoRole.getType() == RoleType.DEMON) {
-            for (UUID p : playersForVisit) {
-                iconReminders.addAll(getDemonVisitModifiers(p));
-            }
-        }
+        addGlobalEffectIconReminders(infoRole, minstrelPlayer, vortoxInPlay, xaanXActive, playersForVisit, iconReminders);
 
         List<Reminder> nonAssociatedReminders = iconReminders.stream()
                 .filter(r -> !isSpecialReminder(r))
@@ -841,27 +820,7 @@ public class NightOrderBuilder {
 
             Set<Reminder> iconReminders = new HashSet<>();
             iconReminders.add(new Reminder(infoRole.getDisplayName(), Optional.of(infoRole)));
-            for (UUID p : associatedPlayersForVisit) {
-                iconReminders.addAll(getStandardIconReminders(p, minstrelPlayer));
-                if (xaanXActive) {
-                    PendingRoleAssignment pAssignment = StorytellerState.PENDING_ROLES.get(p);
-                    RoleType pType = pAssignment != null && pAssignment.isCustomRole() && pAssignment.customRole().isPresent()
-                            ? pAssignment.customRole().get().team()
-                            : (pAssignment != null ? pAssignment.role().getType() : RoleType.NONE);
-                    if (pType == RoleType.TOWNSFOLK) {
-                        iconReminders.add(new Reminder("X", Optional.of(Role.XAAN)));
-                    }
-                }
-            }
-            if (vortoxInPlay && infoRole.getType() == RoleType.TOWNSFOLK) {
-                iconReminders.add(getVortoxReminder());
-            }
-
-            if (infoRole.getType() == RoleType.DEMON) {
-                for (UUID p : associatedPlayersForVisit) {
-                    iconReminders.addAll(getDemonVisitModifiers(p));
-                }
-            }
+            addGlobalEffectIconReminders(infoRole, minstrelPlayer, vortoxInPlay, xaanXActive, associatedPlayersForVisit, iconReminders);
 
             List<Reminder> nonAssociatedReminders = iconReminders.stream()
                     .filter(r -> r.role().isEmpty() || r.role().get() != infoRole)
@@ -908,6 +867,30 @@ public class NightOrderBuilder {
                 visit = RoleVisit.forRole(assignedRole, associatedPlayersForVisit, info.seatTeleport(), finalInstructions, new ArrayList<>(iconReminders), Optional.of(infoRole), false, sourceIndex);
             }
             newActiveNightOrder.add(visit);
+        }
+    }
+
+    private static void addGlobalEffectIconReminders(Role infoRole, UUID minstrelPlayer, boolean vortoxInPlay, boolean xaanXActive, List<UUID> associatedPlayersForVisit, Set<Reminder> iconReminders) {
+        for (UUID p : associatedPlayersForVisit) {
+            iconReminders.addAll(getStandardIconReminders(p, minstrelPlayer));
+            if (xaanXActive) {
+                PendingRoleAssignment pAssignment = StorytellerState.PENDING_ROLES.get(p);
+                RoleType pType = pAssignment != null && pAssignment.isCustomRole() && pAssignment.customRole().isPresent()
+                        ? pAssignment.customRole().get().team()
+                        : (pAssignment != null ? pAssignment.role().getType() : RoleType.NONE);
+                if (pType == RoleType.TOWNSFOLK) {
+                    iconReminders.add(new Reminder("X", Optional.of(Role.XAAN)));
+                }
+            }
+        }
+        if (vortoxInPlay && infoRole.getType() == RoleType.TOWNSFOLK) {
+            iconReminders.add(getVortoxReminder());
+        }
+
+        if (infoRole.getType() == RoleType.DEMON) {
+            for (UUID p : associatedPlayersForVisit) {
+                iconReminders.addAll(getDemonVisitModifiers(p));
+            }
         }
     }
 
