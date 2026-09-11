@@ -700,15 +700,6 @@ public class NightOrderBuilder {
                 }
             }
 
-            // Skip Plague Doctor minion associated roles (handled separately as storyteller minions)
-            if (assignedRole == Role.PLAGUE_DOCTOR && infoRole.getType() == RoleType.MINION) {
-                boolean hasStorytellerAbility = StorytellerState.REMINDERS.getOrDefault(p, Collections.emptyList()).stream()
-                        .anyMatch(r -> r.text().equals("Storyteller Ability"));
-                if (!hasStorytellerAbility) {
-                    continue;
-                }
-            }
-
             // Skip Pixie associated roles unless they have Has Ability reminder
             if (assignedRole == Role.PIXIE) {
                 boolean hasAbility = StorytellerState.REMINDERS.getOrDefault(p, Collections.emptyList()).stream()

@@ -54,13 +54,13 @@ public class ReminderChooseScreen extends Screen {
                 this::saveCustomReminder
         ).dimensions(startX + 200 + 10, topY, 100, 20).build());
 
-        // "Roles" Button - opens role reminder selection screen
+        // "Roles" Button opens role reminder selection screen
         this.addDrawableChild(ButtonWidget.builder(
                 Text.literal("Roles").formatted(Formatting.AQUA),
                 button -> this.client.setScreen(new RoleReminderScreen(Text.literal("Role Reminders"), this.targetPlayerUUID, this.parentScreen))
         ).dimensions(startX + 200 + 10 + 100 + 10, topY, 50, 20).build());
 
-        // --- MODIFIED --- Use the new ReminderGridWidget
+        // Use the new ReminderGridWidget
         int listTopY = topY + 20 + 10;
         int footerHeight = 40;
         this.listWidget = new ReminderGridWidget(this.client, this.width, this.height - listTopY - footerHeight, listTopY);
@@ -217,23 +217,6 @@ public class ReminderChooseScreen extends Screen {
                 .filter(r -> !assignedRolesInPlay.contains(r))
                 .collect(Collectors.toSet());
 
-        // --- 4. Add minions for ANY player with "Storyteller Ability" reminder (Plague Doctor) ---
-        boolean hasStorytellerAbility = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Storyteller Ability"));
-
-        if (hasStorytellerAbility) {
-            for (Role r : scriptRoles) {
-                if (r.getType() == RoleType.MINION) {
-                    // Check if not already in the list to avoid duplicates
-                    boolean alreadyAdded = valid.stream()
-                            .anyMatch(d -> d.role() == r && d.text().equals(r.name().replace('_', ' ')));
-                    if (!alreadyAdded) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
-                    }
-                }
-            }
-        }
-
         switch (targetRole) {
             case DRUNK: // b. Drunk: Not-in-play Townsfolk
                 for (Role r : notInPlayRoles) {
@@ -357,9 +340,26 @@ public class ReminderChooseScreen extends Screen {
 
         if (isPlagueDoctor || hasPlagueDoctorAssociated) {
             addStorytellerMinionRemindersForPlagueDoctor(valid, scriptRoles);
+        } else {
+            // Add minions for not Plague Doctor nor associated players with the PD "Storyteller Ability" reminder ---
+            boolean hasStorytellerAbility = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList()).stream()
+                .anyMatch(r -> r.text().equals("Storyteller Ability"));
+
+            if (hasStorytellerAbility) {
+                for (Role r : scriptRoles) {
+                    if (r.getType() == RoleType.MINION) {
+                        // Check if not already in the list to avoid duplicates
+                        boolean alreadyAdded = valid.stream()
+                            .anyMatch(d -> d.role() == r && d.text().equals(r.name().replace('_', ' ')));
+                        if (!alreadyAdded) {
+                            valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        }
+                    }
+                }
+            }
         }
 
-        // --- 5. Check if ANY player has special associated roles that grant additional reminders ---
+        // --- 4. Check if ANY player has special associated roles that grant additional reminders ---
         // Check all players' reminders for Pixie/Alchemist/Philosopher/Cannibal associated roles
         boolean anyPlayerHasPixieAssociated = false;
         boolean anyPlayerHasAlchemistAssociated = false;
@@ -414,7 +414,7 @@ public class ReminderChooseScreen extends Screen {
             }
         }
 
-        // --- 6. Remove duplicates ---
+        // --- 5. Remove duplicates ---
         List<ReminderCatalog.ReminderDefinition> uniqueValid = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (ReminderCatalog.ReminderDefinition def : valid) {

@@ -61,7 +61,7 @@ public final class RoleGuides {
         guide(Role.LUNATIC, "Add a demon as a role reminder, and the player will be sent that role instead. The first night they get the demon's first night instructions, and on other nights the demon's instructions are added onto the Lunatic's own visit. With the Zombuul, they're skipped if someone has the Zombuul's \"Died Today\" reminder.");
         guide(Role.MUTANT, "Shows up in your madness HUD automatically as a reminder they might be executed for claiming outsider, but not the player's, since they already know (or don't, if they're a drunk or lunatic Hermit).");
         guide(Role.OGRE, "Always sent as good no matter what alignment you set. The real alignment is only sent at game end.");
-        guide(Role.PLAGUE_DOCTOR, "When they die, a visit triggers. Add \"Storyteller Ability\", then pick the minion from their reminders, and you get that minion's visit with no teleport (works with the Organ Grinder).");
+        guide(Role.PLAGUE_DOCTOR, "When they die, a visit triggers. Add an \"ST: [Minion]\" reminder, and you get that minion's visit with no teleport (works with the Organ Grinder). Use the \"Storyteller Ability\" reminder only to add minion abilities to other players (some jinxes do this).");
         guide(Role.SWEETHEART, "Triggers when the Sweetheart dies, unless they're droisoned.");
 
         // Minions
