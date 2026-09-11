@@ -37,7 +37,7 @@ public class BootleggerRulesScreen extends Screen {
     private int hoveredRule = -1;
 
     public BootleggerRulesScreen(Screen parent, List<String> rules) {
-        super(Text.literal("Special Rules"));
+        super(Text.translatable("gui.blood-on-the-blocktower.bootlegger_rules.title"));
         this.parent = parent;
         this.rules = rules;
     }
@@ -67,15 +67,15 @@ public class BootleggerRulesScreen extends Screen {
         input = new TextFieldWidget(textRenderer, panelX + PAD, inputY,
                 textWidth - ADD_WIDTH - 4, FIELD_HEIGHT, Text.empty());
         input.setMaxLength(500);
-        input.setPlaceholder(Text.literal("New special rule").formatted(Formatting.DARK_GRAY));
+        input.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.bootlegger_rules.new_rule").formatted(Formatting.DARK_GRAY));
         input.setText(draft);
         input.setChangedListener(text -> draft = text);
         addDrawableChild(input);
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Add"), button -> addRule())
+        addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.bootlegger_rules.add"), button -> addRule())
                 .dimensions(panelX + PAD + textWidth - ADD_WIDTH, inputY, ADD_WIDTH, FIELD_HEIGHT)
                 .build());
-        addDrawableChild(ButtonWidget.builder(Text.literal("Done"), button -> close())
+        addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.bootlegger_rules.done"), button -> close())
                 .dimensions(panelX + PAD, doneY, textWidth, FIELD_HEIGHT)
                 .build());
 
@@ -115,7 +115,7 @@ public class BootleggerRulesScreen extends Screen {
         hoveredRule = -1;
         if (rules.isEmpty()) {
             context.drawTextWithShadow(textRenderer,
-                    Text.literal("No special rules yet").formatted(Formatting.DARK_GRAY, Formatting.ITALIC),
+                    Text.translatable("gui.blood-on-the-blocktower.bootlegger_rules.no_rules").formatted(Formatting.DARK_GRAY, Formatting.ITALIC),
                     x, y, 0xFFFFFF);
             y += lineHeight;
         } else {

@@ -226,7 +226,7 @@ final class RoleHandlers {
             UUID targetUuid = payload.targetPlayer();
             ServerPlayerEntity target = context.server().getPlayerManager().getPlayer(targetUuid);
             if (target == null) {
-                context.player().sendMessage(Text.literal("Cannot send roles: player is offline").formatted(Formatting.RED), true);
+                context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.cannot_send_offline").formatted(Formatting.RED), true);
                 return;
             }
 
@@ -265,7 +265,7 @@ final class RoleHandlers {
                 DaytimeState.removeTraveler(targetUuid);
                 ServerPlayNetworking.send(target, SendRoleS2CPayload.ofRole(Role.NO_ROLE, true, activePlayerCount, travelerCount, false));
                 MadnessSync.sendMadnessesToPlayer(context.server(), targetUuid, payload.reminders(), pendingRoles);
-                context.player().sendMessage(Text.literal("Cleared role for " + target.getGameProfile().getName()).formatted(Formatting.YELLOW), true);
+                context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.cleared_role", target.getGameProfile().getName()).formatted(Formatting.YELLOW), true);
                 return;
             }
 
@@ -279,7 +279,7 @@ final class RoleHandlers {
             ServerPlayNetworking.send(target, SendRoleS2CPayload.ofAssignment(assignment, activePlayerCount, travelerCount, false));
 
             MadnessSync.sendMadnessesToPlayer(context.server(), targetUuid, payload.reminders(), pendingRoles);
-            context.player().sendMessage(Text.literal("Sent roles to " + target.getGameProfile().getName()).formatted(Formatting.GREEN), true);
+            context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.sent_roles", target.getGameProfile().getName()).formatted(Formatting.GREEN), true);
         });
 
         ModPackets.registerGuarded(DistributeItemsC2SPayload.ID, (payload, context) -> {
@@ -307,9 +307,9 @@ final class RoleHandlers {
                 }
                 // Send feedback to storyteller
                 if (itemsGiven > 0) {
-                    player.sendMessage(Text.literal("Distributed " + itemsGiven + " items to players").formatted(Formatting.GREEN), false);
+                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.distributed_items", itemsGiven).formatted(Formatting.GREEN), false);
                 } else {
-                    player.sendMessage(Text.literal("All players already have items").formatted(Formatting.YELLOW), false);
+                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.all_have_items").formatted(Formatting.YELLOW), false);
                 }
             }
         });

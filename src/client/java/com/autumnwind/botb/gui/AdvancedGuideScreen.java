@@ -27,37 +27,39 @@ import com.autumnwind.botb.util.RoleGuides;
  */
 public class AdvancedGuideScreen extends Screen {
 
+    private static final String KEY_PREFIX = "gui.blood-on-the-blocktower.advanced_guide.";
+
     private final Screen parent;
     private GuideContentWidget contentWidget;
     private GuideCategory selectedCategory = GuideCategory.TRIGGERS;
     private double savedScrollAmount = 0.0;
 
-    /** Lowercased display name to role. */
-    private static final Map<String, Role> ROLES_BY_NAME = new HashMap<>();
+    /** Script id to role. */
+    private static final Map<String, Role> ROLES_BY_ID = new HashMap<>();
     static {
         for (Role role : Role.values()) {
-            if (role != Role.NO_ROLE) ROLES_BY_NAME.put(role.getDisplayName().toLowerCase(Locale.ROOT), role);
+            if (role != Role.NO_ROLE) ROLES_BY_ID.put(role.getId(), role);
         }
     }
 
     public AdvancedGuideScreen(Screen parent) {
-        super(Text.literal("Advanced Guide"));
+        super(Text.translatable(KEY_PREFIX + "title"));
         this.parent = parent;
     }
 
     private enum GuideCategory {
-        TRIGGERS("Triggers"),
-        ASSOCIATED_ROLES("Associated Roles"),
-        ABILITY_BLOCKING("Ability Blocking"),
-        GLOBAL_EFFECTS("Global Effects"),
-        VOTE_MODIFICATION("Vote Modification"),
-        MADNESS_HUD("Madness HUD"),
-        CUSTOM_ROLES("Custom Roles");
+        TRIGGERS,
+        ASSOCIATED_ROLES,
+        ABILITY_BLOCKING,
+        GLOBAL_EFFECTS,
+        VOTE_MODIFICATION,
+        MADNESS_HUD,
+        CUSTOM_ROLES;
 
-        private final String displayName;
+        private final String key = KEY_PREFIX + name().toLowerCase(Locale.ROOT);
 
-        GuideCategory(String displayName) {
-            this.displayName = displayName;
+        MutableText getDisplayName() {
+            return Text.translatable(key);
         }
     }
 
@@ -75,7 +77,7 @@ public class AdvancedGuideScreen extends Screen {
             final GuideCategory cat = category;
             Formatting color = (category == selectedCategory) ? Formatting.YELLOW : Formatting.WHITE;
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal(category.displayName).formatted(color),
+                    category.getDisplayName().formatted(color),
                     button -> {
                         selectedCategory = cat;
                         savedScrollAmount = 0.0;
@@ -88,14 +90,14 @@ public class AdvancedGuideScreen extends Screen {
         // Role Guides opens its own screen rather than a category
         currentY += buttonSpacing;
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Role Guides").formatted(Formatting.AQUA),
+                Text.translatable(KEY_PREFIX + "role_guides").formatted(Formatting.AQUA),
                 button -> this.client.setScreen(new RoleGuidesScreen(this))
         ).dimensions(leftColumnX, currentY, buttonWidth, buttonHeight).build());
 
         // Back button
         int backButtonWidth = 60;
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Back").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.back").formatted(Formatting.YELLOW),
                 button -> this.client.setScreen(this.parent)
         ).dimensions(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
 
@@ -153,274 +155,283 @@ public class AdvancedGuideScreen extends Screen {
         }
 
         private void populateTriggers(int textWidth) {
-            addTitle("Triggered Visits");
+            addTitle("triggers.triggered_visits.title");
             addSpacer();
-            addBody("Triggered visits appear dynamically either after dusk or after the current position in the night order when their condition is met. They occur as soon as possible regardless of their formal night order position.", textWidth);
-            addSpacer();
-            addSpacer();
-
-            addTitle("Conditional Visits");
-            addSpacer();
-            addBody("Some roles only appear in the night order when a condition is met. The visit shows up on its own when the condition holds.", textWidth);
-            addRoleList("Godfather, Summoner, Witch, King, Zombuul, Leviathan, Xaan, Riot, Undertaker", textWidth);
+            addBody("triggers.triggered_visits.body", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("Death Triggers");
+            addTitle("triggers.conditional_visits.title");
             addSpacer();
-            addBody("Death-based triggers activate when a player dies. There are four types based on HOW they died:", textWidth);
-            addSpacer();
-
-            addSubtitle("ANY Death (execution or night)");
-            addRoleList("Hatter, Barber, Sweetheart, Plague Doctor, Poppy Grower", textWidth);
-            addSpacer();
-
-            addSubtitle("NIGHT Death Only");
-            addRoleList("Farmer, Ravenkeeper", textWidth);
-            addBody("Only triggers if killed at night (when day counter != night counter).", textWidth);
-            addSpacer();
-
-            addSubtitle("DEMON Kill Only");
-            addRoleList("Sage, Banshee", textWidth);
-            addBody("Only triggers if killed by the demon at night. To mark a demon kill, place the demon's \"Dead\" reminder on the victim (e.g., Imp's \"Dead\" reminder). Al-Hadikhia's \"1\"/\"2\"/\"3\" reminders also count.", textWidth);
-            addSpacer();
-
-            addSubtitle("OTHER Player Death");
-            addRoleList("Grandmother, Choirboy, Scarlet Woman", textWidth);
-            addBody("These fire on someone else's death, not the role holder's: the grandchild, the King, and the demon respectively.", textWidth);
+            addBody("triggers.conditional_visits.body", textWidth);
+            addRoleList("godfather, summoner, witch, king, zombuul, leviathan, xaan, riot, undertaker", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("Revival & Role Switch Triggers");
+            addTitle("triggers.death_triggers.title");
+            addSpacer();
+            addBody("triggers.death_triggers.body", textWidth);
             addSpacer();
 
-            addSubtitle("Revival Triggers");
-            addBody("When a player is resurrected (e.g., by Professor or Shabaloth), if their role has a first-night-only ability, a triggered visit is created with their first night instructions. No auto-teleport.", textWidth);
+            addSubtitle("triggers.death_triggers.any.subtitle");
+            addRoleList("hatter, barber, sweetheart, plaguedoctor, poppygrower", textWidth);
             addSpacer();
 
-            addSubtitle("Role Switch Triggers");
-            addBody("When a player's role changes mid-night (not during their own visit), a triggered visit is created informing them of their new role. If the new role has first-night-only instructions, those are included. No auto-teleport.", textWidth);
+            addSubtitle("triggers.death_triggers.night.subtitle");
+            addRoleList("farmer, ravenkeeper", textWidth);
+            addBody("triggers.death_triggers.night.body", textWidth);
+            addSpacer();
+
+            addSubtitle("triggers.death_triggers.demon.subtitle");
+            addRoleList("sage, banshee", textWidth);
+            addBody("triggers.death_triggers.demon.body", textWidth);
+            addSpacer();
+
+            addSubtitle("triggers.death_triggers.other.subtitle");
+            addRoleList("grandmother, choirboy, scarletwoman", textWidth);
+            addBody("triggers.death_triggers.other.body", textWidth);
+            addSpacer();
+            addSpacer();
+
+            addTitle("triggers.revival_and_role_switch.title");
+            addSpacer();
+
+            addSubtitle("triggers.revival.subtitle");
+            addBody("triggers.revival.body", textWidth);
+            addSpacer();
+
+            addSubtitle("triggers.role_switch.subtitle");
+            addBody("triggers.role_switch.body", textWidth);
         }
 
         private void populateAssociatedRoles(int textWidth) {
-            addTitle("Associated Roles");
+            addTitle("associated_roles");
             addSpacer();
-            addBody("Associated roles are secondary abilities granted via special reminders. The reminder text is the role name in all capital letters (e.g., \"IMP\") with the role's icon and color boarder. These create additional visits at that role's night order position.", textWidth);
+            addBody("associated_roles.body_1", textWidth);
             addSpacer();
-            addBody("Roles that are built around them, each covered in Role Guides:", textWidth);
-            addRoleList("Philosopher, Cannibal, Pixie, Alchemist, Boffin, Drunk, Marionette, Lunatic, Hermit, Plague Doctor", textWidth);
+            addBody("associated_roles.body_2", textWidth);
+            addRoleList("philosopher, cannibal, pixie, alchemist, boffin, drunk, marionette, lunatic, hermit, plaguedoctor", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("First-Night-Only Associated Roles");
+            addTitle("associated_roles.first_night_only.title");
             addSpacer();
-            addBody("When adding an associated role that only has first night abilities (or has a first night ability and triggered other-nights abilities), a special triggered visit is created with the first night instructions. While potentially anyone can be given first night associated roles mid-game, it mainly applies to the Philosopher, Cannibal, and Pixie.", textWidth);
+            addBody("associated_roles.first_night_only.body", textWidth);
         }
 
         private void populateAbilityBlocking(int textWidth) {
-            addTitle("Ability Blocking");
+            addTitle("ability_blocking");
             addSpacer();
-            addBody("The \"No Ability\" reminder blocks player abilities. There are three types with different scopes:", textWidth);
-            addSpacer();
-            addSpacer();
-
-            addSubtitle("Preacher \"No Ability\"");
-            addBody("Blocks ALL minion abilities for the target player. Add this reminder to a minion chosen by the Preacher. Only affects minion-type roles.", textWidth);
-            addSpacer();
-
-            addSubtitle("Role-Specific \"No Ability\"");
-            addBody("The \"No Ability\" for a specific role (e.g., \"No Ability\" with Assassin icon) blocks only that specific role's ability. Used for once-per-game abilities that have been spent.", textWidth);
-            addSpacer();
-
-            addSubtitle("Generic \"No Ability\"");
-            addBody("Adding \"No Ability\" WITHOUT any role icon (i.e. as a custom reminder) will block ALL abilities for that player. This prevents all visits for their assigned role and any associated roles.", textWidth);
+            addBody("ability_blocking.body", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("\"Has Ability\" Overrides");
+            addSubtitle("ability_blocking.preacher.subtitle");
+            addBody("ability_blocking.preacher.body", textWidth);
             addSpacer();
-            addHighlight("A role's \"Has Ability\" reminder overrides death-based deactivation.", textWidth);
-            addBody("Normally, death-based roles lose their ability when dead (e.g., Undertaker). A dead player carrying a \"Has Ability\" reminder stays active for visits and ability checks despite being dead.", textWidth);
+
+            addSubtitle("ability_blocking.role_specific.subtitle");
+            addBody("ability_blocking.role_specific.body", textWidth);
+            addSpacer();
+
+            addSubtitle("ability_blocking.generic.subtitle");
+            addBody("ability_blocking.generic.body", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("Droisoned & Fake Roles");
+            addTitle("ability_blocking.has_ability.title");
             addSpacer();
-            addHighlight("Drunk/poisoned and fake roles keep their own visits but stop affecting everything else.", textWidth);
-            addBody("A player with any \"Drunk\" or \"Poisoned\" reminder (or anyone drunk from the Minstrel or poisoned by the Xaan) still wakes for their own visits, but their role no longer affects other visits or systems. That means no Minion Info or Demon Info modifiers from:", textWidth);
-            addRoleList("Magician, Poppy Grower, Snitch, Damsel, King, Marionette", textWidth);
-            addBody("No Vortox icon and \"Tell them lies\" line, Legion vote handling, Organ Grinder mode, Boffin ability for the demon, or Wraith auto-teleports from:", textWidth);
-            addRoleList("Vortox, Legion, Organ Grinder, Boffin, Wraith", textWidth);
-            addBody("And no triggers from:", textWidth);
-            addRoleList("Scarlet Woman, Grandmother, Barber, Hatter, Poppy Grower", textWidth);
+            addHighlight("ability_blocking.has_ability.highlight", textWidth);
+            addBody("ability_blocking.has_ability.body", textWidth);
             addSpacer();
-            addBody("Visits that only remind the Storyteller to do something (no player wakes) are skipped entirely for a droisoned holder, since there is nothing to fake:", textWidth);
-            addRoleList("Gossip, Tinker, Moonchild, Cult Leader, Princess, Legion, Vizier, Riot", textWidth);
-            addBody("Likewise the Mezepheles on other nights, the Leviathan on night 1 and its day 5 game over, and the death triggers of:", textWidth);
-            addRoleList("Mezepheles, Leviathan, Sweetheart, Plague Doctor, Farmer, Banshee", textWidth);
             addSpacer();
-            addBody("Fake roles are treated the same way. They get their (false) visits as normal but leave no other footprint. Certain role types count as fake for:", textWidth);
-            addRoleList("Drunk, Marionette, Lunatic, Hermit", textWidth);
+
+            addTitle("ability_blocking.droisoned.title");
+            addSpacer();
+            addHighlight("ability_blocking.droisoned.highlight", textWidth);
+            addBody("ability_blocking.droisoned.body_1", textWidth);
+            addRoleList("magician, poppygrower, snitch, damsel, king, marionette", textWidth);
+            addBody("ability_blocking.droisoned.body_2", textWidth);
+            addRoleList("vortox, legion, organgrinder, boffin, wraith", textWidth);
+            addBody("ability_blocking.droisoned.body_3", textWidth);
+            addRoleList("scarletwoman, grandmother, barber, hatter, poppygrower", textWidth);
+            addSpacer();
+            addBody("ability_blocking.droisoned.body_4", textWidth);
+            addRoleList("gossip, tinker, moonchild, cultleader, princess, legion, vizier, riot", textWidth);
+            addBody("ability_blocking.droisoned.body_5", textWidth);
+            addRoleList("mezepheles, leviathan, sweetheart, plaguedoctor, farmer, banshee", textWidth);
+            addSpacer();
+            addBody("ability_blocking.droisoned.body_6", textWidth);
+            addRoleList("drunk, marionette, lunatic, hermit", textWidth);
         }
 
         private void populateGlobalEffects(int textWidth) {
-            addTitle("Global Effects");
+            addTitle("global_effects");
             addSpacer();
-            addBody("These effects impact multiple players and display as icon reminders on affected visits. Each is covered in Role Guides:", textWidth);
-            addRoleList("Minstrel, Vortox, Xaan, Lil' Monsta, Princess, Al-Hadikhia", textWidth);
+            addBody("global_effects.body", textWidth);
+            addRoleList("minstrel, vortox, xaan, lilmonsta, princess, alhadikhia", textWidth);
             addSpacer();
-            addSpacer();
-
-            addSubtitle("Nominations Modifiers");
-            addBody("Roles that change how nominations or votes work add an icon to the Nominations static action, each with its own instruction line.", textWidth);
-            addRoleList("Organ Grinder, Bishop, Legion, Riot", textWidth);
             addSpacer();
 
-            addSubtitle("Fabled & Loric Visits");
-            addBody("Fabled and loric are never assigned to a seat, so their night visits are based on script presence.", textWidth);
-            addRoleList("Storm Catcher, Tor, Buddhist, Toymaker", textWidth);
+            addSubtitle("global_effects.nominations_modifiers.subtitle");
+            addBody("global_effects.nominations_modifiers.body", textWidth);
+            addRoleList("organgrinder, bishop, legion, riot", textWidth);
+            addSpacer();
+
+            addSubtitle("global_effects.fabled_and_loric.subtitle");
+            addBody("global_effects.fabled_and_loric.body", textWidth);
+            addRoleList("stormcatcher, tor, buddhist, toymaker", textWidth);
         }
 
         private void populateVoteModification(int textWidth) {
-            addTitle("Vote Modification");
+            addTitle("vote_modification");
             addSpacer();
-            addBody("Several roles and reminders modify voting behavior. Roles that modify voting:", textWidth);
-            addRoleList("Banshee, Voudon, Bureaucrat, Thief, God of Ug, Beggar, Organ Grinder, Legion, Butcher", textWidth);
-            addSpacer();
-            addSpacer();
-
-            addTitle("Multiplier Stacking");
-            addSpacer();
-            addBody("Vote multipliers stack multiplicatively:", textWidth);
-            addRoleList("Banshee (2) × Bureaucrat (3) = 6 votes", textWidth);
-            addRoleList("God of Ug (2) × Thief (-1) = -2 votes", textWidth);
-            addRoleList("All four: 2 × 2 × 3 × -1 = -12 votes", textWidth);
-            addSpacer();
-            addBody("Note: These multipliers only affect executions, NOT exiles. Exile votes are never modified by abilities.", textWidth);
+            addBody("vote_modification.body", textWidth);
+            addRoleList("banshee, voudon, bureaucrat, thief, godofug, beggar, organgrinder, legion, butcher", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("Ghost Vote Toggle");
+            addTitle("vote_modification.multiplier_stacking.title");
             addSpacer();
-            addHighlight("Ctrl + Alt + Click on a dead player's head in the grimoire", textWidth);
-            addBody("Toggles whether that player has used their ghost vote, for the Beggar or to fix a mistake. The used ghost vote indicator (obsidian block below vote indicator) updates to reflect this change.", textWidth);
+            addBody("vote_modification.multiplier_stacking.body", textWidth);
+            addAqua("vote_modification.multiplier_stacking.example_1", textWidth);
+            addAqua("vote_modification.multiplier_stacking.example_2", textWidth);
+            addAqua("vote_modification.multiplier_stacking.example_3", textWidth);
+            addSpacer();
+            addBody("vote_modification.multiplier_stacking.note", textWidth);
+            addSpacer();
+            addSpacer();
+
+            addTitle("vote_modification.ghost_vote_toggle.title");
+            addSpacer();
+            addHighlight("vote_modification.ghost_vote_toggle.highlight", textWidth);
+            addBody("vote_modification.ghost_vote_toggle.body", textWidth);
         }
 
         private void populateMadnessHud(int textWidth) {
-            addTitle("Madness HUD");
+            addTitle("madness_hud");
             addSpacer();
-            addBody("The Madness HUD displays active madness conditions in the bottom-left corner. For storytellers, it shows all players' madnesses. For players, it shows only their own madness conditions (except Mutant, which is storyteller-only).", textWidth);
+            addBody("madness_hud.body_1", textWidth);
             addSpacer();
-            addBody("Press the Role HUD toggle key to expand the madness display.", textWidth);
+            addBody("madness_hud.body_2", textWidth);
             addSpacer();
-            addBody("Madness comes from reminders placed on players, and the player's HUD only updates when you send roles again. Roles that cause madness:", textWidth);
-            addRoleList("Cerenovus, Harpy, Pixie, Mutant", textWidth);
+            addBody("madness_hud.body_3", textWidth);
+            addRoleList("cerenovus, harpy, pixie, mutant", textWidth);
         }
 
         private void populateCustomRoles(int textWidth) {
-            addTitle("Custom Roles");
+            addTitle("custom_roles");
             addSpacer();
-            addBody("Custom (homebrew) roles are supported using the official Blood on the Clocktower script JSON schema. Custom roles appear alongside official roles in the grimoire screen, script reference, and night order.", textWidth);
-            addSpacer();
-            addSpacer();
-
-            addTitle("Script JSON Format");
-            addSpacer();
-            addBody("Scripts are imported via clipboard (import button in grimoire screen), as JSON arrays. Each role can be a string (official role ID) or an object (custom role definition).", textWidth);
-            addSpacer();
-
-            addSubtitle("Custom Role Object Fields");
-            addBody("Required fields:", textWidth);
-            addRoleList("id, name, team, ability", textWidth);
-            addSpacer();
-            addBody("Optional fields:", textWidth);
-            addRoleList("image, flavor, firstNight, otherNight, firstNightReminder, otherNightReminder, reminders, remindersGlobal, setup, jinxes", textWidth);
-            addSpacer();
-
-            addSubtitle("Team Values");
-            addBody("Valid team values: \"townsfolk\", \"outsider\", \"minion\", \"demon\", \"traveler\" (or \"traveller\"), \"fabled\", \"loric\".", textWidth);
-            addSpacer();
-
-            addSubtitle("Image Field");
-            addBody("The image field can be a single URL string or an array of 1-3 URLs:", textWidth);
-            addBody("- 1 URL: Used for all alignments", textWidth);
-            addBody("- 2 URLs: [good, evil]", textWidth);
-            addBody("- 3 URLs: [neutral, good, evil]", textWidth);
-            addSpacer();
-
-            addSubtitle("Night Order");
-            addBody("Set firstNight and otherNight to decimal values (e.g., 15.5) to position the role in the night order. Use 0 or omit for roles that don't wake.", textWidth);
+            addBody("custom_roles.body", textWidth);
             addSpacer();
             addSpacer();
 
-            addTitle("Almanac Support");
+            addTitle("custom_roles.script_json_format.title");
             addSpacer();
-            addBody("Custom scripts can link to bloodstar.clocktica.com almanac pages for additional role documentation (Overview, Examples, How To Run, Tips).", textWidth);
-            addSpacer();
-
-            addSubtitle("Main Almanac");
-            addBody("In the _meta object, add an \"almanac\" field with the URL to the almanac HTML page:", textWidth);
-            addHighlight("\"almanac\": \"https://bloodstar.clocktica.com/p/YourScript/almanac.html\"", textWidth);
-            addSpacer();
-            addBody("This provides script-level data (Synopsis, Overview, Changelog) plus role documentation for all roles in that almanac.", textWidth);
+            addBody("custom_roles.script_json_format.body", textWidth);
             addSpacer();
 
-            addSubtitle("Extra Almanacs");
-            addBody("If your script includes custom roles documented in other almanacs, add their almanac URLs to the \"extraAlmanacs\" array:", textWidth);
-            addHighlight("\"extraAlmanacs\": [\"https://bloodstar.clocktica.com/p/Other/almanac.html\", \"https://bloodstar.clocktica.com/p/Another/almanac.html\"]", textWidth);
+            addSubtitle("custom_roles.object_fields.subtitle");
+            addBody("custom_roles.object_fields.required", textWidth);
+            addAqua("custom_roles.object_fields.required_list", textWidth);
             addSpacer();
-            addBody("Extra almanacs only provide role data (not script-level data). Role data from extra almanacs is loaded first, then the main almanac overlays it (main takes precedence).", textWidth);
-            addSpacer();
-
-            addSubtitle("Role ID Matching");
-            addBody("Almanac role IDs are matched by normalizing: lowercase, removing underscores/spaces/dashes. For example, \"My_Custom-Role\" matches \"mycustomrole\" in the almanac HTML.", textWidth);
-            addSpacer();
+            addBody("custom_roles.object_fields.optional", textWidth);
+            addAqua("custom_roles.object_fields.optional_list", textWidth);
             addSpacer();
 
-            addTitle("Example _meta Object");
+            addSubtitle("custom_roles.team_values.subtitle");
+            addBody("custom_roles.team_values.body", textWidth);
             addSpacer();
-            addBody("{", textWidth);
-            addBody("  \"id\": \"_meta\",", textWidth);
-            addBody("  \"name\": \"My Custom Script\",", textWidth);
-            addBody("  \"author\": \"Your Name\",", textWidth);
-            addBody("  \"logo\": \"https://example.com/logo.png\",", textWidth);
-            addBody("  \"almanac\": \"https://bloodstar.clocktica.com/p/.../almanac.html\",", textWidth);
-            addBody("  \"extraAlmanacs\": [\"https://bloodstar.clocktica.com/p/.../almanac.html\"]", textWidth);
-            addBody("}", textWidth);
+
+            addSubtitle("custom_roles.image_field.subtitle");
+            addBody("custom_roles.image_field.body", textWidth);
+            addBody("custom_roles.image_field.one_url", textWidth);
+            addBody("custom_roles.image_field.two_urls", textWidth);
+            addBody("custom_roles.image_field.three_urls", textWidth);
+            addSpacer();
+
+            addSubtitle("custom_roles.night_order.subtitle");
+            addBody("custom_roles.night_order.body", textWidth);
+            addSpacer();
+            addSpacer();
+
+            addTitle("custom_roles.almanac.title");
+            addSpacer();
+            addBody("custom_roles.almanac.body", textWidth);
+            addSpacer();
+
+            addSubtitle("custom_roles.almanac.main.subtitle");
+            addBody("custom_roles.almanac.main.body_1", textWidth);
+            addHighlight("custom_roles.almanac.main.highlight", textWidth);
+            addSpacer();
+            addBody("custom_roles.almanac.main.body_2", textWidth);
+            addSpacer();
+
+            addSubtitle("custom_roles.almanac.extra.subtitle");
+            addBody("custom_roles.almanac.extra.body_1", textWidth);
+            addHighlight("custom_roles.almanac.extra.highlight", textWidth);
+            addSpacer();
+            addBody("custom_roles.almanac.extra.body_2", textWidth);
+            addSpacer();
+
+            addSubtitle("custom_roles.almanac.role_id_matching.subtitle");
+            addBody("custom_roles.almanac.role_id_matching.body", textWidth);
+            addSpacer();
+            addSpacer();
+
+            addTitle("custom_roles.example_meta.title");
+            addSpacer();
+            addBody("custom_roles.example_meta.line_1", textWidth);
+            addBody("custom_roles.example_meta.line_2", textWidth);
+            addBody("custom_roles.example_meta.line_3", textWidth);
+            addBody("custom_roles.example_meta.line_4", textWidth);
+            addBody("custom_roles.example_meta.line_5", textWidth);
+            addBody("custom_roles.example_meta.line_6", textWidth);
+            addBody("custom_roles.example_meta.line_7", textWidth);
+            addBody("custom_roles.example_meta.line_8", textWidth);
         }
 
         // Helper methods for adding entries
-        private void addTitle(String text) {
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal(text).formatted(Formatting.GOLD, Formatting.BOLD)));
+        private void addTitle(String key) {
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable(KEY_PREFIX + key).formatted(Formatting.GOLD, Formatting.BOLD)));
         }
 
-        private void addSubtitle(String text) {
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal(text).formatted(Formatting.WHITE, Formatting.UNDERLINE)));
+        private void addSubtitle(String key) {
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable(KEY_PREFIX + key).formatted(Formatting.WHITE, Formatting.UNDERLINE)));
         }
 
-        private void addBody(String text, int width) {
-            for (OrderedText line : textRenderer.wrapLines(Text.literal(text), width)) {
+        private void addBody(String key, int width) {
+            for (OrderedText line : textRenderer.wrapLines(Text.translatable(KEY_PREFIX + key), width)) {
                 this.addEntry(DocumentEntry.text(textRenderer, line, 0xCCCCCC));
             }
         }
 
-        private void addHighlight(String text, int width) {
-            MutableText highlighted = Text.literal(text).formatted(Formatting.GOLD);
+        private void addHighlight(String key, int width) {
+            MutableText highlighted = Text.translatable(KEY_PREFIX + key).formatted(Formatting.GOLD);
             for (OrderedText line : textRenderer.wrapLines(highlighted, width)) {
                 this.addEntry(DocumentEntry.text(textRenderer, line, 0xCCCCCC));
             }
         }
 
+        /** Plain aqua text in the same style as a role list, without links. */
+        private void addAqua(String key, int width) {
+            MutableText aqua = Text.translatable(KEY_PREFIX + key).formatted(Formatting.AQUA);
+            for (OrderedText line : textRenderer.wrapLines(aqua, width)) {
+                this.addEntry(DocumentEntry.text(textRenderer, line, 0xCCCCCC));
+            }
+        }
+
         /**
-         * A comma-separated list in aqua. Items that name a role become links to its guide, or
-         * its details page if it doesn't have one.
+         * A comma-separated list of role script ids, drawn as role names in aqua. Each item links
+         * to the role's guide, or its details page if it doesn't have one.
          */
-        private void addRoleList(String roles, int width) {
+        private void addRoleList(String roleIds, int width) {
             List<RoleLink> line = new ArrayList<>();
             int lineWidth = 0;
-            String[] items = roles.split(", ");
-            for (int i = 0; i < items.length; i++) {
-                String label = items[i] + (i < items.length - 1 ? "," : "");
+            String[] ids = roleIds.split(", ");
+            for (int i = 0; i < ids.length; i++) {
+                Role role = ROLES_BY_ID.get(ids[i]);
+                String label = (role != null ? role.getDisplayName() : ids[i]) + (i < ids.length - 1 ? "," : "");
                 int labelWidth = textRenderer.getWidth(label);
                 int gap = line.isEmpty() ? 0 : textRenderer.getWidth(" ");
                 if (!line.isEmpty() && lineWidth + gap + labelWidth > width) {
@@ -429,7 +440,7 @@ public class AdvancedGuideScreen extends Screen {
                     lineWidth = 0;
                     gap = 0;
                 }
-                line.add(new RoleLink(label, ROLES_BY_NAME.get(items[i].toLowerCase(Locale.ROOT)), lineWidth + gap, labelWidth));
+                line.add(new RoleLink(label, role, lineWidth + gap, labelWidth));
                 lineWidth += gap + labelWidth;
             }
             if (!line.isEmpty()) {

@@ -42,7 +42,7 @@ final class DayNightHandlers {
                     if (storytellerMFE != null) {
                         ServerPlayerEntity mfePlayer = context.server().getPlayerManager().getPlayer(storytellerMFE);
                         String mfeName = mfePlayer != null ? mfePlayer.getName().getString() : "Unknown";
-                        player.sendMessage(Text.literal("Cannot activate Dusk: " + mfeName + " is marked for execution").formatted(Formatting.RED), true);
+                        player.sendMessage(Text.translatable("message.blood-on-the-blocktower.night.cannot_dusk_marked", mfeName).formatted(Formatting.RED), true);
                         return;
                     }
 
@@ -50,7 +50,7 @@ final class DayNightHandlers {
                         // Get nominee player name for the message
                         ServerPlayerEntity nomineePlayer = context.server().getPlayerManager().getPlayer(currentNominee);
                         String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : "Unknown";
-                        player.sendMessage(Text.literal("Cannot activate Dusk: " + nomineeName + " is currently nominated").formatted(Formatting.RED), true);
+                        player.sendMessage(Text.translatable("message.blood-on-the-blocktower.night.cannot_dusk_nominated", nomineeName).formatted(Formatting.RED), true);
                         return;
                     }
 
@@ -59,19 +59,19 @@ final class DayNightHandlers {
                     if (currentExileTarget != null) {
                         ServerPlayerEntity exilePlayer = context.server().getPlayerManager().getPlayer(currentExileTarget);
                         String exileName = exilePlayer != null ? exilePlayer.getName().getString() : "Unknown";
-                        player.sendMessage(Text.literal("Cannot activate Dusk: " + exileName + " is called for exile").formatted(Formatting.RED), true);
+                        player.sendMessage(Text.translatable("message.blood-on-the-blocktower.night.cannot_dusk_exile", exileName).formatted(Formatting.RED), true);
                         return;
                     }
 
                     command = ServerConfig.DUSK_COMMAND;
                     soundType = PlaySoundS2CPayload.DUSK;
-                    messageToAll = Text.literal("Night falls...").formatted(Formatting.DARK_PURPLE);
+                    messageToAll = Text.translatable("message.blood-on-the-blocktower.night.night_falls").formatted(Formatting.DARK_PURPLE);
 
                     // Calculate night number message (after incrementing)
                     int nightNumber = ServerState.currentNight <= ServerState.currentDay
                         ? ServerState.currentNight + 1  // Will be incremented below
                         : ServerState.currentNight;     // Already at max
-                    extraMessage = Text.literal("--- Night " + nightNumber + " ---").formatted(Formatting.LIGHT_PURPLE);
+                    extraMessage = Text.translatable("message.blood-on-the-blocktower.night.night_number", nightNumber).formatted(Formatting.LIGHT_PURPLE);
 
                     // Process any pending ghost vote updates from Organ Grinder mode
                     // This places the ghost used blocks that were delayed during the vote
@@ -136,13 +136,13 @@ final class DayNightHandlers {
                 } else if (ExecuteDuskDawnC2SPayload.DAWN.equals(type)) {
                     command = ServerConfig.DAWN_COMMAND;
                     soundType = PlaySoundS2CPayload.DAWN;
-                    messageToAll = Text.literal("Dawn breaks!").formatted(Formatting.GOLD);
+                    messageToAll = Text.translatable("message.blood-on-the-blocktower.night.dawn_breaks").formatted(Formatting.GOLD);
 
                     // Calculate day number message (after incrementing)
                     int dayNumber = ServerState.currentDay < ServerState.currentNight
                         ? ServerState.currentDay + 1  // Will be incremented below
                         : ServerState.currentDay;     // Already at max
-                    extraMessage = Text.literal("--- Day " + dayNumber + " ---").formatted(Formatting.YELLOW);
+                    extraMessage = Text.translatable("message.blood-on-the-blocktower.night.day_number", dayNumber).formatted(Formatting.YELLOW);
 
                     // Reset execution tracking for Undertaker (new day = new execution opportunity)
                     ServerState.executionToday = false;

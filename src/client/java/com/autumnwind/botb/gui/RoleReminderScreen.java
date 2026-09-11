@@ -69,7 +69,7 @@ public class RoleReminderScreen extends Screen {
         int startX = this.width / 2 - searchWidth / 2;
 
         // Search field
-        this.searchField = new TextFieldWidget(this.textRenderer, startX, topBarY, searchWidth, 20, Text.literal("Search..."));
+        this.searchField = new TextFieldWidget(this.textRenderer, startX, topBarY, searchWidth, 20, Text.translatable("gui.blood-on-the-blocktower.role_reminder.search"));
         this.searchField.setChangedListener(this::filterRoles);
         this.addDrawableChild(this.searchField);
 

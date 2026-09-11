@@ -160,16 +160,16 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
                 // Check if a script is assigned
                 if (ClientState.currentScript == null) {
                     // Show overlay message that no script is assigned
-                    client.inGameHud.setOverlayMessage(Text.literal("No script assigned"), false);
+                    client.inGameHud.setOverlayMessage(Text.translatable("message.blood-on-the-blocktower.client.no_script_assigned_overlay"), false);
                     return TypedActionResult.success(stack);
                 }
-                client.send(() -> client.setScreen(new ScriptReferenceScreen(Text.literal("Script Reference"))));
+                client.send(() -> client.setScreen(new ScriptReferenceScreen(Text.translatable("message.blood-on-the-blocktower.client.title_script_reference"))));
                 return TypedActionResult.success(stack);
             }
 
             // Grimoire item opens Assign Roles screen
             if (stack.isOf(ModItems.GRIMOIRE)) {
-                client.send(() -> client.setScreen(new AssignRolesScreen(Text.literal("Grimoire"))));
+                client.send(() -> client.setScreen(new AssignRolesScreen(Text.translatable("message.blood-on-the-blocktower.client.title_grimoire"))));
                 return TypedActionResult.success(stack);
             }
 

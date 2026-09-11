@@ -29,7 +29,7 @@ public class SettingsScreen extends Screen {
     private DocumentationListWidget documentationWidget;
 
     public SettingsScreen(Screen parent) {
-        super(Text.literal("Settings"));
+        super(Text.translatable("gui.blood-on-the-blocktower.settings.title"));
         this.parent = parent;
     }
 
@@ -53,7 +53,7 @@ public class SettingsScreen extends Screen {
         // Nominations Volume
         this.addDrawableChild(new VolumeSlider(
                 leftColumnX, currentY, sliderWidth, sliderHeight,
-                "Nominations", ClientState.volumeNominations,
+                Text.translatable("gui.blood-on-the-blocktower.settings.volume.nominations"), ClientState.volumeNominations,
                 value -> {
                     ClientState.volumeNominations = value;
                     PlayerConfig.save();
@@ -64,7 +64,7 @@ public class SettingsScreen extends Screen {
         // Dawn/Dusk Volume
         this.addDrawableChild(new VolumeSlider(
                 leftColumnX, currentY, sliderWidth, sliderHeight,
-                "Dawn/Dusk", ClientState.volumeDawnDusk,
+                Text.translatable("gui.blood-on-the-blocktower.settings.volume.dawn_dusk"), ClientState.volumeDawnDusk,
                 value -> {
                     ClientState.volumeDawnDusk = value;
                     PlayerConfig.save();
@@ -75,7 +75,7 @@ public class SettingsScreen extends Screen {
         // Visit Sound Volume (doorbell/doorknock - storyteller chooses which sound)
         this.addDrawableChild(new VolumeSlider(
                 leftColumnX, currentY, sliderWidth, sliderHeight,
-                "Visit Sound", ClientState.volumeDoorbell,
+                Text.translatable("gui.blood-on-the-blocktower.settings.volume.visit_sound"), ClientState.volumeDoorbell,
                 value -> {
                     ClientState.volumeDoorbell = value;
                     PlayerConfig.save();
@@ -86,7 +86,7 @@ public class SettingsScreen extends Screen {
         // Role Receive Volume
         this.addDrawableChild(new VolumeSlider(
                 leftColumnX, currentY, sliderWidth, sliderHeight,
-                "Role Receive", ClientState.volumeRoleReceive,
+                Text.translatable("gui.blood-on-the-blocktower.settings.volume.role_receive"), ClientState.volumeRoleReceive,
                 value -> {
                     ClientState.volumeRoleReceive = value;
                     PlayerConfig.save();
@@ -97,7 +97,7 @@ public class SettingsScreen extends Screen {
         // Final Reveal Volume (game_end sound)
         this.addDrawableChild(new VolumeSlider(
                 leftColumnX, currentY, sliderWidth, sliderHeight,
-                "Final Reveal", ClientState.volumeFinalReveal,
+                Text.translatable("gui.blood-on-the-blocktower.settings.volume.final_reveal"), ClientState.volumeFinalReveal,
                 value -> {
                     ClientState.volumeFinalReveal = value;
                     PlayerConfig.save();
@@ -118,43 +118,43 @@ public class SettingsScreen extends Screen {
         int rightColX = leftColumnX + prefButtonWidth + sliderSpacing;
 
         // Row 1: Fade Heads | Animations
-        Text fadeText = Text.literal("Fade Heads: " + (ClientState.fadeOutOfGroupHeads ? "ON" : "OFF"));
+        Text fadeText = Text.translatable("gui.blood-on-the-blocktower.settings.fade_heads", onOff(ClientState.fadeOutOfGroupHeads));
         this.addDrawableChild(ButtonWidget.builder(fadeText, b -> {
             ClientState.fadeOutOfGroupHeads = !ClientState.fadeOutOfGroupHeads;
             PlayerConfig.save();
             this.client.setScreen(this);
         }).dimensions(leftColX, currentY, prefButtonWidth, sliderHeight)
-        .tooltip(Tooltip.of(Text.literal("Fade player heads in grimoire when not in your voice chat group")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.fade_heads")))
         .build());
 
-        Text animationsText = Text.literal("Animations: " + (ClientState.grimoireAnimationsEnabled ? "ON" : "OFF"));
+        Text animationsText = Text.translatable("gui.blood-on-the-blocktower.settings.animations", onOff(ClientState.grimoireAnimationsEnabled));
         this.addDrawableChild(ButtonWidget.builder(animationsText, b -> {
             ClientState.grimoireAnimationsEnabled = !ClientState.grimoireAnimationsEnabled;
             PlayerConfig.save();
             this.client.setScreen(this);
         }).dimensions(rightColX, currentY, prefButtonWidth, sliderHeight)
-        .tooltip(Tooltip.of(Text.literal("Enable or disable grimoire entry fade-in animations")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.animations")))
         .build());
 
         currentY += sliderHeight + sliderSpacing;
 
         // Row 2: Hints | Floating Role Icons
-        Text hintsText = Text.literal("Hints: " + (ClientState.hintsEnabled ? "ON" : "OFF"));
+        Text hintsText = Text.translatable("gui.blood-on-the-blocktower.settings.hints", onOff(ClientState.hintsEnabled));
         this.addDrawableChild(ButtonWidget.builder(hintsText, b -> {
             ClientState.hintsEnabled = !ClientState.hintsEnabled;
             PlayerConfig.save();
             this.client.setScreen(this);
         }).dimensions(leftColX, currentY, prefButtonWidth, sliderHeight)
-        .tooltip(Tooltip.of(Text.literal("Show helpful hints and tips")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.hints")))
         .build());
 
-        Text iconsText = Text.literal("Role Icons: " + ClientState.floatingRoleIconMode.displayName());
+        Text iconsText = Text.translatable("gui.blood-on-the-blocktower.settings.role_icons", ClientState.floatingRoleIconMode.displayName());
         this.addDrawableChild(ButtonWidget.builder(iconsText, b -> {
             ClientState.floatingRoleIconMode = ClientState.floatingRoleIconMode.cycle();
             PlayerConfig.save();
             this.client.setScreen(this);
         }).dimensions(rightColX, currentY, prefButtonWidth, sliderHeight)
-        .tooltip(Tooltip.of(Text.literal("Floating role icons above player heads: OFF / ALWAYS / GAME END (after game end only, cleared on reset)")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.role_icons")))
         .build());
 
         // ========================================
@@ -170,35 +170,35 @@ public class SettingsScreen extends Screen {
                 && this.client.player.hasPermissionLevel(2);
         if (!isStoryteller) {
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("Whisper Rules").formatted(Formatting.LIGHT_PURPLE),
+                    Text.translatable("gui.blood-on-the-blocktower.settings.whisper_rules").formatted(Formatting.LIGHT_PURPLE),
                     button -> this.client.setScreen(new WhisperSettingsScreen(this, false))
             ).dimensions(
                     this.width - backButtonWidth - glossaryButtonWidth - whisperButtonWidth - 2 * buttonSpacingBottom - 10,
                     this.height - 30, whisperButtonWidth, 20)
-            .tooltip(Tooltip.of(Text.literal("View the whisper rules set by the storyteller")))
+            .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.whisper_rules")))
             .build());
         }
 
         // Glossary button
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Glossary").formatted(Formatting.GOLD),
+                Text.translatable("gui.blood-on-the-blocktower.settings.glossary").formatted(Formatting.GOLD),
                 button -> this.client.setScreen(new GlossaryScreen(this))
         ).dimensions(this.width - backButtonWidth - glossaryButtonWidth - buttonSpacingBottom - 10, this.height - 30, glossaryButtonWidth, 20)
-        .tooltip(Tooltip.of(Text.literal("View game terminology and rules")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.glossary")))
         .build());
 
         // Back button
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Back").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.settings.back").formatted(Formatting.YELLOW),
                 button -> this.client.setScreen(this.parent)
         ).dimensions(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
 
         // Credits button, bottom-left
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Credits").formatted(Formatting.AQUA),
+                Text.translatable("gui.blood-on-the-blocktower.settings.credits").formatted(Formatting.AQUA),
                 button -> this.client.setScreen(new CreditsScreen(this))
         ).dimensions(10, this.height - 30, 70, 20)
-        .tooltip(Tooltip.of(Text.literal("Who made this")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.settings.tooltip.credits")))
         .build());
 
         // ========================================
@@ -223,11 +223,17 @@ public class SettingsScreen extends Screen {
 
         // Draw category labels
         int leftColumnX = 20;
-        context.drawTextWithShadow(this.textRenderer, Text.literal("Volume").formatted(Formatting.GOLD), leftColumnX, 25, 0xFFFFFF);
+        context.drawTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.category.volume").formatted(Formatting.GOLD), leftColumnX, 25, 0xFFFFFF);
 
         // Calculate preferences category Y position (after 5 volume sliders)
         int grimoireCategoryY = 25 + 12 + 2 + (5 * (20 + 5)) + 15;
-        context.drawTextWithShadow(this.textRenderer, Text.literal("Preferences").formatted(Formatting.GOLD), leftColumnX, grimoireCategoryY, 0xFFFFFF);
+        context.drawTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.category.preferences").formatted(Formatting.GOLD), leftColumnX, grimoireCategoryY, 0xFFFFFF);
+    }
+
+    private static Text onOff(boolean on) {
+        return Text.translatable(on
+                ? "gui.blood-on-the-blocktower.settings.on"
+                : "gui.blood-on-the-blocktower.settings.off");
     }
 
     @Override
@@ -246,7 +252,7 @@ public class SettingsScreen extends Screen {
      * Range: 0% to 100% (stored as 0.0 to 1.0 multiplier)
      */
     private static class VolumeSlider extends SliderWidget {
-        private final String label;
+        private final Text label;
         private final VolumeCallback callback;
 
         @FunctionalInterface
@@ -254,7 +260,7 @@ public class SettingsScreen extends Screen {
             void apply(float value);
         }
 
-        public VolumeSlider(int x, int y, int width, int height, String label, float initialValue, VolumeCallback callback) {
+        public VolumeSlider(int x, int y, int width, int height, Text label, float initialValue, VolumeCallback callback) {
             // Slider value is 0.0-1.0, same as volume multiplier
             super(x, y, width, height, Text.empty(), initialValue);
             this.label = label;
@@ -266,7 +272,7 @@ public class SettingsScreen extends Screen {
         protected void updateMessage() {
             // value is 0.0-1.0, multiply by 100 to get percentage
             int percent = (int) (this.value * 100);
-            this.setMessage(Text.literal(label + ": " + percent + "%"));
+            this.setMessage(Text.translatable("gui.blood-on-the-blocktower.settings.volume_format", label, percent));
         }
 
         @Override
@@ -287,89 +293,89 @@ public class SettingsScreen extends Screen {
             int textWidth = this.getRowWidth() - 10;
 
             // --- Hotkeys Section ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Hotkeys").formatted(Formatting.GOLD, Formatting.BOLD)));
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.hotkeys").formatted(Formatting.GOLD, Formatting.BOLD)));
             this.addEntry(DocumentEntry.spacer());
 
-            addHotkeyEntry("Open Grimoire", KeyInputHandler.openAssignGui);
-            addHotkeyEntry("Open Script", KeyInputHandler.openScriptKey);
-            addHotkeyEntry("Open Role Details", KeyInputHandler.openMyRoleDetailsKey);
-            addHotkeyEntry("Open Role Catalog", KeyInputHandler.openCatalogKey);
-            addHotkeyEntry("Toggle Role HUD", KeyInputHandler.toggleShowRole);
-            addHotkeyEntry("Grimoire Quick View", KeyInputHandler.quickRoleViewKey);
-            addHotkeyEntry("Toggle Sidebar", KeyInputHandler.toggleSidebarKey);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.open_grimoire"), KeyInputHandler.openAssignGui);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.open_script"), KeyInputHandler.openScriptKey);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.open_role_details"), KeyInputHandler.openMyRoleDetailsKey);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.open_role_catalog"), KeyInputHandler.openCatalogKey);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.toggle_role_hud"), KeyInputHandler.toggleShowRole);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.grimoire_quick_view"), KeyInputHandler.quickRoleViewKey);
+            addHotkeyEntry(Text.translatable("gui.blood-on-the-blocktower.settings.hotkey.toggle_sidebar"), KeyInputHandler.toggleSidebarKey);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Grimoire Section ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Grimoire").formatted(Formatting.GOLD, Formatting.BOLD)));
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.grimoire").formatted(Formatting.GOLD, Formatting.BOLD)));
             this.addEntry(DocumentEntry.spacer());
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Reminders").formatted(Formatting.GRAY, Formatting.ITALIC)));
-            addWrappedText("Click on a player's head to add a reminder token. Reminders help track ability effects, poisoning, protection, and other game states.", textWidth);
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.reminders").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addWrappedText(Text.translatable("gui.blood-on-the-blocktower.settings.doc.reminders_body"), textWidth);
             this.addEntry(DocumentEntry.spacer());
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Role Assignment").formatted(Formatting.GRAY, Formatting.ITALIC)));
-            addWrappedText("Click on a player's role icon to assign them a role. Use this to track who you think each player is, or as the Storyteller to assign actual roles.", textWidth);
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.role_assignment").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addWrappedText(Text.translatable("gui.blood-on-the-blocktower.settings.doc.role_assignment_body"), textWidth);
             this.addEntry(DocumentEntry.spacer());
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Viewing Role Details").formatted(Formatting.GRAY, Formatting.ITALIC)));
-            addColoredModifierText("", "Shift", "+Click on a role icon to view its full details and ability description.", textWidth);
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.viewing_role_details").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addColoredModifierText(Text.empty(), "Shift", Text.translatable("gui.blood-on-the-blocktower.settings.doc.shift_click_role"), textWidth);
             this.addEntry(DocumentEntry.spacer());
-            addColoredModifierText("Hold ", "Shift", " while hovering over an assigned role or demon bluff to see its details in a tooltip.", textWidth);
+            addColoredModifierText(Text.translatable("gui.blood-on-the-blocktower.settings.doc.hold"), "Shift", Text.translatable("gui.blood-on-the-blocktower.settings.doc.shift_hover_role"), textWidth);
             this.addEntry(DocumentEntry.spacer());
 
             // --- Reference Section ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Reference").formatted(Formatting.GOLD, Formatting.BOLD)));
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.reference").formatted(Formatting.GOLD, Formatting.BOLD)));
             this.addEntry(DocumentEntry.spacer());
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Script Reference").formatted(Formatting.GRAY, Formatting.ITALIC)));
-            addWrappedText("Open the Script Reference screen to view all roles in the current script. The screen has tabs for:", textWidth);
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.script_reference").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addWrappedText(Text.translatable("gui.blood-on-the-blocktower.settings.doc.script_reference_body"), textWidth);
             this.addEntry(DocumentEntry.spacer());
-            addColoredTabEntry("Roles", "All roles in the current script by type", textWidth);
+            addColoredTabEntry(Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab.roles"), Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab.roles_desc"), textWidth);
             this.addEntry(DocumentEntry.spacer());
-            addColoredTabEntry("Night Order", "The order abilities activate at night", textWidth);
+            addColoredTabEntry(Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab.night_order"), Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab.night_order_desc"), textWidth);
             this.addEntry(DocumentEntry.spacer());
-            addColoredTabEntry("Jinxes", "Special interactions between roles", textWidth);
+            addColoredTabEntry(Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab.jinxes"), Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab.jinxes_desc"), textWidth);
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("Click any role to view its full details.", textWidth);
+            addWrappedText(Text.translatable("gui.blood-on-the-blocktower.settings.doc.click_role_details"), textWidth);
             this.addEntry(DocumentEntry.spacer());
-            addColoredModifierText("", "Ctrl", "+Click on a role to cross it out, used for tracking which roles you believe are not in play.", textWidth);
+            addColoredModifierText(Text.empty(), "Ctrl", Text.translatable("gui.blood-on-the-blocktower.settings.doc.ctrl_click_cross_out"), textWidth);
             this.addEntry(DocumentEntry.spacer());
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Role Catalog").formatted(Formatting.GRAY, Formatting.ITALIC)));
-            addWrappedText("The Role Catalog shows ALL roles in the game, not just those in the current script.", textWidth);
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.doc.role_catalog").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addWrappedText(Text.translatable("gui.blood-on-the-blocktower.settings.doc.role_catalog_body"), textWidth);
         }
 
-        private void addWrappedText(String text, int width) {
-            for (OrderedText line : textRenderer.wrapLines(Text.literal(text), width)) {
-                this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
-            }
-        }
-
-        private void addColoredTabEntry(String tabName, String description, int width) {
-            MutableText text = Text.literal("\u2022 ").formatted(Formatting.WHITE)
-                    .append(Text.literal(tabName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" - " + description).formatted(Formatting.WHITE));
+        private void addWrappedText(Text text, int width) {
             for (OrderedText line : textRenderer.wrapLines(text, width)) {
                 this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
             }
         }
 
-        private void addColoredModifierText(String prefix, String modifier, String suffix, int width) {
+        private void addColoredTabEntry(Text tabName, Text description, int width) {
+            MutableText text = Text.literal("\u2022 ").formatted(Formatting.WHITE)
+                    .append(tabName.copy().formatted(Formatting.GOLD))
+                    .append(Text.translatable("gui.blood-on-the-blocktower.settings.doc.tab_desc", description).formatted(Formatting.WHITE));
+            for (OrderedText line : textRenderer.wrapLines(text, width)) {
+                this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
+            }
+        }
+
+        private void addColoredModifierText(Text prefix, String modifier, Text suffix, int width) {
             // Color modifiers: Shift = aqua, Ctrl = yellow
             Formatting modColor = modifier.equals("Shift") ? Formatting.AQUA : Formatting.YELLOW;
-            MutableText text = Text.literal(prefix).formatted(Formatting.WHITE)
+            MutableText text = prefix.copy().formatted(Formatting.WHITE)
                     .append(Text.literal(modifier).formatted(modColor))
-                    .append(Text.literal(suffix).formatted(Formatting.WHITE));
+                    .append(suffix.copy().formatted(Formatting.WHITE));
             for (OrderedText line : textRenderer.wrapLines(text, width)) {
                 this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
             }
         }
 
-        private void addHotkeyEntry(String action, KeyBinding keyBinding) {
-            String keyName = keyBinding != null ? keyBinding.getBoundKeyLocalizedText().getString() : "Not bound";
-            this.addEntry(DocumentEntry.text(textRenderer, Text.literal("\u2022 " + action + ": ").formatted(Formatting.WHITE)
-                    .append(Text.literal("[" + keyName + "]").formatted(Formatting.YELLOW)).asOrderedText(), 0xFFFFFF));
+        private void addHotkeyEntry(Text action, KeyBinding keyBinding) {
+            Text keyName = keyBinding != null ? keyBinding.getBoundKeyLocalizedText() : Text.translatable("gui.blood-on-the-blocktower.settings.not_bound");
+            this.addEntry(DocumentEntry.text(textRenderer, Text.translatable("gui.blood-on-the-blocktower.settings.hotkey_line", action).formatted(Formatting.WHITE)
+                    .append(Text.literal("[").append(keyName).append("]").formatted(Formatting.YELLOW)).asOrderedText(), 0xFFFFFF));
         }
 
         @Override

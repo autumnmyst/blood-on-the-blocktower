@@ -397,25 +397,25 @@ public class VotingManager {
         switch (result) {
             case MARKED:
                 operatorTitleText = Text.literal(nomineeName).formatted(Formatting.RED);
-                operatorSubtitleText = Text.literal("Marked for execution").formatted(Formatting.RED);
+                operatorSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.marked_for_execution").formatted(Formatting.RED);
                 soundType = PlaySoundS2CPayload.MARKED;
                 break;
             case TIE:
-                operatorTitleText = Text.literal("Tie").formatted(Formatting.YELLOW);
-                operatorSubtitleText = Text.literal("All players pardoned").formatted(Formatting.YELLOW);
+                operatorTitleText = Text.translatable("message.blood-on-the-blocktower.daytime.tie").formatted(Formatting.YELLOW);
+                operatorSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.all_players_pardoned").formatted(Formatting.YELLOW);
                 soundType = PlaySoundS2CPayload.TIE;
                 break;
             case NOT_ENOUGH:
             default:
-                operatorTitleText = Text.literal("Not Enough Votes").formatted(Formatting.WHITE);
-                operatorSubtitleText = Text.literal("To execute " + nomineeName).formatted(Formatting.WHITE);
+                operatorTitleText = Text.translatable("message.blood-on-the-blocktower.daytime.not_enough_votes").formatted(Formatting.WHITE);
+                operatorSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.to_execute", nomineeName).formatted(Formatting.WHITE);
                 soundType = PlaySoundS2CPayload.NOT_ENOUGH_VOTES;
                 break;
         }
 
         // Prepare titles for non-operators in Organ Grinder mode
         Text hiddenTitleText = Text.literal("???").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD);
-        Text hiddenSubtitleText = Text.literal("The vote has been counted...").formatted(Formatting.LIGHT_PURPLE);
+        Text hiddenSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.vote_has_been_counted").formatted(Formatting.LIGHT_PURPLE);
 
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
             boolean hideFromPlayer = organGrinderMode && !player.hasPermissionLevel(2);

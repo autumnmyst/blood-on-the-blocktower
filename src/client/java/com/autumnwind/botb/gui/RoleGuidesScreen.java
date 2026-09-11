@@ -33,7 +33,7 @@ public class RoleGuidesScreen extends Screen {
     private double savedScrollAmount = 0.0;
 
     public RoleGuidesScreen(Screen parent) {
-        super(Text.literal("Role Guides"));
+        super(Text.translatable("gui.blood-on-the-blocktower.role_guides.title"));
         this.parent = parent;
         this.filteredRoles = new ArrayList<>(RoleGuides.roles());
     }
@@ -54,7 +54,7 @@ public class RoleGuidesScreen extends Screen {
 
         int backButtonWidth = 60;
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Back").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.role_guides.back").formatted(Formatting.YELLOW),
                 button -> this.client.setScreen(this.parent)
         ).dimensions(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
     }

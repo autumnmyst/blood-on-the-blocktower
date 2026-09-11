@@ -91,7 +91,9 @@ public class RoleCatalogScreen extends Screen {
     }
 
     private Text getToggleButtonText() {
-        return Text.literal(showingExtraRoles ? "Main" : "Extra");
+        return Text.translatable(showingExtraRoles
+                ? "gui.blood-on-the-blocktower.role_catalog.main"
+                : "gui.blood-on-the-blocktower.role_catalog.extra");
     }
 
     private void onTogglePressed(ButtonWidget button) {

@@ -23,7 +23,7 @@ public class TimerScreen extends Screen {
     private boolean syncDaylight = false;
 
     public TimerScreen() {
-        super(Text.literal("Timer Control"));
+        super(Text.translatable("gui.blood-on-the-blocktower.timer.title"));
     }
 
     @Override
@@ -32,45 +32,45 @@ public class TimerScreen extends Screen {
         int startY = this.height / 2 - 100;
 
         // Quick timer buttons - Row 1: 30s, 1min, 2min
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("30 sec"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.seconds_short", 30), button -> {
             startTimer(30);
         }).dimensions(centerX - 115, startY, 70, 20).build());
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("1 min"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.minutes_short", 1), button -> {
             startTimer(60);
         }).dimensions(centerX - 35, startY, 70, 20).build());
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("2 min"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.minutes_short", 2), button -> {
             startTimer(120);
         }).dimensions(centerX + 45, startY, 70, 20).build());
 
         // Quick timer buttons - Row 2: 3min, 5min, 10min
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("3 min"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.minutes_short", 3), button -> {
             startTimer(180);
         }).dimensions(centerX - 115, startY + 30, 70, 20).build());
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("5 min"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.minutes_short", 5), button -> {
             startTimer(300);
         }).dimensions(centerX - 35, startY + 30, 70, 20).build());
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("10 min"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.minutes_short", 10), button -> {
             startTimer(600);
         }).dimensions(centerX + 45, startY + 30, 70, 20).build());
 
         // Custom time input
-        customTimeField = new TextFieldWidget(this.textRenderer, centerX - 100, startY + 70, 200, 20, Text.literal("Custom Time"));
-        customTimeField.setPlaceholder(Text.literal("mm:ss or seconds"));
+        customTimeField = new TextFieldWidget(this.textRenderer, centerX - 100, startY + 70, 200, 20, Text.translatable("gui.blood-on-the-blocktower.timer.custom_time"));
+        customTimeField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.timer.custom_time_hint"));
         customTimeField.setMaxLength(10);
         this.addDrawableChild(customTimeField);
 
         // Start custom timer button
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Start Custom"), button -> {
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.start_custom"), button -> {
             startCustomTimer();
         }).dimensions(centerX - 100, startY + 100, 200, 20).build());
 
         // Pause/Resume button
         pauseResumeButton = ButtonWidget.builder(
-                ClientTimerState.isPaused ? Text.literal("Resume") : Text.literal("Pause"),
+                ClientTimerState.isPaused ? Text.translatable("gui.blood-on-the-blocktower.timer.resume") : Text.translatable("gui.blood-on-the-blocktower.timer.pause"),
                 button -> {
                     if (ClientTimerState.isPaused) {
                         resumeTimer();
@@ -83,14 +83,14 @@ public class TimerScreen extends Screen {
         this.addDrawableChild(pauseResumeButton);
 
         // Stop button
-        stopButton = ButtonWidget.builder(Text.literal("Stop"), button -> {
+        stopButton = ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.stop"), button -> {
             stopTimer();
         }).dimensions(centerX + 5, startY + 125, 95, 20).build();
         stopButton.active = ClientTimerState.isActive;
         this.addDrawableChild(stopButton);
 
         // Sync daylight checkbox
-        syncDaylightCheckbox = CheckboxWidget.builder(Text.literal("Sync Daylight (Day→Night)"), this.textRenderer)
+        syncDaylightCheckbox = CheckboxWidget.builder(Text.translatable("gui.blood-on-the-blocktower.timer.sync_daylight"), this.textRenderer)
                 .pos(centerX - 100, startY + 180)
                 .callback((checkbox, checked) -> {
                     syncDaylight = checked;
@@ -115,7 +115,7 @@ public class TimerScreen extends Screen {
                 String[] parts = input.split(":");
                 if (parts.length != 2) {
                     customTimeField.setText("");
-                    customTimeField.setPlaceholder(Text.literal("Invalid format"));
+                    customTimeField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.timer.invalid_format"));
                     return;
                 }
                 int minutes = Integer.parseInt(parts[0]);
@@ -128,14 +128,14 @@ public class TimerScreen extends Screen {
 
             if (seconds <= 0 || seconds > 3600) { // Max 1 hour
                 customTimeField.setText("");
-                customTimeField.setPlaceholder(Text.literal("1-3600 seconds"));
+                customTimeField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.timer.range_hint"));
                 return;
             }
 
             startTimer(seconds);
         } catch (NumberFormatException e) {
             customTimeField.setText("");
-            customTimeField.setPlaceholder(Text.literal("Invalid number"));
+            customTimeField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.timer.invalid_number"));
         }
     }
 
@@ -165,9 +165,11 @@ public class TimerScreen extends Screen {
         if (ClientTimerState.isActive) {
             int minutes = ClientTimerState.remainingSeconds / 60;
             int seconds = ClientTimerState.remainingSeconds % 60;
-            String timeText = String.format("Current: %d:%02d", minutes, seconds);
-            String statusText = ClientTimerState.isPaused ? " (Paused)" : " (Running)";
-            context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(timeText + statusText), this.width / 2, this.height / 2 + 60, 0xFFFFFF);
+            String timeText = String.format("%d:%02d", minutes, seconds);
+            Text statusText = Text.translatable(ClientTimerState.isPaused
+                    ? "gui.blood-on-the-blocktower.timer.paused"
+                    : "gui.blood-on-the-blocktower.timer.running");
+            context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.timer.current", timeText, statusText), this.width / 2, this.height / 2 + 60, 0xFFFFFF);
         }
     }
 

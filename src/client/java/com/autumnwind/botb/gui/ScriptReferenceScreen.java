@@ -36,9 +36,9 @@ public class ScriptReferenceScreen extends Screen {
     private static final Identifier DEMON_ICON = Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
 
     // Map to hold tooltips for static night order actions.
-    private static final Map<NightOrder.StaticAction, String> STATIC_ACTION_TOOLTIPS = Map.of(
-            NightOrder.StaticAction.MINION_INFO, "Minions learn who the Demon and other Minions are (but not the specific roles).",
-            NightOrder.StaticAction.DEMON_INFO, "The Demon learns which players are their Minions (but not their specific roles).\nThey are also given three 'bluff' roles that are not in play."
+    private static final Map<NightOrder.StaticAction, Text> STATIC_ACTION_TOOLTIPS = Map.of(
+            NightOrder.StaticAction.MINION_INFO, Text.translatable("gui.blood-on-the-blocktower.script_reference.tooltip.minion_info"),
+            NightOrder.StaticAction.DEMON_INFO, Text.translatable("gui.blood-on-the-blocktower.script_reference.tooltip.demon_info")
     );
 
     public ScriptReferenceScreen(Text title) {
@@ -90,17 +90,17 @@ public class ScriptReferenceScreen extends Screen {
             if (cached != null && cached.hasAnyData()) {
                 this.addDrawableChild(ButtonWidget.builder(Text.literal("?"), b -> openAlmanac())
                         .dimensions(rolesX - 18, topY, 16, 20)
-                        .tooltip(Tooltip.of(Text.literal("View Almanac")))
+                        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.script_reference.tooltip.view_almanac")))
                         .build());
             }
         }
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Roles"), b -> switchPage(Page.ROLES)).dimensions(rolesX, topY, buttonWidth, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Night Order"), b -> switchPage(Page.NIGHT_ORDER)).dimensions(nightOrderX, topY, buttonWidth, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.script_reference.roles"), b -> switchPage(Page.ROLES)).dimensions(rolesX, topY, buttonWidth, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.script_reference.night_order"), b -> switchPage(Page.NIGHT_ORDER)).dimensions(nightOrderX, topY, buttonWidth, 20).build());
 
         // Only add Jinxes button if there are jinxes for this script
         boolean hasJinxes = hasJinxes();
-        ButtonWidget jinxesButton = ButtonWidget.builder(Text.literal("Jinxes"), b -> switchPage(Page.JINXES)).dimensions(jinxesX, topY, buttonWidth, 20).build();
+        ButtonWidget jinxesButton = ButtonWidget.builder(Text.translatable("gui.blood-on-the-blocktower.script_reference.jinxes"), b -> switchPage(Page.JINXES)).dimensions(jinxesX, topY, buttonWidth, 20).build();
         jinxesButton.active = hasJinxes;
         this.addDrawableChild(jinxesButton);
 
@@ -109,7 +109,7 @@ public class ScriptReferenceScreen extends Screen {
             int questionButtonX = jinxesX + buttonWidth + 2;
             this.addDrawableChild(ButtonWidget.builder(Text.literal("?"), b -> openDjinnDetails())
                     .dimensions(questionButtonX, topY, 16, 20)
-                    .tooltip(Tooltip.of(Text.literal("View Djinn (jinx rules)")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.script_reference.tooltip.view_djinn")))
                     .build());
         }
 
@@ -162,7 +162,7 @@ public class ScriptReferenceScreen extends Screen {
         if (hasAuthor()) {
             // Title moved up, author in between title and buttons
             context.drawCenteredTextWithShadow(this.textRenderer, script.name(), this.width / 2, 4, 0xFFFFFF);
-            Text authorText = Text.literal("by " + script.author()).formatted(Formatting.GRAY);
+            Text authorText = Text.translatable("gui.blood-on-the-blocktower.script_reference.by_author", script.author()).formatted(Formatting.GRAY);
             context.drawCenteredTextWithShadow(this.textRenderer, authorText, this.width / 2, 15, 0xAAAAAA);
         } else {
             // Normal title position
@@ -191,11 +191,11 @@ public class ScriptReferenceScreen extends Screen {
             if (customRole != null) return Text.literal(customRole.getDisplayName());
             if (info.isRole()) return Text.literal(info.getRole().getDisplayName());
             return switch (info.getStaticAction()) {
-                case DAWN -> Text.literal("Dawn");
-                case NOMINATIONS -> Text.literal("Nominations"); // Should be filtered out
-                case DUSK -> Text.literal("Dusk");
-                case MINION_INFO -> Text.literal("Minion Info");
-                case DEMON_INFO -> Text.literal("Demon Info & Bluffs");
+                case DAWN -> Text.translatable("gui.blood-on-the-blocktower.script_reference.dawn");
+                case NOMINATIONS -> Text.translatable("gui.blood-on-the-blocktower.script_reference.nominations"); // Should be filtered out
+                case DUSK -> Text.translatable("gui.blood-on-the-blocktower.script_reference.dusk");
+                case MINION_INFO -> Text.translatable("gui.blood-on-the-blocktower.script_reference.minion_info");
+                case DEMON_INFO -> Text.translatable("gui.blood-on-the-blocktower.script_reference.demon_info");
             };
         }
 
@@ -447,16 +447,16 @@ public class ScriptReferenceScreen extends Screen {
                 this.entryHeight = height;
                 this.color = type.getColor();
 
-                String titleString;
+                Text header;
                 if (type == RoleType.TOWNSFOLK) {
-                    titleString = "Townsfolk";
+                    header = Text.translatable("gui.blood-on-the-blocktower.script_reference.header_townsfolk");
                 } else if (type == RoleType.NONE) {
-                    titleString = "No Jinxes for this script.";
+                    header = Text.translatable("gui.blood-on-the-blocktower.script_reference.no_jinxes");
                 }
                 else {
-                    titleString = type.name().substring(0, 1) + type.name().substring(1).toLowerCase(Locale.ROOT) + "s";
+                    header = Text.literal(type.name().substring(0, 1) + type.name().substring(1).toLowerCase(Locale.ROOT) + "s");
                 }
-                this.text = Text.literal(titleString).formatted(Formatting.UNDERLINE);
+                this.text = header.copy().formatted(Formatting.UNDERLINE);
             }
             @Override
             public void render(DrawContext c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
@@ -570,8 +570,8 @@ public class ScriptReferenceScreen extends Screen {
             @Override public void render(DrawContext c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
                 int rowLeft = ScriptListWidget.this.getRowLeft();
                 int rowWidth = ScriptListWidget.this.getRowWidth();
-                c.drawCenteredTextWithShadow(textRenderer, "First Night", rowLeft + rowWidth / 4, y + h/2 - 4, 0xFFFFFF);
-                c.drawCenteredTextWithShadow(textRenderer, "Other Nights", rowLeft + rowWidth * 3 / 4, y + h/2 - 4, 0xFFFFFF);
+                c.drawCenteredTextWithShadow(textRenderer, Text.translatable("gui.blood-on-the-blocktower.script_reference.first_night"), rowLeft + rowWidth / 4, y + h/2 - 4, 0xFFFFFF);
+                c.drawCenteredTextWithShadow(textRenderer, Text.translatable("gui.blood-on-the-blocktower.script_reference.other_nights"), rowLeft + rowWidth * 3 / 4, y + h/2 - 4, 0xFFFFFF);
             }
             @Override public List<? extends Element> children() { return Collections.emptyList(); }
             @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }

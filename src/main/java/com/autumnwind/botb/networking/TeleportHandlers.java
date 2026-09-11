@@ -38,7 +38,7 @@ final class TeleportHandlers {
                         }
                     }
                 } else {
-                    player.sendMessage(Text.literal("Home for seat " + seat + " has not been set.").formatted(Formatting.RED), false);
+                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat).formatted(Formatting.RED), false);
                 }
             }
         });
@@ -59,7 +59,7 @@ final class TeleportHandlers {
                         }
                     }
                 } else {
-                    player.sendMessage(Text.literal("Home for seat " + seat + " has not been set.").formatted(Formatting.RED), false);
+                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat).formatted(Formatting.RED), false);
                 }
             }
         });
@@ -86,7 +86,7 @@ final class TeleportHandlers {
                         }
                     }
                 } else {
-                    player.sendMessage(Text.literal("Town square seat for seat " + seat + " has not been set.").formatted(Formatting.RED), false);
+                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.teleport.town_square_seat_not_set", seat).formatted(Formatting.RED), false);
                 }
             }
         });
@@ -103,7 +103,7 @@ final class TeleportHandlers {
 
                     player.teleport(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, player.getYaw(), player.getPitch());
                 } else {
-                    player.sendMessage(Text.literal("Town Square has not been set.").formatted(Formatting.RED), false);
+                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.teleport.town_square_not_set").formatted(Formatting.RED), false);
                 }
             }
         });
@@ -123,7 +123,7 @@ final class TeleportHandlers {
                         storyteller.getX(), storyteller.getY(), storyteller.getZ(),
                         targetPlayer.getYaw(), targetPlayer.getPitch());
                 } else {
-                    storyteller.sendMessage(Text.literal("Target player not found.").formatted(Formatting.RED), false);
+                    storyteller.sendMessage(Text.translatable("message.blood-on-the-blocktower.teleport.target_not_found").formatted(Formatting.RED), false);
                 }
             }
         });

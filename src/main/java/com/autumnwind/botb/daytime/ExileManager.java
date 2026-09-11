@@ -131,12 +131,12 @@ public class ExileManager {
         int supportRequired = (int) Math.ceil(totalPlayerCount / 2.0);
 
         // Build message - use purple for exile (traveler color)
-        Text titleText = Text.literal(callerName)
-                .styled(style -> style.withColor(0x9932CC)) // Purple (traveler/exile color)
-                .append(Text.literal(" calls for exile of ").formatted(Formatting.WHITE))
-                .append(Text.literal(travelerName).styled(style -> style.withColor(0x9932CC))); // Purple
+        Text titleText = Text.translatable("message.blood-on-the-blocktower.daytime.calls_for_exile",
+                Text.literal(callerName).styled(style -> style.withColor(0x9932CC)), // Purple (traveler/exile color)
+                Text.literal(travelerName).styled(style -> style.withColor(0x9932CC))) // Purple
+                .formatted(Formatting.WHITE);
 
-        Text subtitleText = Text.literal(supportRequired + " support required")
+        Text subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.support_required", supportRequired)
                 .formatted(Formatting.GRAY);
 
         // Send title and chat message to all players

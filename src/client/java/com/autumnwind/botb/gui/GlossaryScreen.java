@@ -19,11 +19,13 @@ import com.autumnwind.botb.gui.widget.DocumentEntry;
  */
 public class GlossaryScreen extends Screen {
 
+    private static final String KEY_PREFIX = "gui.blood-on-the-blocktower.glossary.";
+
     private final Screen parent;
     private GlossaryListWidget glossaryWidget;
 
     public GlossaryScreen(Screen parent) {
-        super(Text.literal("Glossary"));
+        super(Text.translatable(KEY_PREFIX + "title"));
         this.parent = parent;
     }
 
@@ -40,7 +42,7 @@ public class GlossaryScreen extends Screen {
         // Back button
         int backButtonWidth = 60;
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Back").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.back").formatted(Formatting.YELLOW),
                 button -> this.client.setScreen(this.parent)
         ).dimensions(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
     }
@@ -73,98 +75,102 @@ public class GlossaryScreen extends Screen {
             int textWidth = this.getRowWidth() - 10;
 
             // --- Alignment ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Alignment").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("alignment.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("Good (blue) vs Evil (red). Good players want to find and eliminate the Demon. Evil players want to keep the Demon alive and kill the town.", textWidth);
+            addWrappedText("alignment.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Role Types ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Role Types").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("role_types.title");
             this.addEntry(DocumentEntry.spacer());
-            addColoredRoleType("Townsfolk", RoleType.TOWNSFOLK.getColor(), ": Good characters with helpful abilities.", textWidth);
-            addColoredRoleType("Outsiders", RoleType.OUTSIDER.getColor(), ": Good characters whose abilities help evil.", textWidth);
-            addColoredRoleType("Minions", RoleType.MINION.getColor(), ": Evil characters who support the Demon.", textWidth);
-            addColoredRoleType("Demons", RoleType.DEMON.getColor(), ": Evil characters who (usually) kill at night.", textWidth);
+            addColoredRoleType("townsfolk", RoleType.TOWNSFOLK.getColor(), "townsfolk.description", textWidth);
+            addColoredRoleType("outsiders", RoleType.OUTSIDER.getColor(), "outsiders.description", textWidth);
+            addColoredRoleType("minions", RoleType.MINION.getColor(), "minions.description", textWidth);
+            addColoredRoleType("demons", RoleType.DEMON.getColor(), "demons.description", textWidth);
             this.addEntry(DocumentEntry.spacer());
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Extra:").formatted(Formatting.GRAY, Formatting.ITALIC)));
-            addColoredRoleType("Travelers", RoleType.TRAVELER.getColor(), ": Good or evil players who may join or leave mid-game.", textWidth);
-            addColoredRoleType("Fabled", RoleType.FABLED.getColor(), ": Extra rules to run more balanced and inclusive games.", textWidth);
-            addColoredRoleType("Loric", RoleType.LORIC.getColor(), ": Extra rules to make the game feel fresh and interesting.", textWidth);
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable(KEY_PREFIX + "extra").formatted(Formatting.GRAY, Formatting.ITALIC)));
+            addColoredRoleType("travelers", RoleType.TRAVELER.getColor(), "travelers.description", textWidth);
+            addColoredRoleType("fabled", RoleType.FABLED.getColor(), "fabled.description", textWidth);
+            addColoredRoleType("loric", RoleType.LORIC.getColor(), "loric.description", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Nominations ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Nominations").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("nominations.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("During the day, living players can nominate others for execution. Each player can only nominate once per day, and each player can only be nominated once per day.", textWidth);
+            addWrappedText("nominations.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Voting ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Voting").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("voting.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("After a nomination, all players vote. Votes are locked in order around the circle. You need at least half of living players to vote yes, plus more than any previous vote that day.", textWidth);
+            addWrappedText("voting.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Ghost Votes ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Ghost Votes").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("ghost_votes.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("Dead players get one ghost vote to use for the rest of the game. Choose wisely when to use it!", textWidth);
+            addWrappedText("ghost_votes.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Execution ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Execution").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("execution.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("If a player receives enough votes, they are marked for execution. At the end of the day, the player with the most votes is executed (if any). Some characters may survive execution.", textWidth);
+            addWrappedText("execution.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Madness ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Madness").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("madness.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("Some abilities require you to be 'mad' about something - you must try to convince others it's true, or face consequences.", textWidth);
+            addWrappedText("madness.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Poisoning ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Drunkenness and Poisoning").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("droisoning.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("A drunk or poisoned player's ability does not work correctly. They may receive false information or their ability may have no effect. The player does not know they are drunk or poisoned. The effects of 'drunk' and 'poisoned' are functionally identical.", textWidth);
+            addWrappedText("droisoning.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Registration ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Registration").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("registration.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("Some abilities detect character types or alignments. A player 'registers' as whatever they appear to be to these abilities - which may differ from their actual role due to other abilities.", textWidth);
+            addWrappedText("registration.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Protection ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Protection").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("protection.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("Some characters can protect others from the Demon. This protection not only prevents the player from being killed by the Demon, but also makes that player immune to the Demon's other effects.", textWidth);
+            addWrappedText("protection.body", textWidth);
             this.addEntry(DocumentEntry.spacer());
             this.addEntry(DocumentEntry.spacer());
 
             // --- Bluffs ---
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Bluffs").formatted(Formatting.GOLD, Formatting.BOLD)));
+            addTitle("bluffs.title");
             this.addEntry(DocumentEntry.spacer());
-            addWrappedText("At the start of the game, the Demon learns three 'bluff' roles - good roles that are not in play. Evil players can safely claim to be these roles without conflicting with a real player.", textWidth);
+            addWrappedText("bluffs.body", textWidth);
         }
 
-        private void addWrappedText(String text, int width) {
-            for (OrderedText line : textRenderer.wrapLines(Text.literal(text), width)) {
+        private void addTitle(String key) {
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable(KEY_PREFIX + key).formatted(Formatting.GOLD, Formatting.BOLD)));
+        }
+
+        private void addWrappedText(String key, int width) {
+            for (OrderedText line : textRenderer.wrapLines(Text.translatable(KEY_PREFIX + key), width)) {
                 this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
             }
         }
 
-        private void addColoredRoleType(String roleTypeName, int color, String description, int width) {
-            MutableText text = Text.literal(roleTypeName).withColor(color)
-                    .append(Text.literal(description).formatted(Formatting.WHITE));
+        private void addColoredRoleType(String roleTypeKey, int color, String descriptionKey, int width) {
+            MutableText text = Text.translatable(KEY_PREFIX + roleTypeKey).withColor(color)
+                    .append(Text.translatable(KEY_PREFIX + descriptionKey).formatted(Formatting.WHITE));
             for (OrderedText line : textRenderer.wrapLines(text, width)) {
                 this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
             }

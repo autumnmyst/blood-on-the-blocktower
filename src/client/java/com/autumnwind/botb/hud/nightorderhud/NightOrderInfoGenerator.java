@@ -1,5 +1,6 @@
 package com.autumnwind.botb.hud.nightorderhud;
 
+import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
@@ -16,6 +17,22 @@ import java.util.*;
  * This information is only shown to the storyteller in the instructions HUD.
  */
 public class NightOrderInfoGenerator {
+
+    private static final String KEY_PREFIX = "hud." + BloodOnTheBlocktower.MOD_ID + ".night_order.info.";
+
+    private static String key(String name) {
+        return KEY_PREFIX + name;
+    }
+
+    /** Joins parts with the list separator. */
+    private static MutableText join(List<? extends Text> parts) {
+        MutableText result = Text.empty();
+        for (int i = 0; i < parts.size(); i++) {
+            if (i > 0) result.append(Text.translatable(key("separator")).formatted(Formatting.DARK_GRAY));
+            result.append(parts.get(i));
+        }
+        return result;
+    }
 
     /**
      * Generates extra info text for the current role visit.
@@ -63,9 +80,8 @@ public class NightOrderInfoGenerator {
             if (assignment != null && assignment.role() == Role.BOFFIN) {
                 for (Reminder r : entry.getValue()) {
                     if (r.role().isPresent() && r.role().get().isDefaultGood()) {
-                        return Text.literal("Demon has: ")
-                                .append(Text.literal(r.role().get().getDisplayName())
-                                        .formatted(Formatting.AQUA));
+                        return Text.translatable(key("demon_has"),
+                                Text.literal(r.role().get().getDisplayName()).formatted(Formatting.AQUA));
                     }
                 }
             }
@@ -76,9 +92,8 @@ public class NightOrderInfoGenerator {
                 for (Reminder r : reminders) {
                     if (r.role().isPresent() && r.role().get().isDefaultGood() &&
                             Reminders.isRoleMarker(r.text(), r.role().get())) {
-                        return Text.literal("Demon has: ")
-                                .append(Text.literal(r.role().get().getDisplayName())
-                                        .formatted(Formatting.AQUA));
+                        return Text.translatable(key("demon_has"),
+                                Text.literal(r.role().get().getDisplayName()).formatted(Formatting.AQUA));
                     }
                 }
             }
@@ -101,9 +116,8 @@ public class NightOrderInfoGenerator {
         List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(alchemistUuid, Collections.emptyList());
         for (Reminder r : reminders) {
             if (r.role().isPresent() && r.role().get().getType() == RoleType.MINION) {
-                return Text.literal("Has ability: ")
-                        .append(Text.literal(r.role().get().getDisplayName())
-                                .formatted(Formatting.RED));
+                return Text.translatable(key("has_ability"),
+                        Text.literal(r.role().get().getDisplayName()).formatted(Formatting.RED));
             }
         }
         return null;
@@ -117,8 +131,8 @@ public class NightOrderInfoGenerator {
             if (getAssignmentType(entry.getValue()) == RoleType.DEMON) {
                 String demonName = getPlayerName(entry.getKey());
                 if (demonName != null) {
-                    result.append(Text.literal("Demon: ").formatted(Formatting.GRAY))
-                            .append(Text.literal(demonName).formatted(Formatting.DARK_RED));
+                    result.append(Text.translatable(key("demon"),
+                            Text.literal(demonName).formatted(Formatting.DARK_RED)).formatted(Formatting.GRAY));
                     hasContent = true;
                 }
                 break;
@@ -129,9 +143,9 @@ public class NightOrderInfoGenerator {
             if (entry.getValue().role() == Role.MARIONETTE) {
                 String marionetteName = getPlayerName(entry.getKey());
                 if (marionetteName != null) {
-                    if (hasContent) result.append(Text.literal(" | ").formatted(Formatting.DARK_GRAY));
-                    result.append(Text.literal("Marionette: ").formatted(Formatting.GRAY))
-                            .append(Text.literal(marionetteName).formatted(Formatting.RED));
+                    if (hasContent) result.append(Text.translatable(key("pipe_separator")).formatted(Formatting.DARK_GRAY));
+                    result.append(Text.translatable(key("marionette"),
+                            Text.literal(marionetteName).formatted(Formatting.RED)).formatted(Formatting.GRAY));
                     hasContent = true;
                 }
                 break;
@@ -150,15 +164,14 @@ public class NightOrderInfoGenerator {
         }
 
         if (outsiderRoles.isEmpty()) {
-            return Text.literal("No Outsiders in play").formatted(Formatting.GRAY);
+            return Text.translatable(key("no_outsiders")).formatted(Formatting.GRAY);
         }
 
-        MutableText result = Text.literal("Outsiders: ").formatted(Formatting.GRAY);
-        for (int i = 0; i < outsiderRoles.size(); i++) {
-            if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-            result.append(Text.literal(outsiderRoles.get(i)).formatted(Formatting.DARK_AQUA));
+        List<Text> outsiderTexts = new ArrayList<>();
+        for (String outsiderRole : outsiderRoles) {
+            outsiderTexts.add(Text.literal(outsiderRole).formatted(Formatting.DARK_AQUA));
         }
-        return result;
+        return Text.translatable(key("outsiders"), join(outsiderTexts)).formatted(Formatting.GRAY);
     }
 
     private static Text generateEvilTwinInfo(List<UUID> players) {
@@ -167,8 +180,8 @@ public class NightOrderInfoGenerator {
                 if (r.role().isPresent() && r.role().get() == Role.EVIL_TWIN && r.text().equals(Reminders.TWIN)) {
                     String twinName = getPlayerName(entry.getKey());
                     if (twinName != null) {
-                        return Text.literal("Twin: ")
-                                .append(Text.literal(twinName).formatted(Formatting.GREEN));
+                        return Text.translatable(key("twin"),
+                                Text.literal(twinName).formatted(Formatting.GREEN));
                     }
                 }
             }
@@ -198,8 +211,9 @@ public class NightOrderInfoGenerator {
                         && r.text().equals(Reminders.RED_HERRING)) {
                     String name = getPlayerName(entry.getKey());
                     if (name != null) {
-                        return Text.literal("Red Herring: ").formatted(Formatting.GRAY)
-                                .append(Text.literal(name).formatted(Formatting.RED));
+                        return Text.translatable(key("red_herring"),
+                                Reminders.display(Reminders.RED_HERRING, Optional.empty()),
+                                Text.literal(name).formatted(Formatting.RED)).formatted(Formatting.GRAY);
                     }
                 }
             }
@@ -248,17 +262,18 @@ public class NightOrderInfoGenerator {
 
         if (playerNames.isEmpty()) return null;
 
-        MutableText result = Text.literal("Either: ").formatted(Formatting.GRAY);
-        for (int i = 0; i < playerNames.size(); i++) {
-            if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-            result.append(Text.literal(playerNames.get(i)).formatted(Formatting.YELLOW));
+        List<Text> nameTexts = new ArrayList<>();
+        for (String playerName : playerNames) {
+            nameTexts.add(Text.literal(playerName).formatted(Formatting.YELLOW));
         }
+        MutableText result = Text.translatable(key("either"), join(nameTexts)).formatted(Formatting.GRAY);
 
         if (targetRole != null) {
             final Role finalTargetRole = targetRole;
-            result.append(Text.literal(" is the ").formatted(Formatting.GRAY))
-                    .append(Text.literal(finalTargetRole.getDisplayName())
-                            .styled(style -> style.withColor(finalTargetRole.getType().getColor())));
+            result.append(Text.translatable(key("is_the"),
+                    Text.literal(finalTargetRole.getDisplayName())
+                            .styled(style -> style.withColor(finalTargetRole.getType().getColor())))
+                    .formatted(Formatting.GRAY));
         }
 
         return result;
@@ -273,7 +288,7 @@ public class NightOrderInfoGenerator {
         }
         sortedSeats.sort(Map.Entry.comparingByValue());
 
-        if (sortedSeats.size() < 2) return Text.literal("Pairs: 0").formatted(Formatting.GRAY);
+        if (sortedSeats.size() < 2) return Text.translatable(key("pairs"), 0).formatted(Formatting.GRAY);
 
         List<Boolean> evilStatus = new ArrayList<>();
         for (Map.Entry<UUID, Integer> entry : sortedSeats) {
@@ -290,8 +305,8 @@ public class NightOrderInfoGenerator {
             }
         }
 
-        return Text.literal("Evil pairs: ")
-                .append(Text.literal(String.valueOf(pairs)).formatted(Formatting.RED));
+        return Text.translatable(key("evil_pairs"),
+                Text.literal(String.valueOf(pairs)).formatted(Formatting.RED));
     }
 
     private static Text generateEmpathInfo(List<UUID> players) {
@@ -355,8 +370,8 @@ public class NightOrderInfoGenerator {
             }
         }
 
-        return Text.literal("Evil neighbors: ")
-                .append(Text.literal(String.valueOf(evilCount)).formatted(
+        return Text.translatable(key("evil_neighbors"),
+                Text.literal(String.valueOf(evilCount)).formatted(
                         evilCount == 0 ? Formatting.GREEN : (evilCount == 1 ? Formatting.YELLOW : Formatting.RED)));
     }
 
@@ -367,12 +382,11 @@ public class NightOrderInfoGenerator {
                     String grandchildName = getPlayerName(entry.getKey());
                     PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(entry.getKey());
                     if (grandchildName != null && assignment != null) {
-                        return Text.literal("Grandchild: ")
-                                .append(Text.literal(grandchildName).formatted(Formatting.GREEN))
-                                .append(Text.literal(" (").formatted(Formatting.GRAY))
-                                .append(Text.literal(getAssignmentDisplayName(assignment))
-                                        .styled(style -> style.withColor(getAssignmentColor(assignment))))
-                                .append(Text.literal(")").formatted(Formatting.GRAY));
+                        return Text.translatable(key("grandchild"),
+                                Reminders.display(Reminders.GRANDCHILD, Optional.empty()),
+                                Text.literal(grandchildName).formatted(Formatting.GREEN),
+                                Text.literal(getAssignmentDisplayName(assignment))
+                                        .styled(style -> style.withColor(getAssignmentColor(assignment))));
                     }
                 }
             }
@@ -399,7 +413,7 @@ public class NightOrderInfoGenerator {
                 }
             }
         }
-        if (minionSeats.isEmpty()) return Text.literal("No Minions seated").formatted(Formatting.GRAY);
+        if (minionSeats.isEmpty()) return Text.translatable(key("no_minions_seated")).formatted(Formatting.GRAY);
 
         int maxSeat = StorytellerState.PENDING_SEAT_NUMBERS.values().stream()
                 .filter(s -> s > 0).mapToInt(Integer::intValue).max().orElse(1);
@@ -412,8 +426,8 @@ public class NightOrderInfoGenerator {
             minDistance = Math.min(minDistance, distance);
         }
 
-        return Text.literal("Distance: ")
-                .append(Text.literal(String.valueOf(minDistance)).formatted(Formatting.GOLD));
+        return Text.translatable(key("distance"),
+                Text.literal(String.valueOf(minDistance)).formatted(Formatting.GOLD));
     }
 
     private static Text generateStewardInfo(List<UUID> players) {
@@ -422,8 +436,8 @@ public class NightOrderInfoGenerator {
                 if (r.role().isPresent() && r.role().get() == Role.STEWARD) {
                     String name = getPlayerName(entry.getKey());
                     if (name != null) {
-                        return Text.literal("Good player: ")
-                                .append(Text.literal(name).formatted(Formatting.GREEN));
+                        return Text.translatable(key("good_player"),
+                                Text.literal(name).formatted(Formatting.GREEN));
                     }
                 }
             }
@@ -446,12 +460,11 @@ public class NightOrderInfoGenerator {
 
         if (names.isEmpty()) return null;
 
-        MutableText result = Text.literal("Not Demon: ").formatted(Formatting.GRAY);
-        for (int i = 0; i < names.size(); i++) {
-            if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-            result.append(Text.literal(names.get(i)).formatted(Formatting.GREEN));
+        List<Text> nameTexts = new ArrayList<>();
+        for (String name : names) {
+            nameTexts.add(Text.literal(name).formatted(Formatting.GREEN));
         }
-        return result;
+        return Text.translatable(key("not_demon"), join(nameTexts)).formatted(Formatting.GRAY);
     }
 
     private static Text generateNobleInfo(List<UUID> players) {
@@ -477,13 +490,12 @@ public class NightOrderInfoGenerator {
 
         if (names.isEmpty()) return null;
 
-        MutableText result = Text.literal("Players: ").formatted(Formatting.GRAY);
-        for (int i = 0; i < names.size(); i++) {
-            if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-            boolean isEvil = names.get(i).equals(evilName);
-            result.append(Text.literal(names.get(i)).formatted(isEvil ? Formatting.RED : Formatting.GREEN));
+        List<Text> nameTexts = new ArrayList<>();
+        for (String name : names) {
+            boolean isEvil = name.equals(evilName);
+            nameTexts.add(Text.literal(name).formatted(isEvil ? Formatting.RED : Formatting.GREEN));
         }
-        return result;
+        return Text.translatable(key("players"), join(nameTexts)).formatted(Formatting.GRAY);
     }
 
     private static Text generateShugenjaInfo(List<UUID> players) {
@@ -535,15 +547,15 @@ public class NightOrderInfoGenerator {
 
         String direction;
         if (clockwiseDistance < counterClockwiseDistance) {
-            direction = "Clockwise";
+            direction = "clockwise";
         } else if (counterClockwiseDistance < clockwiseDistance) {
-            direction = "Counter-clockwise";
+            direction = "counter_clockwise";
         } else {
-            direction = "Equidistant";
+            direction = "equidistant";
         }
 
-        return Text.literal("Closest evil: ")
-                .append(Text.literal(direction).formatted(Formatting.GOLD));
+        return Text.translatable(key("closest_evil"),
+                Text.translatable(key(direction)).formatted(Formatting.GOLD));
     }
 
     private static Text generateBountyHunterInfo(List<UUID> players) {
@@ -552,8 +564,8 @@ public class NightOrderInfoGenerator {
                 if (r.role().isPresent() && r.role().get() == Role.BOUNTY_HUNTER && r.text().equals(Reminders.KNOWN)) {
                     String name = getPlayerName(entry.getKey());
                     if (name != null) {
-                        return Text.literal("Known evil: ")
-                                .append(Text.literal(name).formatted(Formatting.RED));
+                        return Text.translatable(key("known_evil"),
+                                Text.literal(name).formatted(Formatting.RED));
                     }
                 }
             }
@@ -564,10 +576,10 @@ public class NightOrderInfoGenerator {
     private static Text generateUndertakerInfo() {
         Role lastExecutedRole = StorytellerState.lastExecutedRole;
         if (lastExecutedRole == null) {
-            return Text.literal("No execution today").formatted(Formatting.GRAY);
+            return Text.translatable(key("no_execution_today")).formatted(Formatting.GRAY);
         }
-        return Text.literal("Executed: ")
-                .append(Text.literal(lastExecutedRole.getDisplayName())
+        return Text.translatable(key("executed"),
+                Text.literal(lastExecutedRole.getDisplayName())
                         .styled(style -> style.withColor(lastExecutedRole.getType().getColor())));
     }
 
@@ -577,15 +589,15 @@ public class NightOrderInfoGenerator {
 
     private static Text generateFlowergirlInfo() {
         boolean demonVoted = StorytellerState.demonVotedToday;
-        return Text.literal("Demon voted: ")
-                .append(Text.literal(demonVoted ? "Yes" : "No")
+        return Text.translatable(key("demon_voted"),
+                Text.translatable(key(demonVoted ? "yes" : "no"))
                         .formatted(demonVoted ? Formatting.RED : Formatting.GREEN));
     }
 
     private static Text generateTownCrierInfo() {
         boolean minionNominated = StorytellerState.minionNominatedToday;
-        return Text.literal("Minion nominated: ")
-                .append(Text.literal(minionNominated ? "Yes" : "No")
+        return Text.translatable(key("minion_nominated"),
+                Text.translatable(key(minionNominated ? "yes" : "no"))
                         .formatted(minionNominated ? Formatting.RED : Formatting.GREEN));
     }
 
@@ -594,8 +606,8 @@ public class NightOrderInfoGenerator {
             if (getAssignmentType(entry.getValue()) == RoleType.DEMON) {
                 String name = getPlayerName(entry.getKey());
                 if (name != null) {
-                    return Text.literal("Demon: ")
-                            .append(Text.literal(name).formatted(Formatting.DARK_RED));
+                    return Text.translatable(key("demon"),
+                            Text.literal(name).formatted(Formatting.DARK_RED));
                 }
             }
         }
@@ -619,23 +631,21 @@ public class NightOrderInfoGenerator {
         }
         if (demonsAndMagicians.isEmpty()) return null;
 
-        MutableText result = Text.literal(demonsAndMagicians.size() == 1 ? "Demon: " : "Demons: ")
-                .formatted(Formatting.GRAY);
-        for (int i = 0; i < demonsAndMagicians.size(); i++) {
-            if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-            UUID uuid = demonsAndMagicians.get(i);
+        List<Text> nameTexts = new ArrayList<>();
+        for (UUID uuid : demonsAndMagicians) {
             String name = getPlayerName(uuid);
             String displayName = name != null ? name : "?";
             PendingRoleAssignment a = StorytellerState.PENDING_ROLES.get(uuid);
             boolean isMagician = a != null && !a.isCustomRole() && a.role() == Role.MAGICIAN;
             if (isMagician) {
-                result.append(Text.literal(displayName).formatted(Formatting.BLUE))
-                        .append(Text.literal(" (magician)").formatted(Formatting.GRAY));
+                nameTexts.add(Text.translatable(key("magician"),
+                        Text.literal(displayName).formatted(Formatting.BLUE)).formatted(Formatting.GRAY));
             } else {
-                result.append(Text.literal(displayName).formatted(Formatting.DARK_RED));
+                nameTexts.add(Text.literal(displayName).formatted(Formatting.DARK_RED));
             }
         }
-        return result;
+        return Text.translatable(key(demonsAndMagicians.size() == 1 ? "demon" : "demons"), join(nameTexts))
+                .formatted(Formatting.GRAY);
     }
 
     /**
@@ -657,32 +667,31 @@ public class NightOrderInfoGenerator {
 
         MutableText result = Text.empty();
         if (!minionsAndMagicians.isEmpty()) {
-            result.append(Text.literal(minionsAndMagicians.size() == 1 ? "Minion: " : "Minions: ")
-                    .formatted(Formatting.GRAY));
-            for (int i = 0; i < minionsAndMagicians.size(); i++) {
-                if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-                UUID uuid = minionsAndMagicians.get(i);
+            List<Text> nameTexts = new ArrayList<>();
+            for (UUID uuid : minionsAndMagicians) {
                 String name = getPlayerName(uuid);
                 String displayName = name != null ? name : "?";
                 PendingRoleAssignment a = StorytellerState.PENDING_ROLES.get(uuid);
                 boolean isMagician = a != null && !a.isCustomRole() && a.role() == Role.MAGICIAN;
                 if (isMagician) {
-                    result.append(Text.literal(displayName).formatted(Formatting.BLUE))
-                            .append(Text.literal(" (magician)").formatted(Formatting.GRAY));
+                    nameTexts.add(Text.translatable(key("magician"),
+                            Text.literal(displayName).formatted(Formatting.BLUE)).formatted(Formatting.GRAY));
                 } else {
-                    result.append(Text.literal(displayName).formatted(Formatting.RED));
+                    nameTexts.add(Text.literal(displayName).formatted(Formatting.RED));
                 }
             }
+            result.append(Text.translatable(key(minionsAndMagicians.size() == 1 ? "minion" : "minions"), join(nameTexts))
+                    .formatted(Formatting.GRAY));
         }
         if (!bluffs.isEmpty()) {
             if (!minionsAndMagicians.isEmpty()) result.append(Text.literal("\n"));
-            result.append(Text.literal(bluffs.size() == 1 ? "Bluff: " : "Bluffs: ").formatted(Formatting.GRAY));
-            for (int i = 0; i < bluffs.size(); i++) {
-                if (i > 0) result.append(Text.literal(", ").formatted(Formatting.DARK_GRAY));
-                ScriptRole bluff = bluffs.get(i);
-                result.append(Text.literal(bluff.getDisplayName())
+            List<Text> bluffTexts = new ArrayList<>();
+            for (ScriptRole bluff : bluffs) {
+                bluffTexts.add(Text.literal(bluff.getDisplayName())
                         .styled(style -> style.withColor(bluff.getTeam().getColor())));
             }
+            result.append(Text.translatable(key(bluffs.size() == 1 ? "bluff" : "bluffs"), join(bluffTexts))
+                    .formatted(Formatting.GRAY));
         }
         return result;
     }
@@ -698,8 +707,8 @@ public class NightOrderInfoGenerator {
             }
         }
 
-        return Text.literal("Dead evil: ")
-                .append(Text.literal(String.valueOf(deadEvilCount))
+        return Text.translatable(key("dead_evil"),
+                Text.literal(String.valueOf(deadEvilCount))
                         .formatted(deadEvilCount == 0 ? Formatting.GREEN : Formatting.RED));
     }
 
@@ -731,7 +740,7 @@ public class NightOrderInfoGenerator {
      * Gets the display name from an assignment, handling custom roles.
      */
     private static String getAssignmentDisplayName(PendingRoleAssignment assignment) {
-        if (assignment == null) return "Unknown";
+        if (assignment == null) return Text.translatable(key("unknown")).getString();
         if (assignment.isCustomRole() && assignment.customRole().isPresent()) {
             return assignment.customRole().get().getDisplayName();
         }

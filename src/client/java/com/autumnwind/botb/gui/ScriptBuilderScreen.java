@@ -24,6 +24,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ElementListWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.Clipboard;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -78,10 +79,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     private static final int[] FULL_COUNTS = {13, 4, 4, 4};
     private static final int[] TEENSYVILLE_COUNTS = {6, 2, 2, 2};
 
-    private static final String IMPORT_CUSTOMS_LABEL = "Import Custom Roles";
-    private static final String CLEAR_CUSTOMS_LABEL = "Clear Custom Roles";
-    private static final String IMPORT_CUSTOMS_SHORT = "Customs";
-    private static final String CLEAR_CUSTOMS_SHORT = "Wipe";
+    private static final Text IMPORT_CUSTOMS_LABEL = Text.translatable("gui.blood-on-the-blocktower.script_builder.import_custom_roles");
+    private static final Text CLEAR_CUSTOMS_LABEL = Text.translatable("gui.blood-on-the-blocktower.script_builder.clear_custom_roles");
+    private static final Text IMPORT_CUSTOMS_SHORT = Text.translatable("gui.blood-on-the-blocktower.script_builder.import_custom_roles_short");
+    private static final Text CLEAR_CUSTOMS_SHORT = Text.translatable("gui.blood-on-the-blocktower.script_builder.clear_custom_roles_short");
 
     private final Screen parent;
 
@@ -164,7 +165,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     private int hoverTooltipY;
 
     public ScriptBuilderScreen(Screen parent) {
-        super(Text.literal("Script Builder"));
+        super(Text.translatable("gui.blood-on-the-blocktower.script_builder.title"));
         this.parent = parent;
         CustomRoleLibrary.preloadTextures();
         seedFrom(ClientState.currentScript);
@@ -351,18 +352,18 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
         this.nameField = new TextFieldWidget(this.textRenderer, padding, rowY, nameWidth, fieldHeight, Text.empty());
         this.nameField.setMaxLength(64);
-        this.nameField.setPlaceholder(Text.literal("Script name").formatted(Formatting.DARK_GRAY));
+        this.nameField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.script_builder.script_name").formatted(Formatting.DARK_GRAY));
         this.nameField.setText(currentName);
         this.addDrawableChild(this.nameField);
 
         this.authorField = new TextFieldWidget(this.textRenderer, padding + nameWidth + 4, rowY, authorWidth, fieldHeight, Text.empty());
         this.authorField.setMaxLength(64);
-        this.authorField.setPlaceholder(Text.literal("Author").formatted(Formatting.DARK_GRAY));
+        this.authorField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.script_builder.author").formatted(Formatting.DARK_GRAY));
         this.authorField.setText(currentAuthor);
         this.addDrawableChild(this.authorField);
 
         this.searchField = new TextFieldWidget(this.textRenderer, paletteX, rowY, paletteWidth, fieldHeight, Text.empty());
-        this.searchField.setPlaceholder(Text.literal("Search characters").formatted(Formatting.DARK_GRAY));
+        this.searchField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.script_builder.search_characters").formatted(Formatting.DARK_GRAY));
         this.searchField.setText(currentSearch);
         this.searchField.setChangedListener(text -> refreshPalette());
         this.addDrawableChild(this.searchField);
@@ -398,10 +399,12 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         // either way. The customs button is sized for the longer of its two states so it doesn't
         // resize under the cursor when shift is pressed.
         int customsWidth = Math.max(textWidth(IMPORT_CUSTOMS_LABEL), textWidth(CLEAR_CUSTOMS_LABEL)) + 12;
+        MutableText randomScriptLabel = Text.translatable("gui.blood-on-the-blocktower.script_builder.random_script");
+        MutableText clearLabel = Text.translatable("gui.blood-on-the-blocktower.script_builder.clear");
         boolean roomy = this.width - 2 * padding - rightGroup - 3 * spacing
-                >= textWidth("Import Script") + customsWidth + textWidth("Random Script") + textWidth("Clear") + 36;
-        String importLabel = roomy ? "Import Script" : "Import";
-        String randomLabel = roomy ? "Random Script" : "Random";
+                >= textWidth(importLabel(true)) + customsWidth + textWidth(randomScriptLabel) + textWidth(clearLabel) + 36;
+        MutableText importText = importLabel(roomy);
+        MutableText randomLabel = roomy ? randomScriptLabel : Text.translatable("gui.blood-on-the-blocktower.script_builder.random_script_short");
         if (!roomy) {
             customsWidth = Math.max(textWidth(IMPORT_CUSTOMS_SHORT), textWidth(CLEAR_CUSTOMS_SHORT)) + 12;
         }
@@ -409,9 +412,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
         int buttonX = padding;
         // Label, colour and tooltip are swapped by shift in render(), and the press reads shift too.
-        int importWidth = Math.max(textWidth(importLabel), textWidth(roomy ? "Export Script" : "Export")) + 12;
+        int importWidth = Math.max(textWidth(importText), textWidth(exportLabel(roomy))) + 12;
         this.importRoomy = roomy;
-        this.importButton = this.addDrawableChild(ButtonWidget.builder(Text.literal(importLabel), button -> {
+        this.importButton = this.addDrawableChild(ButtonWidget.builder(importText, button -> {
             if (hasShiftDown()) {
                 exportScript();
             } else {
@@ -435,12 +438,12 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         this.customsShowingClear = !hasShiftDown(); // force the first update in render()
         buttonX += customsWidth + spacing;
 
-        buttonX += addFooterButton(Text.literal(randomLabel).formatted(Formatting.AQUA), buttonX, buttonY, buttonHeight,
-                Text.literal("Roll a random script: " + FULL_COUNTS[0] + "/" + FULL_COUNTS[1] + "/"
-                        + FULL_COUNTS[2] + "/" + FULL_COUNTS[3] + "\nShift for Teensyville: "
-                        + TEENSYVILLE_COUNTS[0] + "/" + TEENSYVILLE_COUNTS[1] + "/"
-                        + TEENSYVILLE_COUNTS[2] + "/" + TEENSYVILLE_COUNTS[3])
-                        .append(Text.literal("\nCtrl+Click ban/unban all").formatted(Formatting.DARK_GRAY, Formatting.ITALIC)),
+        buttonX += addFooterButton(randomLabel.formatted(Formatting.AQUA), buttonX, buttonY, buttonHeight,
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.random_script",
+                        FULL_COUNTS[0], FULL_COUNTS[1], FULL_COUNTS[2], FULL_COUNTS[3],
+                        TEENSYVILLE_COUNTS[0], TEENSYVILLE_COUNTS[1], TEENSYVILLE_COUNTS[2], TEENSYVILLE_COUNTS[3])
+                        .append(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.random_script_ban_all")
+                                .formatted(Formatting.DARK_GRAY, Formatting.ITALIC)),
                 button -> {
                     if (hasControlDown()) {
                         toggleBanAll();
@@ -449,35 +452,42 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                     }
                 }) + spacing;
 
-        addFooterButton(Text.literal("Clear").formatted(Formatting.RED), buttonX, buttonY, buttonHeight,
-                "Empty the builder.",
+        addFooterButton(clearLabel.formatted(Formatting.RED), buttonX, buttonY, buttonHeight,
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.clear"),
                 button -> clearBuilder());
 
         this.saveButton = this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Save").formatted(Formatting.GREEN),
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.save").formatted(Formatting.GREEN),
                 button -> save()
         ).dimensions(this.width - padding - backWidth - spacing - saveWidth, buttonY, saveWidth, buttonHeight)
-        .tooltip(Tooltip.of(Text.literal(
-                "Lock this script in as your active script. Use Send Roles to send it to players.")))
+        .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.save")))
         .build());
 
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Back").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.back").formatted(Formatting.YELLOW),
                 button -> this.close()
         ).dimensions(this.width - padding - backWidth, buttonY, backWidth, buttonHeight).build());
     }
 
-    private int textWidth(String text) {
+    private int textWidth(Text text) {
         return this.textRenderer.getWidth(text);
     }
 
-    /** Adds a footer button sized to its label, and returns that width. */
-    private int addFooterButton(Text label, int x, int y, int height, String tooltip, ButtonWidget.PressAction action) {
-        return addFooterButton(label, x, y, height, Text.literal(tooltip), action);
+    private static MutableText importLabel(boolean roomy) {
+        return Text.translatable(roomy
+                ? "gui.blood-on-the-blocktower.script_builder.import_script"
+                : "gui.blood-on-the-blocktower.script_builder.import_script_short");
     }
 
+    private static MutableText exportLabel(boolean roomy) {
+        return Text.translatable(roomy
+                ? "gui.blood-on-the-blocktower.script_builder.export_script"
+                : "gui.blood-on-the-blocktower.script_builder.export_script_short");
+    }
+
+    /** Adds a footer button sized to its label, and returns that width. */
     private int addFooterButton(Text label, int x, int y, int height, Text tooltip, ButtonWidget.PressAction action) {
-        int width = textWidth(label.getString()) + 12;
+        int width = textWidth(label) + 12;
         this.addDrawableChild(ButtonWidget.builder(label, action)
                 .dimensions(x, y, width, height)
                 .tooltip(Tooltip.of(tooltip))
@@ -690,7 +700,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
         }
 
-        scriptName = teensyville ? "Random Teensyville" : "Random Script";
+        scriptName = Text.translatable(teensyville
+                ? "gui.blood-on-the-blocktower.script_builder.random_teensyville_name"
+                : "gui.blood-on-the-blocktower.script_builder.random_script_name").getString();
         nameField.setText(scriptName);
         refreshBoth();
     }
@@ -700,8 +712,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         // Clearing an already-empty library changes nothing, so it says nothing.
         if (removed == 0) return;
 
-        message(Text.literal("Cleared " + removed + " custom role" + (removed == 1 ? "" : "s")
-                + " from your library").formatted(Formatting.YELLOW));
+        message(Text.translatable(removed == 1
+                ? "gui.blood-on-the-blocktower.script_builder.cleared_custom_role"
+                : "gui.blood-on-the-blocktower.script_builder.cleared_custom_roles", removed)
+                .formatted(Formatting.YELLOW));
         refreshBoth();
     }
 
@@ -716,11 +730,11 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     private void exportScript() {
         Script script = ClientState.currentScript;
         if (script == null || script.rawJson() == null || script.rawJson().isEmpty()) {
-            message(Text.literal("No active script to export").formatted(Formatting.RED));
+            message(Text.translatable("gui.blood-on-the-blocktower.script_builder.no_script_to_export").formatted(Formatting.RED));
             return;
         }
         this.client.keyboard.setClipboard(script.rawJson());
-        message(Text.literal("Script copied to clipboard").formatted(Formatting.GREEN));
+        message(Text.translatable("gui.blood-on-the-blocktower.script_builder.script_copied").formatted(Formatting.GREEN));
     }
 
     private void importCustomRoles() {
@@ -731,7 +745,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         int added = counts[0];
         int updated = counts[1];
         if (added == 0 && updated == 0) {
-            message(Text.literal("No homebrew characters found in that script").formatted(Formatting.YELLOW));
+            message(Text.translatable("gui.blood-on-the-blocktower.script_builder.no_homebrew_found").formatted(Formatting.YELLOW));
             return;
         }
 
@@ -745,21 +759,28 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         }
 
         refreshBoth();
-        String summary = updated == 0
-                ? "Added " + added + " custom role" + (added == 1 ? "" : "s")
-                : "Added " + added + ", updated " + updated + " custom role" + (added + updated == 1 ? "" : "s");
-        message(Text.literal(summary).formatted(Formatting.GREEN));
+        MutableText summary;
+        if (updated == 0) {
+            summary = Text.translatable(added == 1
+                    ? "gui.blood-on-the-blocktower.script_builder.added_custom_role"
+                    : "gui.blood-on-the-blocktower.script_builder.added_custom_roles", added);
+        } else {
+            summary = Text.translatable(added + updated == 1
+                    ? "gui.blood-on-the-blocktower.script_builder.added_updated_custom_role"
+                    : "gui.blood-on-the-blocktower.script_builder.added_updated_custom_roles", added, updated);
+        }
+        message(summary.formatted(Formatting.GREEN));
     }
 
     private Optional<Script> readClipboardScript() {
         String clipboardText = new Clipboard().getClipboard(0, (error, string) -> {});
         if (clipboardText == null || clipboardText.isEmpty()) {
-            message(Text.literal("Clipboard is empty").formatted(Formatting.RED));
+            message(Text.translatable("gui.blood-on-the-blocktower.script_builder.clipboard_empty").formatted(Formatting.RED));
             return Optional.empty();
         }
         Optional<Script> parsed = Script.fromJson(clipboardText);
         if (parsed.isEmpty()) {
-            message(Text.literal("Failed to read script - invalid format").formatted(Formatting.RED));
+            message(Text.translatable("gui.blood-on-the-blocktower.script_builder.invalid_script").formatted(Formatting.RED));
         }
         return parsed;
     }
@@ -780,7 +801,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             default -> false;
         });
         if (!removing && !hasPlayableRole) {
-            message(Text.literal("Add at least one townsfolk, outsider, minion or demon before saving")
+            message(Text.translatable("gui.blood-on-the-blocktower.script_builder.no_playable_role")
                     .formatted(Formatting.RED));
             return;
         }
@@ -791,15 +812,14 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             return;
         }
 
-        Text warning = Text.literal("These are assigned in your grimoire but not on the new script:\n"
-                + String.join(", ", orphaned)
-                + "\n\nSaving will leave those assignments unresolved.");
+        Text warning = Text.translatable("gui.blood-on-the-blocktower.script_builder.orphaned_warning",
+                String.join(", ", orphaned));
         this.client.setScreen(new ConfirmScreen(
                 confirmed -> {
                     this.client.setScreen(this);
                     if (confirmed) apply(ordered);
                 },
-                Text.literal("Save script?").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.save_script_confirm").formatted(Formatting.YELLOW),
                 warning));
     }
 
@@ -817,7 +837,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         StorytellerState.syncGrimoire();
         captureBaseline();
 
-        message(Text.literal("Removed the active script").formatted(Formatting.YELLOW));
+        message(Text.translatable("gui.blood-on-the-blocktower.script_builder.removed_active_script").formatted(Formatting.YELLOW));
     }
 
     /**
@@ -875,7 +895,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         }
 
         ScriptJson.Meta meta = new ScriptJson.Meta(
-                nameField.getText().isBlank() ? "Custom Script" : nameField.getText(),
+                nameField.getText().isBlank()
+                        ? Text.translatable("gui.blood-on-the-blocktower.script_builder.default_script_name").getString()
+                        : nameField.getText(),
                 authorField.getText(),
                 baseLogo,
                 mainAlmanac,
@@ -888,7 +910,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         String json = ScriptJson.build(meta, ordered, definitions);
         Optional<Script> built = Script.fromJson(json);
         if (built.isEmpty()) {
-            message(Text.literal("Could not build the script - no changes were made").formatted(Formatting.RED));
+            message(Text.translatable("gui.blood-on-the-blocktower.script_builder.build_failed").formatted(Formatting.RED));
             return;
         }
 
@@ -899,7 +921,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         StorytellerState.syncGrimoire();
         captureBaseline();
 
-        message(Text.literal("Saved \"" + script.name() + "\" (" + ordered.size() + " characters)")
+        message(Text.translatable("gui.blood-on-the-blocktower.script_builder.saved", script.name(), ordered.size())
                 .formatted(Formatting.GREEN));
     }
 
@@ -971,8 +993,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                         this.client.setScreen(this);
                     }
                 },
-                Text.literal("Discard changes?").formatted(Formatting.YELLOW),
-                Text.literal("Your edits haven't been saved to the active script.")));
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.discard_changes").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.script_builder.discard_changes_message")));
     }
 
     @Override
@@ -989,13 +1011,12 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         if (this.importButton != null && hasShiftDown() != this.importShowingExport) {
             this.importShowingExport = hasShiftDown();
             if (this.importShowingExport) {
-                this.importButton.setMessage(Text.literal(importRoomy ? "Export Script" : "Export")
-                        .formatted(Formatting.AQUA));
-                this.importButton.setTooltip(Tooltip.of(Text.literal("Copy the saved script to your clipboard")));
+                this.importButton.setMessage(exportLabel(importRoomy).formatted(Formatting.AQUA));
+                this.importButton.setTooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.export_script")));
             } else {
-                this.importButton.setMessage(Text.literal(importRoomy ? "Import Script" : "Import"));
-                this.importButton.setTooltip(Tooltip.of(Text.literal("Load the script in your clipboard")
-                        .append(Text.literal("\nShift to export script")
+                this.importButton.setMessage(importLabel(importRoomy));
+                this.importButton.setTooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.import_script")
+                        .append(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.import_script_shift")
                                 .formatted(Formatting.DARK_GRAY, Formatting.ITALIC))));
             }
         }
@@ -1008,16 +1029,16 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         if (this.customsButton != null && hasShiftDown() != this.customsShowingClear) {
             this.customsShowingClear = hasShiftDown();
             if (this.customsShowingClear) {
-                this.customsButton.setMessage(Text.literal(customsRoomy ? CLEAR_CUSTOMS_LABEL : CLEAR_CUSTOMS_SHORT)
+                this.customsButton.setMessage((customsRoomy ? CLEAR_CUSTOMS_LABEL : CLEAR_CUSTOMS_SHORT).copy()
                         .formatted(Formatting.RED));
-                this.customsButton.setTooltip(Tooltip.of(Text.literal(
-                        "Forget every character in your custom role library")));
+                this.customsButton.setTooltip(Tooltip.of(Text.translatable(
+                        "gui.blood-on-the-blocktower.script_builder.tooltip.clear_custom_roles")));
             } else {
-                this.customsButton.setMessage(Text.literal(customsRoomy ? IMPORT_CUSTOMS_LABEL : IMPORT_CUSTOMS_SHORT)
+                this.customsButton.setMessage((customsRoomy ? IMPORT_CUSTOMS_LABEL : IMPORT_CUSTOMS_SHORT).copy()
                         .formatted(Formatting.LIGHT_PURPLE));
-                this.customsButton.setTooltip(Tooltip.of(Text.literal(
-                        "Add every homebrew character in the clipboard script to your custom role library")
-                        .append(Text.literal("\nShift to clear the library")
+                this.customsButton.setTooltip(Tooltip.of(Text.translatable(
+                        "gui.blood-on-the-blocktower.script_builder.tooltip.import_custom_roles")
+                        .append(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.import_custom_roles_shift")
                                 .formatted(Formatting.DARK_GRAY, Formatting.ITALIC))));
             }
         }
@@ -1080,7 +1101,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         void populate(List<ScriptRole> roles) {
             this.clearEntries();
             if (roles.isEmpty()) {
-                this.addEntry(new InfoEntry("Click to add characters"));
+                this.addEntry(new InfoEntry(Text.translatable("gui.blood-on-the-blocktower.script_builder.empty_hint")));
                 return;
             }
             RoleType currentTeam = null;
@@ -1114,9 +1135,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
         /** A wrapped, non-interactive message, used for the empty-script placeholder. */
         class InfoEntry extends Entry {
-            private final String message;
+            private final Text message;
 
-            InfoEntry(String message) {
+            InfoEntry(Text message) {
                 this.message = message;
             }
 
@@ -1187,7 +1208,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                 if (isMouseOver) {
                     List<Text> hints = new ArrayList<>();
                     if (AbilityText.isBootlegger(role)) {
-                        hints.add(Text.literal("Ctrl+Click to edit special rules").formatted(Formatting.AQUA));
+                        hints.add(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.edit_special_rules").formatted(Formatting.AQUA));
                     }
                     queueTooltip(tooltipLines(AbilityText.of(role, baseBootlegger), hints), mouseX, mouseY);
                 }
@@ -1315,15 +1336,15 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                     if (isMouseOver) {
                         List<Text> extra = new ArrayList<>();
                         if (isBannable(role)) {
-                            extra.add(Text.literal(banned
-                                    ? "Ctrl+Click to allow in random"
-                                    : "Ctrl+Click to bar from random").formatted(Formatting.DARK_GRAY));
+                            extra.add(Text.translatable(banned
+                                    ? "gui.blood-on-the-blocktower.script_builder.tooltip.allow_in_random"
+                                    : "gui.blood-on-the-blocktower.script_builder.tooltip.bar_from_random").formatted(Formatting.DARK_GRAY));
                         }
                         CustomRoleLibrary.get(role.getId()).ifPresent(entry -> {
                             if (!entry.sourceScript().isBlank()) {
-                                extra.add(Text.literal("From: " + entry.sourceScript()).formatted(Formatting.DARK_AQUA));
+                                extra.add(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.from_script", entry.sourceScript()).formatted(Formatting.DARK_AQUA));
                             }
-                            extra.add(Text.literal("Ctrl+Shift+Click to forget").formatted(Formatting.DARK_RED));
+                            extra.add(Text.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.forget").formatted(Formatting.DARK_RED));
                         });
                         queueTooltip(tooltipLines(role.getAbility(), extra), mouseX, mouseY);
                     }

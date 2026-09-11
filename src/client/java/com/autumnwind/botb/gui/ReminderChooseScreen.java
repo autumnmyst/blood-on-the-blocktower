@@ -26,6 +26,8 @@ import net.minecraft.util.Identifier;
 
 public class ReminderChooseScreen extends Screen {
 
+    private static final Text CUSTOM_REMINDER_PLACEHOLDER = Text.translatable("gui.blood-on-the-blocktower.reminder_choose.custom_reminder");
+
     private final UUID targetPlayerUUID;
     private final Screen parentScreen;
     private TextFieldWidget customTextField;
@@ -45,19 +47,19 @@ public class ReminderChooseScreen extends Screen {
         int topY = 30;
 
         // Custom Reminder Input
-        this.customTextField = new TextFieldWidget(this.textRenderer, startX, topY, 200, 20, Text.literal("Custom Reminder..."));
+        this.customTextField = new TextFieldWidget(this.textRenderer, startX, topY, 200, 20, CUSTOM_REMINDER_PLACEHOLDER);
         this.addDrawableChild(this.customTextField);
 
         // "Save Custom" Button
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Save Custom").formatted(Formatting.GREEN),
+                Text.translatable("gui.blood-on-the-blocktower.reminder_choose.save_custom").formatted(Formatting.GREEN),
                 this::saveCustomReminder
         ).dimensions(startX + 200 + 10, topY, 100, 20).build());
 
         // "Roles" Button opens role reminder selection screen
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Roles").formatted(Formatting.AQUA),
-                button -> this.client.setScreen(new RoleReminderScreen(Text.literal("Role Reminders"), this.targetPlayerUUID, this.parentScreen))
+                Text.translatable("gui.blood-on-the-blocktower.reminder_choose.roles").formatted(Formatting.AQUA),
+                button -> this.client.setScreen(new RoleReminderScreen(Text.translatable("gui.blood-on-the-blocktower.reminder_choose.role_reminders_title"), this.targetPlayerUUID, this.parentScreen))
         ).dimensions(startX + 200 + 10 + 100 + 10, topY, 50, 20).build());
 
         // Use the new ReminderGridWidget
@@ -528,7 +530,7 @@ public class ReminderChooseScreen extends Screen {
 
     private void saveCustomReminder(ButtonWidget button) {
         String text = this.customTextField.getText();
-        if (text.isEmpty() || text.equals("Custom Reminder...")) {
+        if (text.isEmpty() || text.equals(CUSTOM_REMINDER_PLACEHOLDER.getString())) {
             return;
         }
 
@@ -900,20 +902,24 @@ public class ReminderChooseScreen extends Screen {
                     // Show role description on hover (still useful)
                     if (isMouseOver) {
                         int tooltipMaxWidth = 170;
-                        String description;
+                        Text description;
                         if (isFabled) {
                             ScriptRole fabledRole = ClientState.currentScript != null ?
                                     ClientState.currentScript.getFabledOrLoric(def.fabledId()).orElse(null) : null;
-                            description = fabledRole != null ? AbilityText.of(fabledRole) : "Fabled character";
+                            description = fabledRole != null
+                                    ? Text.literal(AbilityText.of(fabledRole))
+                                    : Text.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.fabled_character");
                         } else if (isCustomRole) {
                             CustomRole customRole = ClientState.currentScript != null ?
                                     ClientState.currentScript.getCustomRole(def.customRoleId()).orElse(null) : null;
-                            description = customRole != null ? customRole.ability() : "Custom role";
+                            description = customRole != null
+                                    ? Text.literal(customRole.ability())
+                                    : Text.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.custom_role");
                         } else if (role == Role.NO_ROLE) {
                             // Good/Evil alignment markers sit on the placeholder role
-                            description = "Marks this player as " + def.text().toLowerCase(Locale.ROOT) + ".";
+                            description = Text.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.marks_alignment", def.text().toLowerCase(Locale.ROOT));
                         } else {
-                            description = role.getDescription();
+                            description = Text.literal(role.getDescription());
                         }
                         List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
                                 .wrapLines(description, tooltipMaxWidth, Style.EMPTY);

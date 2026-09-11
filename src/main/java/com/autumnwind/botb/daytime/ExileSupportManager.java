@@ -132,17 +132,17 @@ public class ExileSupportManager {
         // Build result message
         Text resultText;
         if (exilePassed) {
-            resultText = Text.literal("Exile Passed")
+            resultText = Text.translatable("message.blood-on-the-blocktower.daytime.exile_passed")
                     .styled(style -> style.withColor(0x9932CC)) // Purple
                     .append(Text.literal(" - ").formatted(Formatting.WHITE))
                     .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)))
-                    .append(Text.literal(" (" + supportCount + " supports)").formatted(Formatting.GRAY));
+                    .append(Text.translatable("message.blood-on-the-blocktower.daytime.supports_count", supportCount).formatted(Formatting.GRAY));
         } else {
-            resultText = Text.literal("Exile Failed")
+            resultText = Text.translatable("message.blood-on-the-blocktower.daytime.exile_failed")
                     .formatted(Formatting.GRAY)
                     .append(Text.literal(" - ").formatted(Formatting.WHITE))
                     .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)))
-                    .append(Text.literal(" (" + supportCount + " supports)").formatted(Formatting.GRAY));
+                    .append(Text.translatable("message.blood-on-the-blocktower.daytime.supports_count", supportCount).formatted(Formatting.GRAY));
         }
 
         // Build title/subtitle for display
@@ -152,11 +152,11 @@ public class ExileSupportManager {
 
         if (exilePassed) {
             titleText = Text.literal(targetName).styled(style -> style.withColor(0x9932CC)); // Purple
-            subtitleText = Text.literal("Exiled").styled(style -> style.withColor(0x9932CC));
+            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.exiled").styled(style -> style.withColor(0x9932CC));
             soundType = PlaySoundS2CPayload.MARKED;
         } else {
-            titleText = Text.literal("Exile Failed").formatted(Formatting.GRAY);
-            subtitleText = Text.literal("Not enough support for " + targetName).formatted(Formatting.GRAY);
+            titleText = Text.translatable("message.blood-on-the-blocktower.daytime.exile_failed").formatted(Formatting.GRAY);
+            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.not_enough_support", targetName).formatted(Formatting.GRAY);
             soundType = PlaySoundS2CPayload.NOT_ENOUGH_VOTES;
         }
 

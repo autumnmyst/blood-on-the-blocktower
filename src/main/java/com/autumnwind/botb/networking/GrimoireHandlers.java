@@ -96,7 +96,7 @@ final class GrimoireHandlers {
             Integer seat2 = seats.get(player2);
 
             if (seat1 == null || seat2 == null) {
-                context.player().sendMessage(Text.literal("Cannot swap: one or both players not seated").formatted(Formatting.RED), true);
+                context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.grimoire.cannot_swap_unseated").formatted(Formatting.RED), true);
                 return;
             }
 
@@ -104,7 +104,7 @@ final class GrimoireHandlers {
             if (DaytimeState.getCurrentNominee() != null ||
                 DaytimeState.getCurrentExileTarget() != null ||
                 DaytimeState.isExileSupportInProgress()) {
-                context.player().sendMessage(Text.literal("Cannot swap seats during voting/nomination/exile").formatted(Formatting.RED), true);
+                context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.grimoire.cannot_swap_during_vote").formatted(Formatting.RED), true);
                 return;
             }
 

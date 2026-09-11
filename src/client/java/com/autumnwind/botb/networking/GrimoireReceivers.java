@@ -68,7 +68,7 @@ final class GrimoireReceivers {
                     // Show message to player
                     if (context.client().player != null) {
                         context.client().player.sendMessage(
-                                Text.literal("You have received the Grimoire from the Storyteller!")
+                                Text.translatable("message.blood-on-the-blocktower.client.grimoire_received")
                                         .formatted(Formatting.LIGHT_PURPLE),
                                 false
                         );
@@ -77,7 +77,7 @@ final class GrimoireReceivers {
                     // Refresh AssignRolesScreen if it's currently open
                     if (context.client().currentScreen instanceof AssignRolesScreen) {
                         context.client().setScreen(new AssignRolesScreen(
-                                Text.literal("Grimoire")
+                                Text.translatable("message.blood-on-the-blocktower.client.title_grimoire")
                         ));
                     }
                 }

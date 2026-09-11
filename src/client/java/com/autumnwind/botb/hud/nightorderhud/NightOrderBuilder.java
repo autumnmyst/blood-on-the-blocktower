@@ -1,8 +1,10 @@
 package com.autumnwind.botb.hud.nightorderhud;
 
+import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
+import net.minecraft.text.Text;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +18,12 @@ import static com.autumnwind.botb.hud.nightorderhud.RoleHelpers.*;
  * Handles building and rebuilding the active night order.
  */
 public class NightOrderBuilder {
+
+    private static final String KEY_PREFIX = "hud." + BloodOnTheBlocktower.MOD_ID + ".night_order.builder.";
+
+    private static String key(String name) {
+        return KEY_PREFIX + name;
+    }
 
     private static boolean checkingWraiths = false;
 
@@ -105,7 +113,7 @@ public class NightOrderBuilder {
                             Role.AL_HADIKHIA,
                             allSeatedPlayers,
                             true, // seat teleport
-                            "Ask each player whether they would like to live or die.",
+                            Text.translatable(key("al_hadikhia_homebrew")).getString(),
                             new ArrayList<>(alHadikhiaReminders),
                             Optional.empty(),
                             false, // not triggered
@@ -316,7 +324,7 @@ public class NightOrderBuilder {
                         Role.LEVIATHAN,
                         List.of(leviathanPlayer),
                         false, // no teleport
-                        "It is day 5 or later. The Leviathan is alive and has their ability. Evil wins!",
+                        Text.translatable(key("leviathan_win")).getString(),
                         new ArrayList<>(leviathanReminders),
                         Optional.empty(),
                         false,
@@ -649,7 +657,7 @@ public class NightOrderBuilder {
                 if (!isFirstNight) {
                     String demonInstructions = getDemonInstructions(demonReminderOpt.get(), script);
                     if (!demonInstructions.isBlank()) {
-                        finalInstructions = finalInstructions + "\nDEMON: " + demonInstructions;
+                        finalInstructions = finalInstructions + "\n" + Text.translatable(key("demon_instructions"), demonInstructions).getString();
                     }
                 }
             }
@@ -834,7 +842,7 @@ public class NightOrderBuilder {
                     if (!isFirstNight) {
                         String demonInstructions = getDemonInstructions(demonReminderOpt.get(), script);
                         if (!demonInstructions.isBlank()) {
-                            finalInstructions = finalInstructions + "\nDEMON: " + demonInstructions;
+                            finalInstructions = finalInstructions + "\n" + Text.translatable(key("demon_instructions"), demonInstructions).getString();
                         }
                     }
                 }

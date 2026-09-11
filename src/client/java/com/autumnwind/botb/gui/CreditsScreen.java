@@ -32,7 +32,7 @@ public class CreditsScreen extends Screen {
     private CreditsListWidget creditsWidget;
 
     public CreditsScreen(Screen parent) {
-        super(Text.literal("Credits"));
+        super(Text.translatable("gui.blood-on-the-blocktower.credits.title"));
         this.parent = parent;
     }
 
@@ -47,7 +47,7 @@ public class CreditsScreen extends Screen {
 
         int backButtonWidth = 60;
         this.addDrawableChild(ButtonWidget.builder(
-                Text.literal("Back").formatted(Formatting.YELLOW),
+                Text.translatable("gui.blood-on-the-blocktower.credits.back").formatted(Formatting.YELLOW),
                 button -> this.client.setScreen(this.parent)
         ).dimensions(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
     }
@@ -79,74 +79,70 @@ public class CreditsScreen extends Screen {
 
         /** The credits themselves. */
         private void populate() {
-            section("Blood on the Blocktower");
-            entry("By", "Autumn Wind (autumnmyst)");
-            body("""
-                    A Minecraft adaptation of Blood on the Clocktower,
-                    the social deduction game by The Pandemonium Institute.""");
+            section(Text.literal("Blood on the Blocktower"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.by"), Text.literal("Autumn Wind (autumnmyst)"));
+            body(Text.translatable("gui.blood-on-the-blocktower.credits.body.blocktower"));
             spacer();
 
-            section("Blood on the Clocktower");
-            entry("Game design", "Steven Medway");
-            entry("Published by", "The Pandemonium Institute");
-            body("""
-                    Names, abilities, and almanac text belong to The Pandemonium Institute.
-                    This mod is an UNOFFICIAL and UNAFFILIATED fan project.""");
+            section(Text.literal("Blood on the Clocktower"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.game_design"), Text.literal("Steven Medway"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.published_by"), Text.literal("The Pandemonium Institute"));
+            body(Text.translatable("gui.blood-on-the-blocktower.credits.body.clocktower"));
             spacer();
 
-            section("The Yogscast");
-            body("Almost all of the role icons in this mod are by the fantastic folks at The Yogscast! They were a huge inspiration for this mod, and their role icons really bring the whole aesthetic together.");
+            section(Text.literal("The Yogscast"));
+            body(Text.translatable("gui.blood-on-the-blocktower.credits.body.yogscast"));
             spacer();
 
-            section("Art");
-            entry("Role icons", "Artist credit is on the bottom right of each role's details page");
-            entry("Other icons", "Dawn, Dusk, Minion, and Demon icons by The Yogscast");
-            entry("Clock hands", "Retextured stock images");
+            section(Text.translatable("gui.blood-on-the-blocktower.credits.section.art"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.role_icons"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.role_icons_value"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.other_icons"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.other_icons_value"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.clock_hands"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.clock_hands_value"));
             spacer();
 
-            section("Sounds");
-            entry("Receive Role", "\"Role Reveal\" sound from Innersloth's \"Among Us\"");
-            entry("Dawn", "Edvard Grieg - Morning Mood (Au Matin)");
-            entry("Dusk", "\"Secret Area Discovered\" sound from Team Cherry's \"Hollow Knight\"");
-            entry("Game End", "\"Boss Defeat\" sound from Team Cherry's \"Hollow Knight\"");
-            entry("Everything Else", "Royalty free sounds");
+            section(Text.translatable("gui.blood-on-the-blocktower.credits.section.sounds"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.receive_role"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.receive_role_value"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.dawn"), Text.literal("Edvard Grieg - Morning Mood (Au Matin)"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.dusk"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.dusk_value"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.game_end"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.game_end_value"));
+            entry(Text.translatable("gui.blood-on-the-blocktower.credits.entry.everything_else"), Text.translatable("gui.blood-on-the-blocktower.credits.entry.everything_else_value"));
             spacer();
 
-            section("Thanks");
-            body("An enormous thank you to Steven Medway & The Pandemonium Institute for making such an amazing game and fostering this great community, to The Yogscast for their fabulous icons, and to all the friends who came together each week to play and test the mod with me. Seriously, I can't thank you enough.");
+            section(Text.translatable("gui.blood-on-the-blocktower.credits.section.thanks"));
+            body(Text.translatable("gui.blood-on-the-blocktower.credits.body.thanks"));
             spacer();
 
-            section("Links");
-            link("Blood on the Clocktower", "https://bloodontheclocktower.com");
-            link("The Yogscast", "https://www.youtube.com/@yogscast");
-            link("Custom Role Creator", "https://bloodstar.clocktica.com/");
+            section(Text.translatable("gui.blood-on-the-blocktower.credits.section.links"));
+            link(Text.literal("Blood on the Clocktower"), "https://bloodontheclocktower.com");
+            link(Text.literal("The Yogscast"), "https://www.youtube.com/@yogscast");
+            link(Text.translatable("gui.blood-on-the-blocktower.credits.link.custom_role_creator"), "https://bloodstar.clocktica.com/");
             spacer();
 
-            section("All Rights Reserved");
-            body("This applies to the code and my own assets. I claim no rights to third-party works used and credited, such as Blood on the Clocktower (owned by Steven Medway and The Pandemonium Institute) and assets by The Yogscast; refer to the respective owners for their licensing terms.");
+            section(Text.translatable("gui.blood-on-the-blocktower.credits.section.all_rights_reserved"));
+            body(Text.translatable("gui.blood-on-the-blocktower.credits.body.all_rights_reserved"));
         }
 
         // ---- Content helpers -------------------------------------------------
 
         /** A gold, bold section heading. */
-        private void section(String title) {
-            this.addEntry(new TextEntry(Text.literal(title).formatted(Formatting.GOLD, Formatting.BOLD)));
+        private void section(Text title) {
+            this.addEntry(new TextEntry(title.copy().formatted(Formatting.GOLD, Formatting.BOLD)));
         }
 
         /** A "Role: Name" line with the role in grey and the name in white. */
-        private void entry(String role, String name) {
-            this.addEntry(new TextEntry(Text.literal(role + ": ").formatted(Formatting.GRAY)
-                    .append(Text.literal(name).formatted(Formatting.WHITE))));
+        private void entry(Text role, Text name) {
+            this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.credits.entry_label", role).formatted(Formatting.GRAY)
+                    .append(name.copy().formatted(Formatting.WHITE))));
         }
 
         /** A paragraph, wrapped to the list width. */
-        private void body(String text) {
-            wrap(Text.literal(text).formatted(Formatting.WHITE));
+        private void body(Text text) {
+            wrap(text.copy().formatted(Formatting.WHITE));
         }
 
         /** A label with a URL beneath it, aqua so it reads as a link. */
-        private void link(String label, String url) {
-            this.addEntry(new TextEntry(Text.literal(label).formatted(Formatting.WHITE)));
+        private void link(Text label, String url) {
+            this.addEntry(new TextEntry(label.copy().formatted(Formatting.WHITE)));
             wrap(Text.literal("  " + url).formatted(Formatting.AQUA));
         }
 

@@ -60,11 +60,11 @@ public class AssignRolesScreen extends Screen {
     private ButtonWidget hardResetButton = null;
     private ButtonWidget sendRolesButton = null;
     private static final Tooltip SEND_ROLES_TOOLTIP =
-            Tooltip.of(Text.literal("Send roles, seats, reminders, and the script to all players")
-                    .append(Text.literal("\nHold Alt to only send script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC)));
+            Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_roles")
+                    .append(Text.literal("\n"))
+                    .append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.hold_alt_script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC)));
     private static final Tooltip SEND_SCRIPT_TOOLTIP =
-            Tooltip.of(Text.literal(
-                    "Send only the script to all players"));
+            Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_script"));
 
     // Current game phase for button visibility
     private GamePhase currentPhase = GamePhase.SETUP;
@@ -143,7 +143,7 @@ public class AssignRolesScreen extends Screen {
         int bluffsButtonX = paddingFromEdge;
 
         // Bluffs Toggle (closing the screen is ESC only, so this sits in the bottom corner)
-        Text bluffsText = Text.literal("Bluffs: " + (StorytellerState.showBluffs ? "SHOW" : "HIDE"));
+        Text bluffsText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.bluffs", Text.translatable(StorytellerState.showBluffs ? "gui.blood-on-the-blocktower.assign_roles.show" : "gui.blood-on-the-blocktower.assign_roles.hide"));
         this.addDrawableChild(ButtonWidget.builder(bluffsText, b -> {
             StorytellerState.showBluffs = !StorytellerState.showBluffs;
             this.client.setScreen(this);
@@ -167,75 +167,74 @@ public class AssignRolesScreen extends Screen {
                     // Top-Left: Script Builder. Clipboard import, editing and removal all live
                     // inside the builder now, so this one button covers the lot.
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Script Builder"),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.script_builder"),
                             button -> this.client.setScreen(new ScriptBuilderScreen(this))
                     ).dimensions(10, 10, importButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal(
-                            "Build a script: import, edit, or create from scratch")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.script_builder")))
                     .build());
 
                     // Top-Right: Setup toggles. The shuffles fade out until someone is
                     // seated, and Randomize until a script is assigned to draw roles from.
                     ButtonWidget shuffleRolesButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Shuffle Roles").formatted(Formatting.AQUA),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.shuffle_roles").formatted(Formatting.AQUA),
                             button -> shuffleRoles()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Shuffle assigned roles among seated players")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.shuffle_roles")))
                     .build());
                     shuffleRolesButton.active = StorytellerState.hasSeatedPlayers();
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     ButtonWidget shuffleSeatsButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Shuffle Seats").formatted(Formatting.DARK_AQUA),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.shuffle_seats").formatted(Formatting.DARK_AQUA),
                             button -> shuffleSeats()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Shuffle seat positions of seated players")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.shuffle_seats")))
                     .build());
                     shuffleSeatsButton.active = StorytellerState.hasSeatedPlayers();
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     ButtonWidget randomizeButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Randomize Roles").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.randomize_roles").formatted(Formatting.GOLD),
                             button -> randomizeRoles()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Randomly assign roles from script based on player count")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.randomize_roles")))
                     .build());
                     randomizeButton.active = ClientState.currentScript != null;
                     largeButtonY += buttonHeight + buttonSpacing;
 
-                    Text unseatedText = Text.literal("Unseated: " + (StorytellerState.showUnseated ? "SHOW" : "HIDE"));
+                    Text unseatedText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.unseated", Text.translatable(StorytellerState.showUnseated ? "gui.blood-on-the-blocktower.assign_roles.show" : "gui.blood-on-the-blocktower.assign_roles.hide"));
                     this.addDrawableChild(ButtonWidget.builder(unseatedText, b -> {
                         StorytellerState.showUnseated = !StorytellerState.showUnseated;
                         this.client.setScreen(this);
                     }).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Toggle visibility of unseated players in grimoire")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.unseated")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
-                    Text selfText = Text.literal("Self: " + (StorytellerState.showSelf ? "SHOW" : "HIDE"));
+                    Text selfText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.self", Text.translatable(StorytellerState.showSelf ? "gui.blood-on-the-blocktower.assign_roles.show" : "gui.blood-on-the-blocktower.assign_roles.hide"));
                     this.addDrawableChild(ButtonWidget.builder(selfText, b -> {
                         StorytellerState.showSelf = !StorytellerState.showSelf;
                         this.client.setScreen(this);
                     }).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Toggle visibility of yourself in grimoire")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.self")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing + 10; // Extra spacing before action buttons
 
                     // Large Action Buttons. Both fade out until someone is seated.
                     ButtonWidget sendToSeatsButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Send to Seats").formatted(Formatting.LIGHT_PURPLE),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_to_seats").formatted(Formatting.LIGHT_PURPLE),
                             button -> sendAllPlayersToSeats()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Send All Players To Town Square Seats")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_to_seats")))
                     .build());
                     sendToSeatsButton.active = StorytellerState.hasSeatedPlayers();
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     ButtonWidget sendHomeButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Send Home").formatted(Formatting.AQUA),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_home").formatted(Formatting.AQUA),
                             button -> sendAllPlayersHome()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Send All Players Home")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_home")))
                     .build());
                     sendHomeButton.active = StorytellerState.hasSeatedPlayers();
 
@@ -252,7 +251,7 @@ public class AssignRolesScreen extends Screen {
 
                     Formatting buttonColor = cachedValidation.isValid() ? Formatting.GREEN : Formatting.RED;
                     ButtonWidget.Builder sendRolesBuilder = ButtonWidget.builder(
-                            Text.literal("SEND ROLES").formatted(buttonColor),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_roles").formatted(buttonColor),
                             button -> sendRolesOrScript()
                     ).dimensions(rightButtonX, buttonY, 90, buttonHeight);
 
@@ -267,27 +266,27 @@ public class AssignRolesScreen extends Screen {
                     // Night Phase: TP Town Square, Send Home, TP Info, Send Roles
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Town Square").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.town_square").formatted(Formatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new TeleportToTownSquareC2SPayload());
                                 this.close();
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Teleport To Town Square")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.town_square")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     ButtonWidget nightSendHomeButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Send Home").formatted(Formatting.AQUA),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_home").formatted(Formatting.AQUA),
                             button -> sendAllPlayersHome()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Send All Players Home")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_home")))
                     .build());
                     nightSendHomeButton.active = StorytellerState.hasSeatedPlayers();
 
                     // Bottom-Right: Send Roles button. TP Info is always on, driven by the RoleHUD.
                     sendRolesButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("SEND ROLES").formatted(Formatting.GREEN),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_roles").formatted(Formatting.GREEN),
                             button -> sendRolesOrScript()
                     ).dimensions(rightButtonX, buttonY, 90, buttonHeight)
                     .tooltip(SEND_ROLES_TOOLTIP)
@@ -299,30 +298,30 @@ public class AssignRolesScreen extends Screen {
                     // NO TP Info, NO Send Roles
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Town Square").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.town_square").formatted(Formatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new TeleportToTownSquareC2SPayload());
                                 this.close();
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Teleport To Town Square")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.town_square")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     ButtonWidget daySendToSeatsButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Send to Seats").formatted(Formatting.LIGHT_PURPLE),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_to_seats").formatted(Formatting.LIGHT_PURPLE),
                             button -> sendAllPlayersToSeats()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Send All Players To Town Square Seats")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_to_seats")))
                     .build());
                     daySendToSeatsButton.active = StorytellerState.hasSeatedPlayers();
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Timer").formatted(Formatting.YELLOW),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.timer").formatted(Formatting.YELLOW),
                             button -> this.client.setScreen(new TimerScreen())
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Open Timer")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
                 }
 
@@ -331,30 +330,30 @@ public class AssignRolesScreen extends Screen {
                     // NO TP Info, NO Send Roles
 
                     ButtonWidget nomSendToSeatsButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Send to Seats").formatted(Formatting.LIGHT_PURPLE),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_to_seats").formatted(Formatting.LIGHT_PURPLE),
                             button -> sendAllPlayersToSeats()
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Send All Players To Town Square Seats")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.send_to_seats")))
                     .build());
                     nomSendToSeatsButton.active = StorytellerState.hasSeatedPlayers();
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Timer").formatted(Formatting.YELLOW),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.timer").formatted(Formatting.YELLOW),
                             button -> this.client.setScreen(new TimerScreen())
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Open Timer")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     hardResetButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Hard Reset").formatted(Formatting.RED),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.hard_reset").formatted(Formatting.RED),
                             button -> {
                                 ClientPlayNetworking.send(new HardResetVoteC2SPayload());
                                 this.client.setScreen(this); // Refresh to update phase
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Hard Reset (Clears Vote, Nomination, and MFE)")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.hard_reset")))
                     .build());
                     hardResetButton.active = !ClientState.voteInProgress;
                 }
@@ -364,15 +363,15 @@ public class AssignRolesScreen extends Screen {
                     // Run Vote and Reset faded during vote
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Timer").formatted(Formatting.YELLOW),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.timer").formatted(Formatting.YELLOW),
                             button -> this.client.setScreen(new TimerScreen())
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Open Timer")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     voteButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Run Vote").formatted(Formatting.GREEN),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.run_vote").formatted(Formatting.GREEN),
                             button -> {
                                 if (ClientState.currentNominee != null && !ClientState.voteInProgress) {
                                     boolean organGrinderMode = StorytellerState.isOrganGrinderModeActive(ClientState.playerDeathStatus);
@@ -390,19 +389,19 @@ public class AssignRolesScreen extends Screen {
                                 }
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Run Vote")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.run_vote")))
                     .build());
                     voteButton.active = !ClientState.voteInProgress;
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     resetButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Reset").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.reset").formatted(Formatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new ResetVoteC2SPayload());
                                 this.client.setScreen(this); // Refresh to update phase
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Reset Vote/Nomination")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_vote")))
                     .build());
                     resetButton.active = !ClientState.voteInProgress;
                 }
@@ -411,26 +410,26 @@ public class AssignRolesScreen extends Screen {
                     // Player Marked: Timer, Hard Reset, Execute, Execute Survive
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Timer").formatted(Formatting.YELLOW),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.timer").formatted(Formatting.YELLOW),
                             button -> this.client.setScreen(new TimerScreen())
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Open Timer")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     hardResetButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Hard Reset").formatted(Formatting.RED),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.hard_reset").formatted(Formatting.RED),
                             button -> {
                                 ClientPlayNetworking.send(new HardResetVoteC2SPayload());
                                 this.client.setScreen(this); // Refresh to update phase
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Hard Reset (Clears Vote, Nomination, and MFE)")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.hard_reset")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     executeButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Execute").formatted(Formatting.DARK_RED),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.execute").formatted(Formatting.DARK_RED),
                             button -> {
                                 // For operators: prioritize storytellerMFE (handles Legion secret marks)
                                 // If using storytellerMFE (differs from player MFE), use forced execution
@@ -447,12 +446,12 @@ public class AssignRolesScreen extends Screen {
                                 }
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Execute Marked Player")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.execute")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     executeFailButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Execute Survive").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.execute_survive").formatted(Formatting.GOLD),
                             button -> {
                                 // For operators: prioritize storytellerMFE (handles Legion secret marks)
                                 // If using storytellerMFE (differs from player MFE), use forced execution
@@ -469,7 +468,7 @@ public class AssignRolesScreen extends Screen {
                                 }
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Execution Fail (No Death)")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.execute_survive")))
                     .build());
                 }
 
@@ -478,33 +477,33 @@ public class AssignRolesScreen extends Screen {
                     // Similar to PLAYER_NOMINATED but for exile
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Timer").formatted(Formatting.YELLOW),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.timer").formatted(Formatting.YELLOW),
                             button -> this.client.setScreen(new TimerScreen())
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Open Timer")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Run Support").formatted(Formatting.LIGHT_PURPLE),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.run_support").formatted(Formatting.LIGHT_PURPLE),
                             button -> {
                                 if (ClientState.currentExileTarget != null && !ClientState.exileSupportInProgress) {
                                     ClientPlayNetworking.send(new RunExileSupportC2SPayload());
                                 }
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Run Exile Support Vote")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.run_support")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Reset").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.reset").formatted(Formatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new ResetExileC2SPayload());
                                 this.client.setScreen(this); // Refresh to update phase
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Reset Exile Call")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_exile_call")))
                     .build());
                 }
 
@@ -512,22 +511,22 @@ public class AssignRolesScreen extends Screen {
                     // Exile support vote in progress: Timer only (vote auto-completes)
 
                     this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Timer").formatted(Formatting.YELLOW),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.timer").formatted(Formatting.YELLOW),
                             button -> this.client.setScreen(new TimerScreen())
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Open Timer")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
                     largeButtonY += buttonHeight + buttonSpacing;
 
                     // Reset button (but inactive during support)
                     resetButton = this.addDrawableChild(ButtonWidget.builder(
-                            Text.literal("Reset").formatted(Formatting.GOLD),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.reset").formatted(Formatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new ResetExileC2SPayload());
                                 this.client.setScreen(this);
                             }
                     ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                    .tooltip(Tooltip.of(Text.literal("Reset Exile Support")))
+                    .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_exile_support")))
                     .build());
                     // Can reset during support if needed
                 }
@@ -537,26 +536,26 @@ public class AssignRolesScreen extends Screen {
             if (ClientState.rolesRevealed) {
                 largeButtonY += buttonHeight + buttonSpacing + 10;
                 this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Reset Game").formatted(Formatting.GREEN),
+                        Text.translatable("gui.blood-on-the-blocktower.assign_roles.reset_game").formatted(Formatting.GREEN),
                         button -> {
                             if (this.client.player != null) {
                                 this.client.player.networkHandler.sendCommand("botb resetGame");
                             }
                         }
                 ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                .tooltip(Tooltip.of(Text.literal("Revive everyone, clear roles, day/night back to 0. Seats and grimoires are kept")))
+                .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_game")))
                 .build());
                 largeButtonY += buttonHeight + buttonSpacing;
 
                 this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Full Reset").formatted(Formatting.RED),
+                        Text.translatable("gui.blood-on-the-blocktower.assign_roles.full_reset").formatted(Formatting.RED),
                         button -> {
                             if (this.client.player != null) {
                                 this.client.player.networkHandler.sendCommand("botb resetGameHard");
                             }
                         }
                 ).dimensions(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
-                .tooltip(Tooltip.of(Text.literal("Same as Reset Game, plus unseats all players and wipes their grimoires")))
+                .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.full_reset")))
                 .build());
             }
 
@@ -572,10 +571,10 @@ public class AssignRolesScreen extends Screen {
             }
 
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("T").formatted(Formatting.BOLD),
+                    Text.translatable("gui.blood-on-the-blocktower.assign_roles.storyteller_tools_short").formatted(Formatting.BOLD),
                     button -> this.client.setScreen(new StorytellerToolsScreen(this))
             ).dimensions(gearButtonX, gearButtonY, gearButtonSize, buttonHeight)
-            .tooltip(Tooltip.of(Text.literal("Storyteller Tools")))
+            .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.storyteller_tools")))
             .build());
         } else {
             // --- Settings Button (only for non-operators) ---
@@ -587,7 +586,7 @@ public class AssignRolesScreen extends Screen {
                     Text.literal("\u2699").formatted(Formatting.BOLD),
                     button -> this.client.setScreen(new SettingsScreen(this))
             ).dimensions(settingsButtonX, settingsButtonY, settingsButtonSize, buttonHeight)
-            .tooltip(Tooltip.of(Text.literal("Settings")))
+            .tooltip(Tooltip.of(Text.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.settings")))
             .build());
         }
 
@@ -984,19 +983,19 @@ public class AssignRolesScreen extends Screen {
             boolean hasScript = ClientState.currentScript != null;
             if (currentPhase == GamePhase.SETUP && cachedValidation != null) {
                 if (scriptOnly) {
-                    sendRolesButton.setMessage(Text.literal("SEND SCRIPT").formatted(Formatting.AQUA));
+                    sendRolesButton.setMessage(Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_script").formatted(Formatting.AQUA));
                     sendRolesButton.active = hasScript;
                     sendRolesButton.setTooltip(SEND_SCRIPT_TOOLTIP);
                 } else {
                     boolean valid = cachedValidation.isValid();
-                    sendRolesButton.setMessage(Text.literal("SEND ROLES").formatted(valid ? Formatting.GREEN : Formatting.RED));
+                    sendRolesButton.setMessage(Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_roles").formatted(valid ? Formatting.GREEN : Formatting.RED));
                     sendRolesButton.active = valid || Screen.hasShiftDown();
                     sendRolesButton.setTooltip(valid ? SEND_ROLES_TOOLTIP : null);
                 }
             } else {
                 sendRolesButton.setMessage(scriptOnly
-                        ? Text.literal("SEND SCRIPT").formatted(Formatting.AQUA)
-                        : Text.literal("SEND ROLES").formatted(Formatting.GREEN));
+                        ? Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_script").formatted(Formatting.AQUA)
+                        : Text.translatable("gui.blood-on-the-blocktower.assign_roles.send_roles").formatted(Formatting.GREEN));
                 sendRolesButton.active = !scriptOnly || hasScript;
                 sendRolesButton.setTooltip(scriptOnly ? SEND_SCRIPT_TOOLTIP : SEND_ROLES_TOOLTIP);
             }
@@ -1019,8 +1018,8 @@ public class AssignRolesScreen extends Screen {
                 authorName = this.textRenderer.trimToWidth(authorName, maxTextWidth - this.textRenderer.getWidth("...")) + "...";
             }
 
-            context.drawTextWithShadow(this.textRenderer, Text.literal("Script: ").append(Text.literal(scriptName).formatted(Formatting.YELLOW)), 10, scriptTextY, 0xFFFFFF);
-            context.drawTextWithShadow(this.textRenderer, Text.literal("Author: ").append(Text.literal(authorName).formatted(Formatting.GRAY)), 10, scriptTextY + 12, 0xFFFFFF);
+            context.drawTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.assign_roles.script", Text.literal(scriptName).formatted(Formatting.YELLOW)), 10, scriptTextY, 0xFFFFFF);
+            context.drawTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.assign_roles.author", Text.literal(authorName).formatted(Formatting.GRAY)), 10, scriptTextY + 12, 0xFFFFFF);
         }
 
         // Render top bar:
@@ -1037,8 +1036,8 @@ public class AssignRolesScreen extends Screen {
 
         // Pre-game lobby: connected player and storyteller counts
         if (showPreGameCount) {
-            String playersLine = "Players: " + ClientState.lobbyPlayerCount;
-            String storytellersLine = "Storytellers: " + ClientState.lobbyStorytellerCount;
+            Text playersLine = Text.translatable("gui.blood-on-the-blocktower.assign_roles.players", ClientState.lobbyPlayerCount);
+            Text storytellersLine = Text.translatable("gui.blood-on-the-blocktower.assign_roles.storytellers", ClientState.lobbyStorytellerCount);
             int lineHeight = this.textRenderer.fontHeight + 6;
             int topY = this.height / 2 - lineHeight;
             context.drawCenteredTextWithShadow(this.textRenderer, playersLine, this.width / 2, topY, 0xFFFFFFFF);
@@ -1317,59 +1316,59 @@ public class AssignRolesScreen extends Screen {
                     if (Screen.hasControlDown() && Screen.hasShiftDown() && Screen.hasAltDown()) {
                         nameHoverTextList = Arrays.asList(
                             Text.literal(widget.playerName),
-                            Text.literal("Left-click: ").formatted(Formatting.LIGHT_PURPLE).append(Text.literal("send grimoire").formatted(Formatting.WHITE))
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.LIGHT_PURPLE).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_grimoire").formatted(Formatting.WHITE))
                         );
                     } else if (Screen.hasAltDown() && Screen.hasShiftDown()) {
                         nameHoverTextList = Arrays.asList(
                             Text.literal(widget.playerName),
-                            Text.literal("Left-click: ").formatted(Formatting.YELLOW).append(Text.literal("swap roles").formatted(Formatting.WHITE)),
-                            Text.literal("Right-click: ").formatted(Formatting.LIGHT_PURPLE).append(Text.literal("swap seats").formatted(Formatting.WHITE))
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.YELLOW).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.swap_roles").formatted(Formatting.WHITE)),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").formatted(Formatting.LIGHT_PURPLE).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.swap_seats").formatted(Formatting.WHITE))
                         );
                     } else if (Screen.hasControlDown() && Screen.hasAltDown()) {
                         boolean playerIsDead = ClientState.playerDeathStatus.getOrDefault(widget.uuid, false);
                         boolean hasUsedGhostVote = ClientState.hasUsedGhostVote.getOrDefault(widget.uuid, false);
-                        Text sendRolesLine = Text.literal("Right-click: ").formatted(Formatting.GREEN).append(Text.literal("send roles to player").formatted(Formatting.WHITE));
+                        Text sendRolesLine = Text.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").formatted(Formatting.GREEN).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_roles_to_player").formatted(Formatting.WHITE));
                         if (playerIsDead) {
                             if (hasUsedGhostVote) {
                                 nameHoverTextList = Arrays.asList(
                                     Text.literal(widget.playerName),
-                                    Text.literal("Left-click: ").formatted(Formatting.AQUA).append(Text.literal("restore ghost vote").formatted(Formatting.WHITE)),
+                                    Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.AQUA).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.restore_ghost_vote").formatted(Formatting.WHITE)),
                                     sendRolesLine
                                 );
                             } else {
                                 nameHoverTextList = Arrays.asList(
                                     Text.literal(widget.playerName),
-                                    Text.literal("Left-click: ").formatted(Formatting.GRAY).append(Text.literal("mark ghost vote used").formatted(Formatting.WHITE)),
+                                    Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.GRAY).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.mark_ghost_vote_used").formatted(Formatting.WHITE)),
                                     sendRolesLine
                                 );
                             }
                         } else {
                             nameHoverTextList = Arrays.asList(
                                 Text.literal(widget.playerName),
-                                Text.literal("(Player must be dead to toggle ghost vote)").formatted(Formatting.DARK_GRAY),
+                                Text.translatable("gui.blood-on-the-blocktower.assign_roles.ghost_vote_dead_only").formatted(Formatting.DARK_GRAY),
                                 sendRolesLine
                             );
                         }
                     } else if (Screen.hasControlDown() && Screen.hasShiftDown()) {
                         nameHoverTextList = Arrays.asList(
-                            Text.literal("Left-click: ").formatted(Formatting.DARK_RED).append(Text.literal("force execute (real)").formatted(Formatting.WHITE)),
-                            Text.literal("Right-click: ").formatted(Formatting.YELLOW).append(Text.literal("force execute (fake)").formatted(Formatting.WHITE))
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.DARK_RED).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.force_execute_real").formatted(Formatting.WHITE)),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").formatted(Formatting.YELLOW).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.force_execute_fake").formatted(Formatting.WHITE))
                         );
                     } else if (Screen.hasShiftDown()) {
                         nameHoverTextList = Arrays.asList(
-                            Text.literal("Left-click: ").formatted(Formatting.AQUA).append(Text.literal("visit house").formatted(Formatting.WHITE)),
-                            Text.literal("Right-click: ").formatted(Formatting.RED).append(Text.literal("send to seat").formatted(Formatting.WHITE))
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.AQUA).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.visit_house").formatted(Formatting.WHITE)),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").formatted(Formatting.RED).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_to_seat").formatted(Formatting.WHITE))
                         );
                     } else if (Screen.hasControlDown()) {
                         nameHoverTextList = Arrays.asList(
-                            Text.literal("Left-click: ").formatted(Formatting.AQUA).append(Text.literal("mark dead").formatted(Formatting.WHITE)),
-                            Text.literal("Right-click: ").formatted(Formatting.RED).append(Text.literal("teleport here").formatted(Formatting.WHITE))
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.AQUA).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.mark_dead").formatted(Formatting.WHITE)),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").formatted(Formatting.RED).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.teleport_here").formatted(Formatting.WHITE))
                         );
                     } else {
                         nameHoverTextList = Arrays.asList(
                             Text.literal(widget.playerName),
-                            Text.literal("Left-click: ").formatted(Formatting.AQUA).append(Text.literal("add reminder").formatted(Formatting.WHITE)),
-                            Text.literal("Right-click: ").formatted(Formatting.RED).append(Text.literal("send home").formatted(Formatting.WHITE))
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").formatted(Formatting.AQUA).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.add_reminder").formatted(Formatting.WHITE)),
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").formatted(Formatting.RED).append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_home").formatted(Formatting.WHITE))
                         );
                     }
                 } else {
@@ -1491,11 +1490,11 @@ public class AssignRolesScreen extends Screen {
                 context.drawTexture(skinTexture, storytellerWidget.headX, storytellerWidget.headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE, 40.0f, 8.0f, 8, 8, 64, 64);
 
                 // Draw "ST" label below the head
-                String stLabel = "ST";
+                Text stLabel = Text.translatable("gui.blood-on-the-blocktower.assign_roles.storyteller_short").formatted(Formatting.GOLD);
                 int labelWidth = this.textRenderer.getWidth(stLabel);
                 int labelX = storytellerWidget.headX + (HEAD_ICON_SIZE / 2) - (labelWidth / 2);
                 int labelY = storytellerWidget.headY + HEAD_ICON_SIZE + 2;
-                context.drawTextWithShadow(this.textRenderer, Text.literal(stLabel).formatted(Formatting.GOLD), labelX, labelY, 0xFFFFFF);
+                context.drawTextWithShadow(this.textRenderer, stLabel, labelX, labelY, 0xFFFFFF);
 
                 // Draw nomination highlight border if applicable
                 int highlightOffset = 3;
@@ -1517,7 +1516,7 @@ public class AssignRolesScreen extends Screen {
                 // Hover text
                 if (storytellerWidget.isMouseOverHead(mouseX, mouseY)) {
                     String storytellerName = storyteller.getName().getString();
-                    storytellerHoverText = Text.literal(storytellerName + " (Storyteller)").formatted(Formatting.GOLD);
+                    storytellerHoverText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.storyteller_name", storytellerName).formatted(Formatting.GOLD);
                 }
             }
         }
@@ -1628,7 +1627,7 @@ public class AssignRolesScreen extends Screen {
         // "(disconnected)" directly below the name line in light grey italics.
         // When the hover text has no name line (instruction-only variants), put it at the top.
         if (hoveredHeadWidget != null && hoveredHeadWidget.disconnected) {
-            Text disconnectedLine = Text.literal("(disconnected)")
+            Text disconnectedLine = Text.translatable("gui.blood-on-the-blocktower.assign_roles.disconnected")
                     .formatted(Formatting.ITALIC, Formatting.GRAY);
             if (nameHoverTextList != null) {
                 List<Text> adjusted = new ArrayList<>(nameHoverTextList);
@@ -1676,7 +1675,7 @@ public class AssignRolesScreen extends Screen {
                         .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
                         .collect(Collectors.toList());
                 if (ClientState.hintsEnabled) {
-                    tooltipTextLines.add(Text.literal("Click for full description").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                    tooltipTextLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.click_full_description").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 }
                 context.drawTooltip(this.textRenderer, tooltipTextLines, mouseX, mouseY);
             } else {
@@ -1693,12 +1692,12 @@ public class AssignRolesScreen extends Screen {
                 if (isOperator && hoveredRoleWidget != null && hoveredRoleWidget.hasRole()
                         && AssignRolesUtils.isPlayerMarkable(hoveredRoleWidget.uuid)) {
                     tooltipTextLines = new ArrayList<>(tooltipTextLines);
-                    tooltipTextLines.add(Text.literal("Ctrl+Click").withColor(0xFFA500)
-                            .append(Text.literal(" to toggle mark").formatted(Formatting.GRAY)));
+                    tooltipTextLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.toggle_mark_hint",
+                            Text.translatable("gui.blood-on-the-blocktower.assign_roles.ctrl_click").withColor(0xFFA500)).formatted(Formatting.GRAY));
                 }
                 if (ClientState.hintsEnabled && hoveredRoleWidget != null && hoveredRoleWidget.hasRole()) {
                     tooltipTextLines = new ArrayList<>(tooltipTextLines);
-                    tooltipTextLines.add(Text.literal("Shift: details").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                    tooltipTextLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.shift_details").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 }
                 context.drawTooltip(this.textRenderer, tooltipTextLines, mouseX, mouseY);
             }
@@ -1726,13 +1725,13 @@ public class AssignRolesScreen extends Screen {
             if (mouseX >= sendRolesButton.getX() && mouseX < sendRolesButton.getX() + sendRolesButton.getWidth() &&
                 mouseY >= sendRolesButton.getY() && mouseY < sendRolesButton.getY() + sendRolesButton.getHeight()) {
                 List<Text> errorLines = new ArrayList<>();
-                errorLines.add(Text.literal("Setup Issues:").formatted(Formatting.RED));
+                errorLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.setup_issues").formatted(Formatting.RED));
                 for (String error : cachedValidation.errors()) {
-                    errorLines.add(Text.literal("- " + error).formatted(Formatting.GRAY));
+                    errorLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.setup_issue_line", error).formatted(Formatting.GRAY));
                 }
                 errorLines.add(Text.literal("")); // Empty line
-                errorLines.add(Text.literal("Hold Shift to override").formatted(Formatting.YELLOW, Formatting.ITALIC));
-                errorLines.add(Text.literal("Hold Alt to only send script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
+                errorLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.hold_shift_override").formatted(Formatting.YELLOW, Formatting.ITALIC));
+                errorLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.hold_alt_script").formatted(Formatting.DARK_GRAY, Formatting.ITALIC));
                 context.drawTooltip(this.textRenderer, errorLines, mouseX, mouseY);
             }
         }
@@ -1788,10 +1787,10 @@ public class AssignRolesScreen extends Screen {
         // Render hints for non-operators (if enabled)
         if (!isOperator && ClientState.hintsEnabled) {
             int hintY = this.height - 25;
-            Text hintText = Text.literal("Click role: assign ").formatted(Formatting.GRAY, Formatting.ITALIC)
+            Text hintText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.hint_click_role").formatted(Formatting.GRAY, Formatting.ITALIC)
                     .append(Text.literal("|").formatted(Formatting.GRAY))
-                    .append(Text.literal(" Click head: reminders").formatted(Formatting.GRAY, Formatting.ITALIC));
-            Text hideText = Text.literal("(hide hints in settings)").formatted(Formatting.DARK_GRAY, Formatting.ITALIC);
+                    .append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.hint_click_head").formatted(Formatting.GRAY, Formatting.ITALIC));
+            Text hideText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.hint_hide").formatted(Formatting.DARK_GRAY, Formatting.ITALIC);
             context.drawCenteredTextWithShadow(this.textRenderer, hintText, this.width / 2, hintY, 0xFFFFFF);
             context.drawCenteredTextWithShadow(this.textRenderer, hideText, this.width / 2, hintY + 10, 0xFFFFFF);
         }
@@ -1880,7 +1879,7 @@ public class AssignRolesScreen extends Screen {
                                 ClientState.voteInProgress;
                         if (isBlocked) {
                             if (this.client.player != null) {
-                                this.client.player.sendMessage(Text.literal("Cannot swap seats during voting/exile").formatted(Formatting.RED), true);
+                                this.client.player.sendMessage(Text.translatable("gui.blood-on-the-blocktower.assign_roles.cannot_swap_seats").formatted(Formatting.RED), true);
                             }
                             return true;
                         }
@@ -2233,7 +2232,7 @@ public class AssignRolesScreen extends Screen {
                         ));
                         // Show feedback message
                         if (client.player != null) {
-                            client.player.sendMessage(Text.literal("Sent grimoire to " + widget.playerName).formatted(Formatting.GREEN), false);
+                            client.player.sendMessage(Text.translatable("gui.blood-on-the-blocktower.assign_roles.sent_grimoire", widget.playerName).formatted(Formatting.GREEN), false);
                         }
                         return true;
                     }
@@ -2311,7 +2310,7 @@ public class AssignRolesScreen extends Screen {
                     }
                     // NORMAL CLICK = Add Reminder
                     if (!isShiftDown && !isCtrlDown) {
-                        this.client.setScreen(new ReminderChooseScreen(Text.literal("Add Reminder for ").append(Text.literal(widget.playerName)), widget.uuid, this));
+                        this.client.setScreen(new ReminderChooseScreen(Text.translatable("gui.blood-on-the-blocktower.assign_roles.add_reminder_for", widget.playerName), widget.uuid, this));
                         return true;
                     }
                     // SHIFT + CLICK = Teleport (Operator only)
@@ -2413,12 +2412,12 @@ public class AssignRolesScreen extends Screen {
 
     private void openRoleSelectionScreen(UUID targetPlayerUUID) {
         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, targetPlayerUUID);
-        String nameStr = info != null ? info.name() : "Unknown";
-        client.setScreen(new RoleSelectionScreen(Text.literal("Select Role for " + nameStr), targetPlayerUUID, this));
+        Text nameText = info != null ? Text.literal(info.name()) : Text.translatable("gui.blood-on-the-blocktower.assign_roles.unknown_player");
+        client.setScreen(new RoleSelectionScreen(Text.translatable("gui.blood-on-the-blocktower.assign_roles.select_role_for", nameText), targetPlayerUUID, this));
     }
 
     private void openBluffSelectionScreen(int bluffIndex) {
-        client.setScreen(new RoleSelectionScreen(Text.literal("Select Bluff Role"), bluffIndex, this));
+        client.setScreen(new RoleSelectionScreen(Text.translatable("gui.blood-on-the-blocktower.assign_roles.select_bluff_role"), bluffIndex, this));
     }
 
     /**
@@ -2476,18 +2475,18 @@ public class AssignRolesScreen extends Screen {
                 }
             }
             boolean legionValid = legionCount > totalSeated / 2;
-            countsText = Text.literal("Legion: ")
+            countsText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.legion")
                     .append(Text.literal(legionCount + "/" + totalSeated).formatted(legionValid ? Formatting.GREEN : Formatting.RED))
-                    .append(Text.literal(" (need majority)").formatted(Formatting.GRAY));
+                    .append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.need_majority").formatted(Formatting.GRAY));
         } else if (expected.noEvil()) {
             // Atheist game: all good roles
             int goodRoles = actual.townsfolk() + actual.outsiders();
             int evilRoles = actual.minions() + actual.demons();
-            countsText = Text.literal("Atheist Game: ")
-                    .append(Text.literal(goodRoles + " good").formatted(Formatting.BLUE))
+            countsText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.atheist_game")
+                    .append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.good_count", goodRoles).formatted(Formatting.BLUE))
                     .append(Text.literal(", "))
-                    .append(Text.literal(evilRoles + " evil").formatted(evilRoles == 0 ? Formatting.GREEN : Formatting.RED))
-                    .append(Text.literal(" (need 0 evil)").formatted(Formatting.GRAY));
+                    .append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.evil_count", evilRoles).formatted(evilRoles == 0 ? Formatting.GREEN : Formatting.RED))
+                    .append(Text.translatable("gui.blood-on-the-blocktower.assign_roles.need_no_evil").formatted(Formatting.GRAY));
         } else {
             // Standard game
             // Role type letters colored by their type, actual count green when valid / red when invalid
@@ -2508,7 +2507,7 @@ public class AssignRolesScreen extends Screen {
 
             // Townsfolk - validate against the displayed expected value
             boolean townsfolkValid = actual.townsfolk() == displayExpectedTownsfolk;
-            Text townsfolkText = Text.literal("T: ").formatted(Formatting.BLUE)
+            Text townsfolkText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.townsfolk_short").formatted(Formatting.BLUE)
                     .append(Text.literal(String.valueOf(actual.townsfolk())).formatted(townsfolkValid ? Formatting.GREEN : Formatting.RED))
                     .append(Text.literal("/" + displayExpectedTownsfolk).formatted(Formatting.GRAY));
 
@@ -2517,19 +2516,19 @@ public class AssignRolesScreen extends Screen {
             String expectedOutsidersStr = expected.minOutsiders() == expected.maxOutsiders()
                     ? String.valueOf(expected.minOutsiders())
                     : expected.minOutsiders() + "-" + expected.maxOutsiders();
-            Text outsidersText = Text.literal("  O: ").formatted(Formatting.DARK_AQUA)
+            Text outsidersText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.outsiders_short").formatted(Formatting.DARK_AQUA)
                     .append(Text.literal(String.valueOf(actual.outsiders())).formatted(outsidersValid ? Formatting.GREEN : Formatting.RED))
                     .append(Text.literal("/" + expectedOutsidersStr).formatted(Formatting.GRAY));
 
             // Minions
             boolean minionsValid = actual.minions() == resolved.minions();
-            Text minionsText = Text.literal("  M: ").formatted(Formatting.RED)
+            Text minionsText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.minions_short").formatted(Formatting.RED)
                     .append(Text.literal(String.valueOf(actual.minions())).formatted(minionsValid ? Formatting.GREEN : Formatting.RED))
                     .append(Text.literal("/" + resolved.minions()).formatted(Formatting.GRAY));
 
             // Demons
             boolean demonsValid = actual.demons() == resolved.demons();
-            Text demonsText = Text.literal("  D: ").formatted(Formatting.DARK_RED)
+            Text demonsText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.demons_short").formatted(Formatting.DARK_RED)
                     .append(Text.literal(String.valueOf(actual.demons())).formatted(demonsValid ? Formatting.GREEN : Formatting.RED))
                     .append(Text.literal("/" + resolved.demons()).formatted(Formatting.GRAY));
 
@@ -2543,11 +2542,11 @@ public class AssignRolesScreen extends Screen {
         // Draw "VALID" or "INVALID" indicator
         int indicatorY = y + 12;
         if (cachedValidation.isValid()) {
-            Text validText = Text.literal("SETUP VALID").formatted(Formatting.GREEN);
+            Text validText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.setup_valid").formatted(Formatting.GREEN);
             int validWidth = this.textRenderer.getWidth(validText);
             context.drawTextWithShadow(this.textRenderer, validText, centerX - validWidth / 2, indicatorY, 0xFFFFFF);
         } else {
-            Text invalidText = Text.literal("SETUP INVALID").formatted(Formatting.RED);
+            Text invalidText = Text.translatable("gui.blood-on-the-blocktower.assign_roles.setup_invalid").formatted(Formatting.RED);
             int invalidWidth = this.textRenderer.getWidth(invalidText);
             context.drawTextWithShadow(this.textRenderer, invalidText, centerX - invalidWidth / 2, indicatorY, 0xFFFFFF);
         }

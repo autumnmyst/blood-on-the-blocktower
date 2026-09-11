@@ -125,7 +125,7 @@ public class RoleGuideDetailsScreen extends Screen {
             super(client, width, height, y, client.textRenderer.fontHeight + 1);
             int textWidth = this.getRowWidth() - 10;
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.literal("How To Run").formatted(Formatting.GOLD)));
+            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.role_guide_details.how_to_run").formatted(Formatting.GOLD)));
             boolean first = true;
             for (String paragraph : RoleGuides.get(role).split("\n")) {
                 if (!first) this.addEntry(DocumentEntry.spacer());

@@ -43,9 +43,9 @@ public final class PlayerEvents {
             if (ServerPlayNetworking.canSend(handler.getPlayer(), ModVersionS2CPayload.ID)) {
                 ServerPlayNetworking.send(handler.getPlayer(), new ModVersionS2CPayload(BloodOnTheBlocktower.version()));
             } else {
-                handler.getPlayer().sendMessage(Text.literal("Blood on the Blocktower version mismatch! ").formatted(Formatting.RED)
-                        .append(Text.literal("Server has " + BloodOnTheBlocktower.version() + ", your mod is older. ").formatted(Formatting.YELLOW))
-                        .append(Text.literal("Some features may not work until you update.").formatted(Formatting.GRAY)), false);
+                handler.getPlayer().sendMessage(Text.translatable("message.blood-on-the-blocktower.command.version_mismatch").formatted(Formatting.RED)
+                        .append(Text.translatable("message.blood-on-the-blocktower.command.version_mismatch_server", BloodOnTheBlocktower.version()).formatted(Formatting.YELLOW))
+                        .append(Text.translatable("message.blood-on-the-blocktower.command.version_mismatch_features").formatted(Formatting.GRAY)), false);
             }
 
             TimerManager.addPlayer(handler.getPlayer());

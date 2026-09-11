@@ -115,10 +115,10 @@ public class MessageCommandMixin {
                                                      ServerPlayerEntity target,
                                                      WhisperSettings settings) {
         if (!settings.allowWhispering()) {
-            return Text.literal("You can only whisper to the storyteller").formatted(Formatting.RED);
+            return Text.translatable("message.blood-on-the-blocktower.whisper.only_storyteller").formatted(Formatting.RED);
         }
 
-        Text tooFarAway = Text.literal("Player " + target.getName().getString() + " is too far away to hear you!")
+        Text tooFarAway = Text.translatable("message.blood-on-the-blocktower.whisper.too_far_away", target.getName().getString())
                 .formatted(Formatting.RED);
 
         if (settings.vcEnforced() && !sameVoiceChatGroupState(sender, target)) {
@@ -207,10 +207,10 @@ public class MessageCommandMixin {
         // Whispers involving an operator (storyteller↔player or op↔op) don't get
         // announced publicly, since those are normal storyteller communication channels.
         if (!senderIsOp && !targetIsOp && settings.broadcast()) {
-            MutableText publicMsg = Text.empty()
-                    .append(Text.literal(senderName).formatted(Formatting.YELLOW))
-                    .append(Text.literal(" is whispering to ").styled(s -> s.withColor(PALE_PURPLE).withItalic(true)))
-                    .append(Text.literal(targetName).formatted(Formatting.YELLOW));
+            MutableText publicMsg = Text.translatable("message.blood-on-the-blocktower.whisper.is_whispering_to",
+                            Text.literal(senderName).styled(s -> s.withColor(Formatting.YELLOW).withItalic(false)),
+                            Text.literal(targetName).styled(s -> s.withColor(Formatting.YELLOW).withItalic(false)))
+                    .styled(s -> s.withColor(PALE_PURPLE).withItalic(true));
             for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
                 p.sendMessage(publicMsg, false);
             }
@@ -249,7 +249,7 @@ public class MessageCommandMixin {
         // delivery). Bright yellow names, gray connectors, content unstyled so it
         // reads as the actual whisper.
         MutableText opMsg = Text.empty()
-                .append(Text.literal("[whisper] ").formatted(Formatting.LIGHT_PURPLE))
+                .append(Text.translatable("message.blood-on-the-blocktower.whisper.op_prefix").formatted(Formatting.LIGHT_PURPLE))
                 .append(Text.literal(senderName).formatted(Formatting.YELLOW))
                 .append(Text.literal(" → ").formatted(Formatting.GRAY))
                 .append(Text.literal(targetName).formatted(Formatting.YELLOW))

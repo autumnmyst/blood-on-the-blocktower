@@ -217,26 +217,27 @@ public class KeyInputHandler {
                 ClientState.isHudEnabled = !ClientState.isHudEnabled;
                 PlayerConfig.save();
 
-                String status = ClientState.isHudEnabled ? "Enabled" : "Disabled";
-                client.player.sendMessage(Text.literal("HUD Completely " + status), true);
+                client.player.sendMessage(Text.translatable(ClientState.isHudEnabled
+                        ? "message.blood-on-the-blocktower.client.hud_completely_enabled"
+                        : "message.blood-on-the-blocktower.client.hud_completely_disabled"), true);
             }
 
             // Storyteller: Open Role Assignment GUI
             if(openAssignGui.wasPressed()) {
-                client.setScreen(new AssignRolesScreen(Text.literal("Assign Roles")));
+                client.setScreen(new AssignRolesScreen(Text.translatable("message.blood-on-the-blocktower.client.title_assign_roles")));
             }
 
             // Player: Open Role Catalog
             if(openCatalogKey.wasPressed()) {
-                client.setScreen(new RoleCatalogScreen(Text.literal("Role Catalog")));
+                client.setScreen(new RoleCatalogScreen(Text.translatable("message.blood-on-the-blocktower.client.title_role_catalog")));
             }
 
             // Player: Open Script Reference
             if (openScriptKey.wasPressed()) {
                 if (ClientState.currentScript != null) {
-                    client.setScreen(new ScriptReferenceScreen(Text.literal("Script Reference")));
+                    client.setScreen(new ScriptReferenceScreen(Text.translatable("message.blood-on-the-blocktower.client.title_script_reference")));
                 } else {
-                    client.player.sendMessage(Text.literal("No script has been assigned.").formatted(Formatting.RED), true);
+                    client.player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.no_script_assigned").formatted(Formatting.RED), true);
                 }
             }
 
@@ -245,8 +246,9 @@ public class KeyInputHandler {
                 // Only operators can toggle the night HUD
                 if (client.player.hasPermissionLevel(2)) {
                     ClientState.isNightHudVisible = !ClientState.isNightHudVisible;
-                    String status = ClientState.isNightHudVisible ? "Visible" : "Hidden";
-                    client.player.sendMessage(Text.literal("Night Order HUD: " + status), true);
+                    client.player.sendMessage(Text.translatable(ClientState.isNightHudVisible
+                            ? "message.blood-on-the-blocktower.client.night_hud_visible"
+                            : "message.blood-on-the-blocktower.client.night_hud_hidden"), true);
                 }
                 // Non-operators: do nothing (no message, no toggle)
             }
@@ -297,22 +299,24 @@ public class KeyInputHandler {
                     // Official role
                     client.setScreen(new CharacterDetailsScreen(ClientState.myRole, client.currentScreen));
                 } else {
-                    client.player.sendMessage(Text.literal("You do not have a role assigned.").formatted(Formatting.RED), true);
+                    client.player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.no_role_assigned").formatted(Formatting.RED), true);
                 }
             }
 
             // Toggle Sidebar
             if (toggleSidebarKey.wasPressed()) {
                 ClientState.isSidebarVisible = !ClientState.isSidebarVisible;
-                String status = ClientState.isSidebarVisible ? "Visible" : "Hidden";
-                client.player.sendMessage(Text.literal("Voice Chat Sidebar: " + status), true);
+                client.player.sendMessage(Text.translatable(ClientState.isSidebarVisible
+                        ? "message.blood-on-the-blocktower.client.sidebar_visible"
+                        : "message.blood-on-the-blocktower.client.sidebar_hidden"), true);
             }
 
             // Toggle Auto Teleport (Operator only)
             if (toggleAutoTeleportKey.wasPressed() && client.player.hasPermissionLevel(2)) {
                 StorytellerState.autoTeleportEnabled = !StorytellerState.autoTeleportEnabled;
-                String status = StorytellerState.autoTeleportEnabled ? "AUTO" : "MANUAL";
-                client.player.sendMessage(Text.literal("Teleport Mode: " + status), true);
+                client.player.sendMessage(Text.translatable(StorytellerState.autoTeleportEnabled
+                        ? "message.blood-on-the-blocktower.client.teleport_mode_auto"
+                        : "message.blood-on-the-blocktower.client.teleport_mode_manual"), true);
             }
 
             // Toggle Timer Screen (Operator only)

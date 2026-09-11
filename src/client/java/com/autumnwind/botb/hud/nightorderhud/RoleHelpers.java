@@ -1,15 +1,24 @@
 package com.autumnwind.botb.hud.nightorderhud;
 
+import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
+import net.minecraft.text.Text;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Helper methods for analyzing roles, associated roles, and reminders.
  */
 public class RoleHelpers {
+
+    private static final String KEY_PREFIX = "hud." + BloodOnTheBlocktower.MOD_ID + ".night_order.helper.";
+
+    private static String key(String name) {
+        return KEY_PREFIX + name;
+    }
 
     /**
      * Checks if a player has any triggered role (either assigned or associated).
@@ -237,60 +246,66 @@ public class RoleHelpers {
             // Special case: Princess "Doesn't Kill" reminder. Two newlines = a blank
             // line before each modifier so the storyteller can scan them at a glance.
             if (role == Role.PRINCESS && reminder.text().equals(Reminders.DOESNT_KILL)) {
-                result.append("\n\n").append("PRINCESS: The demon doesn't kill tonight");
+                result.append("\n\n").append(modifier("princess_doesnt_kill", role));
                 continue;
             }
 
             // Special case: Xaan "X" icon on townsfolk visits
             if (role == Role.XAAN && reminder.text().equals(Reminders.X)) {
-                result.append("\n\n").append("XAAN: All Townsfolk are poisoned until dusk");
+                result.append("\n\n").append(modifier("xaan_poison", role));
                 continue;
             }
 
             // Special case: Riot day modifier on Nominations
             if (role == Role.RIOT && reminder.text().equals(Reminders.RIOT)) {
-                result.append("\n\n").append("RIOT: Each nominee dies immediately, then must nominate an alive player right away (3... 2... 1...). If nobody nominates, the Storyteller nominates. Good wins when all Riot players are dead.");
+                result.append("\n\n").append(modifier("riot", role));
                 continue;
             }
 
             // Special case: Organ Grinder mode modifier on Nominations
             if (role == Role.ORGAN_GRINDER && reminder.text().equals(Reminders.ORGAN_GRINDER)) {
-                result.append("\n\n").append("ORGAN GRINDER: Votes are secret. Players are blinded while voting and see only \"???\" afterwards; you see the real count and marked player. Do not reveal results until nominations are over.");
+                result.append("\n\n").append(modifier("organ_grinder", role));
                 continue;
             }
 
             // Special case: Bishop mode modifier on Nominations
             if (role == Role.BISHOP && reminder.text().equals(Reminders.BISHOP)) {
-                result.append("\n\n").append("BISHOP: Only you can nominate. Nominate at least one player of the opposite alignment to the Bishop each day.");
+                result.append("\n\n").append(modifier("bishop", role));
                 continue;
             }
 
             // Special case: Toymaker "Final Night: No Attack" on the demon's visit
             if (role == Role.TOYMAKER && reminder.text().equals(Reminders.FINAL_NIGHT_NO_ATTACK)) {
-                result.append("\n\n").append("TOYMAKER: The Demon does not attack tonight.");
+                result.append("\n\n").append(modifier("toymaker", role));
                 continue;
             }
 
             // Special case: Buddhist modifier on Dawn
             if (role == Role.BUDDHIST && reminder.text().equals(Reminders.BUDDHIST)) {
-                result.append("\n\n").append("BUDDHIST: For the first 2 minutes of the day, veteran players may not talk.");
+                result.append("\n\n").append(modifier("buddhist", role));
                 continue;
             }
 
             // Special case: Legion modifier on Nominations
             if (role == Role.LEGION && reminder.text().equals(Reminders.LEGION)) {
-                result.append("\n\n").append("LEGION: A vote where only evil players voted counts as zero. Players don't see this; only you are told.");
+                result.append("\n\n").append(modifier("legion", role));
                 continue;
             }
 
             // Get first night instructions for this role
             String roleInstructions = getFirstNightInstructions(role);
             if (!roleInstructions.isBlank()) {
-                result.append("\n\n").append(role.getDisplayName().toUpperCase(Locale.ROOT)).append(": ").append(roleInstructions);
+                result.append("\n\n").append(Text.translatable(key("role_instructions"),
+                        role.getDisplayName().toUpperCase(Locale.ROOT), roleInstructions).getString());
             }
         }
 
         return result.toString();
+    }
+
+    /** A modifier line for a visit, headed by the role's name in caps. */
+    private static String modifier(String name, Role role) {
+        return Text.translatable(key(name), role.getDisplayName().toUpperCase(Locale.ROOT)).getString();
     }
 
     /**
@@ -564,7 +579,10 @@ public class RoleHelpers {
         }
 
         if (reminderTexts.isEmpty()) return "";
-        return " (" + String.join(", ", reminderTexts) + ")";
+        String joined = reminderTexts.stream()
+                .map(text -> Reminders.display(text, Optional.empty()).getString())
+                .collect(Collectors.joining(Text.translatable(key("separator")).getString()));
+        return Text.translatable(key("reminder_suffix"), joined).getString();
     }
 
     /**

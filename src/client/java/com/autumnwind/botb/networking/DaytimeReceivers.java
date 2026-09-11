@@ -190,7 +190,7 @@ final class DaytimeReceivers {
                 Text resultMessage;
                 if (hideVoteInfo) {
                     // Organ Grinder mode: hide details from non-operators
-                    resultMessage = Text.literal("The vote has been counted.")
+                    resultMessage = Text.translatable("message.blood-on-the-blocktower.client.vote_counted")
                             .formatted(Formatting.LIGHT_PURPLE);
                 } else {
                     // Get the name to display for marked player (for operators, may be different than nominee)
@@ -212,12 +212,12 @@ final class DaytimeReceivers {
                     resultMessage = switch (displayResult) {
                         case MARKED -> Text.literal(finalMarkedPlayerName)
                                 .styled(style -> style.withColor(0xFF8C00)) // Orange (canBeNominated color)
-                                .append(Text.literal(" has been ").formatted(Formatting.WHITE))
-                                .append(Text.literal("marked for execution").formatted(Formatting.RED))
-                                .append(Text.literal(" with " + displayVoteCount + " vote(s).").formatted(Formatting.WHITE));
-                        case TIE -> Text.literal("Tie!").formatted(Formatting.YELLOW)
-                                .append(Text.literal(" All players pardoned with " + payload.voteCount() + " vote(s) each.").formatted(Formatting.WHITE));
-                        case NOT_ENOUGH -> Text.literal("Not enough votes to mark for execution. " + payload.voteCount() + " vote(s) received.")
+                                .append(Text.translatable("message.blood-on-the-blocktower.client.has_been").formatted(Formatting.WHITE))
+                                .append(Text.translatable("message.blood-on-the-blocktower.client.marked_for_execution").formatted(Formatting.RED))
+                                .append(Text.translatable("message.blood-on-the-blocktower.client.with_votes", displayVoteCount).formatted(Formatting.WHITE));
+                        case TIE -> Text.translatable("message.blood-on-the-blocktower.client.tie").formatted(Formatting.YELLOW)
+                                .append(Text.translatable("message.blood-on-the-blocktower.client.all_pardoned_with_votes", payload.voteCount()).formatted(Formatting.WHITE));
+                        case NOT_ENOUGH -> Text.translatable("message.blood-on-the-blocktower.client.not_enough_votes", payload.voteCount())
                                 .formatted(Formatting.WHITE);
                     };
                 }
@@ -228,7 +228,7 @@ final class DaytimeReceivers {
                     // For operators: explain when it's a Legion-protected vote (evil-only)
                     if (isOperator && payload.legionProtectedVote()) {
                         context.client().player.sendMessage(
-                            Text.literal("[Legion] Only evil players voted - vote counts as 0.")
+                            Text.translatable("message.blood-on-the-blocktower.client.legion_evil_only_vote")
                                 .formatted(Formatting.DARK_PURPLE),
                             false
                         );
@@ -236,7 +236,7 @@ final class DaytimeReceivers {
 
                     // Only show voters list if not hiding vote info (supports distant players)
                     if (!hideVoteInfo && !voters.isEmpty()) {
-                        context.client().player.sendMessage(Text.literal("Voted:"), false);
+                        context.client().player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.voted"), false);
                         for (UUID voterUuid : voters) {
                             String voterName = null;
                             AbstractClientPlayerEntity voter =
@@ -252,8 +252,8 @@ final class DaytimeReceivers {
 
                             if (voterName != null) {
                                 context.client().player.sendMessage(
-                                    Text.literal("- ").formatted(Formatting.WHITE)
-                                        .append(Text.literal(voterName).formatted(Formatting.YELLOW)),
+                                    Text.translatable("message.blood-on-the-blocktower.client.voter_entry",
+                                        Text.literal(voterName).formatted(Formatting.YELLOW)).formatted(Formatting.WHITE),
                                     false
                                 );
                             }

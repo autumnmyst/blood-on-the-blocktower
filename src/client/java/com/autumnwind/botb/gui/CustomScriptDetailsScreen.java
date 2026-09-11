@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Locale;
 
 /**
  * Screen for displaying custom script details from the almanac.
@@ -42,7 +41,7 @@ public class CustomScriptDetailsScreen extends Screen {
     private final Map<Page, Double> savedScrollAmounts = new EnumMap<>(Page.class);
 
     public CustomScriptDetailsScreen(Screen parent) {
-        super(Text.literal("Script Details"));
+        super(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.title"));
         this.script = ClientState.currentScript;
         this.parent = parent;
 
@@ -78,9 +77,9 @@ public class CustomScriptDetailsScreen extends Screen {
         int overviewX = this.width / 2 - buttonWidth / 2;
         int changelogX = this.width / 2 + buttonWidth / 2 + spacing;
 
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Synopsis"), b -> switchPage(Page.SYNOPSIS)).dimensions(synopsisX, topY, buttonWidth, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Overview"), b -> switchPage(Page.OVERVIEW)).dimensions(overviewX, topY, buttonWidth, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Changelog"), b -> switchPage(Page.CHANGELOG)).dimensions(changelogX, topY, buttonWidth, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(pageTitle(Page.SYNOPSIS), b -> switchPage(Page.SYNOPSIS)).dimensions(synopsisX, topY, buttonWidth, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(pageTitle(Page.OVERVIEW), b -> switchPage(Page.OVERVIEW)).dimensions(overviewX, topY, buttonWidth, 20).build());
+        this.addDrawableChild(ButtonWidget.builder(pageTitle(Page.CHANGELOG), b -> switchPage(Page.CHANGELOG)).dimensions(changelogX, topY, buttonWidth, 20).build());
 
         this.switchPage(this.currentPage, true);
 
@@ -110,6 +109,22 @@ public class CustomScriptDetailsScreen extends Screen {
         this.switchPage(newPage, false);
     }
 
+    private static Text pageTitle(Page page) {
+        return switch (page) {
+            case SYNOPSIS -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.synopsis");
+            case OVERVIEW -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.overview");
+            case CHANGELOG -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.changelog");
+        };
+    }
+
+    private static Text noContentMessage(Page page) {
+        return switch (page) {
+            case SYNOPSIS -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_synopsis");
+            case OVERVIEW -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_overview");
+            case CHANGELOG -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_changelog");
+        };
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
@@ -117,7 +132,7 @@ public class CustomScriptDetailsScreen extends Screen {
         if (script != null) {
             if (hasAuthor()) {
                 context.drawCenteredTextWithShadow(this.textRenderer, script.name(), this.width / 2, 4, 0xFFFFFF);
-                Text authorText = Text.literal("by " + script.author()).formatted(Formatting.GRAY);
+                Text authorText = Text.translatable("gui.blood-on-the-blocktower.custom_script_details.by_author", script.author()).formatted(Formatting.GRAY);
                 context.drawCenteredTextWithShadow(this.textRenderer, authorText, this.width / 2, 15, 0xAAAAAA);
             } else {
                 context.drawCenteredTextWithShadow(this.textRenderer, script.name(), this.width / 2, 8, 0xFFFFFF);
@@ -126,7 +141,7 @@ public class CustomScriptDetailsScreen extends Screen {
 
         // Show loading indicator if still fetching
         if (isLoading) {
-            context.drawCenteredTextWithShadow(this.textRenderer, Text.literal("Loading almanac...").formatted(Formatting.YELLOW), this.width / 2, this.height / 2, 0xFFFFFF);
+            context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.custom_script_details.loading_almanac").formatted(Formatting.YELLOW), this.width / 2, this.height / 2, 0xFFFFFF);
         }
     }
 
@@ -148,20 +163,20 @@ public class CustomScriptDetailsScreen extends Screen {
             this.clearEntries();
 
             if (isLoading) {
-                this.addEntry(new TextEntry(Text.literal("Loading...").formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.loading").formatted(Formatting.ITALIC, Formatting.GRAY)));
                 return;
             }
 
             // Check for errors
             String lastError = AlmanacParser.getLastError();
             if (lastError != null && (almanacData == null || !almanacData.hasScriptData())) {
-                this.addEntry(new TextEntry(Text.literal("Failed to load almanac:").formatted(Formatting.RED)));
+                this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.load_failed").formatted(Formatting.RED)));
                 this.addEntry(new TextEntry(Text.literal(lastError).formatted(Formatting.GRAY)));
                 return;
             }
 
             if (almanacData == null || almanacData.scriptData() == null) {
-                this.addEntry(new TextEntry(Text.literal("No almanac data available.").formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_almanac_data").formatted(Formatting.ITALIC, Formatting.GRAY)));
                 return;
             }
 
@@ -184,12 +199,11 @@ public class CustomScriptDetailsScreen extends Screen {
             }
 
             // Add a title
-            String title = page.name().charAt(0) + page.name().substring(1).toLowerCase(Locale.ROOT);
-            this.addEntry(new TitleEntry(title));
+            this.addEntry(new TitleEntry(pageTitle(page)));
             this.addEntry(new SpacerEntry());
 
             if (content == null || content.isEmpty()) {
-                this.addEntry(new TextEntry(Text.literal("No " + page.name().toLowerCase(Locale.ROOT) + " available.").formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(noContentMessage(page).copy().formatted(Formatting.ITALIC, Formatting.GRAY)));
                 return;
             }
 
@@ -229,8 +243,8 @@ public class CustomScriptDetailsScreen extends Screen {
 
         public class TitleEntry extends Entry {
             private final Text text;
-            public TitleEntry(String title) {
-                this.text = Text.literal(title).formatted(Formatting.GOLD, Formatting.BOLD);
+            public TitleEntry(Text title) {
+                this.text = title.copy().formatted(Formatting.GOLD, Formatting.BOLD);
             }
 
             @Override

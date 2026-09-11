@@ -31,9 +31,9 @@ final class MiscReceivers {
             String local = BloodOnTheBlocktower.version();
             if (local.equals(payload.version())) return;
             BloodOnTheBlocktower.LOGGER.warn("BotB version mismatch: server {} / client {}", payload.version(), local);
-            context.player().sendMessage(Text.literal("Blood on the Blocktower version mismatch! ").formatted(Formatting.RED)
-                    .append(Text.literal("Server has " + payload.version() + ", you have " + local + ". ").formatted(Formatting.YELLOW))
-                    .append(Text.literal("Some features may not work until you match.").formatted(Formatting.GRAY)), false);
+            context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.client.version_mismatch").formatted(Formatting.RED)
+                    .append(Text.translatable("message.blood-on-the-blocktower.client.version_mismatch_versions", payload.version(), local).formatted(Formatting.YELLOW))
+                    .append(Text.translatable("message.blood-on-the-blocktower.client.version_mismatch_hint").formatted(Formatting.GRAY)), false);
         });
     }
 }

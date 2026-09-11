@@ -181,7 +181,7 @@ public class RoleSelectionScreen extends Screen {
 
             // Unassign Button (for players)
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("Unassign").formatted(Formatting.RED),
+                    Text.translatable("gui.blood-on-the-blocktower.role_selection.unassign").formatted(Formatting.RED),
                     button -> unassignAndClose() // Calls player unassign
             ).dimensions(startX + searchWidth + alignWidth + (2 * spacing), topBarY, unassignWidth, 20).build());
 
@@ -195,7 +195,7 @@ public class RoleSelectionScreen extends Screen {
 
             // Unassign Button (for bluffs)
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("Unassign").formatted(Formatting.RED),
+                    Text.translatable("gui.blood-on-the-blocktower.role_selection.unassign").formatted(Formatting.RED),
                     button -> unassignBluffAndClose() // Calls bluff unassign
             ).dimensions(startX + searchWidth + spacing, topBarY, unassignWidth, 20).build());
         }

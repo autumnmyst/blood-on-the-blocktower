@@ -25,7 +25,7 @@ public class VoiceChatGroupScreenOpenMixin {
     private void restrictVoiceChatGroupScreenOpening(Screen screen, CallbackInfo ci) {
         if (screen instanceof GroupScreen || screen instanceof JoinGroupScreen) {
             if (player != null && !player.hasPermissionLevel(2)) {
-                player.sendMessage(Text.literal("Only server operators can access the groups menu"), true);
+                player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.groups_menu_operators_only"), true);
                 ci.cancel(); // Don't open the screen
             }
         }

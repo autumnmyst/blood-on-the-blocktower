@@ -148,10 +148,10 @@ public class NominationManager {
         int votesRequired = (int) Math.ceil(alivePlayerCount / 2.0);
 
         // Build message
-        Text titleText = Text.literal(nominatorName)
-                .styled(style -> style.withColor(0x4FC3F7)) // Light blue (canNominate color)
-                .append(Text.literal(" nominates ").formatted(Formatting.WHITE))
-                .append(Text.literal(nomineeName).styled(style -> style.withColor(0xFF8C00))); // Orange (canBeNominated color)
+        Text titleText = Text.translatable("message.blood-on-the-blocktower.daytime.nominates",
+                Text.literal(nominatorName).styled(style -> style.withColor(0x4FC3F7)), // Light blue (canNominate color)
+                Text.literal(nomineeName).styled(style -> style.withColor(0xFF8C00))) // Orange (canBeNominated color)
+                .formatted(Formatting.WHITE);
 
         Text subtitleText;
         int votesForTie = DaytimeState.getVotesForMarkedPlayer();
@@ -159,15 +159,15 @@ public class NominationManager {
             votesRequired = votesForTie + 1;
         }
         if (DaytimeState.getMarkedForExecution() != null) {
-            subtitleText = Text.literal(votesForTie + " to tie, " + votesRequired + " to execute")
+            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.votes_to_tie_execute", votesForTie, votesRequired)
                     .formatted(Formatting.GRAY);
         } else {
-            subtitleText = Text.literal(votesRequired + " votes required")
+            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.votes_required", votesRequired)
                     .formatted(Formatting.GRAY);
         }
 
         // Hidden subtitle for non-operators on OG days (light purple color)
-        Text hiddenSubtitleText = Text.literal("? votes required")
+        Text hiddenSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.votes_required_hidden")
                 .styled(style -> style.withColor(0xDA70D6)); // Light purple/orchid
 
         // Send title and chat message to all players

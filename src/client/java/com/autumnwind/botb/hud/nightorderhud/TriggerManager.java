@@ -1,8 +1,10 @@
 package com.autumnwind.botb.hud.nightorderhud;
 
+import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
+import net.minecraft.text.Text;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -14,6 +16,12 @@ import static com.autumnwind.botb.hud.nightorderhud.RoleHelpers.*;
  * Manages triggered role visits (death-based, mark-based, role-switch, etc.).
  */
 public class TriggerManager {
+
+    private static final String KEY_PREFIX = "hud." + BloodOnTheBlocktower.MOD_ID + ".night_order.trigger.";
+
+    private static String key(String name) {
+        return KEY_PREFIX + name;
+    }
 
     /**
      * Adds a triggered visit to the map. The trigger will be placed after its sourceIndex.
@@ -600,7 +608,7 @@ public class TriggerManager {
                         && v.players().contains(playerUUID));
         if (alreadyTriggered) return;
 
-        String instruction = "You are an evil Traveler. Learn who the Demon is.";
+        String instruction = Text.translatable(key("evil_traveler")).getString();
         NightOrder.getFirstNightOrder().stream()
                 .filter(info -> info.isStatic() && info.getStaticAction() == NightOrder.StaticAction.MINION_INFO)
                 .findFirst()
@@ -675,7 +683,7 @@ public class TriggerManager {
                 Role.CANNIBAL,
                 cannibalPlayers,
                 false, // seatTeleport = false
-                "A living player was successfully executed today.",
+                Text.translatable(key("cannibal_execution")).getString(),
                 Collections.emptyList(),
                 Optional.empty(),
                 true, // triggered = true
@@ -686,8 +694,10 @@ public class TriggerManager {
         addTriggeredVisit(cannibalReminder);
     }
 
-    /** Identity marker for role-switch triggers in the triggeredVisits map. */
-    private static final String ROLE_SWITCH_INSTRUCTION_PREFIX = "You are now the ";
+    /** Opening line of a role-switch trigger, also its identity marker in the triggeredVisits map. */
+    private static String roleSwitchInstruction(Role newRole) {
+        return Text.translatable(key("role_switch"), newRole.getDisplayName()).getString();
+    }
 
     /**
      * Creates a role switch trigger for a player whose role has changed.
@@ -736,7 +746,7 @@ public class TriggerManager {
         // 2. Has a triggered other night ability (like Grandmother)
         // AND we're past night 1
         StringBuilder instructions = new StringBuilder();
-        instructions.append(ROLE_SWITCH_INSTRUCTION_PREFIX).append(newRole.getDisplayName()).append(".");
+        instructions.append(roleSwitchInstruction(newRole));
 
         // Check if we should include first night instructions (only on nights 2+)
         boolean shouldIncludeFnInstructions = ClientState.currentNight > 1 &&
@@ -746,7 +756,7 @@ public class TriggerManager {
         if (shouldIncludeFnInstructions) {
             String firstNightInstructions = getFirstNightInstructions(newRole);
             if (!firstNightInstructions.isBlank()) {
-                instructions.append("\n\nFIRST NIGHT INSTRUCTIONS:\n").append(firstNightInstructions);
+                instructions.append("\n\n").append(Text.translatable(key("first_night_instructions"), firstNightInstructions).getString());
             }
         }
 
@@ -828,14 +838,14 @@ public class TriggerManager {
         // sourceIndex. Instructions follow the same FN-inclusion rules as a brand-new
         // trigger so the displayed content stays correct.
         StringBuilder instructions = new StringBuilder();
-        instructions.append(ROLE_SWITCH_INSTRUCTION_PREFIX).append(newRole.getDisplayName()).append(".");
+        instructions.append(roleSwitchInstruction(newRole));
         boolean shouldIncludeFnInstructions = ClientState.currentNight > 1
                 && hasFirstNightsAbility(newRole)
                 && (!hasOtherNightsAbility(newRole) || isTriggeredRole(newRole));
         if (shouldIncludeFnInstructions) {
             String firstNightInstructions = getFirstNightInstructions(newRole);
             if (!firstNightInstructions.isBlank()) {
-                instructions.append("\n\nFIRST NIGHT INSTRUCTIONS:\n").append(firstNightInstructions);
+                instructions.append("\n\n").append(Text.translatable(key("first_night_instructions"), firstNightInstructions).getString());
             }
         }
 
@@ -870,8 +880,9 @@ public class TriggerManager {
                 && v.triggerSourcePlayer().get().equals(playerUUID)
                 && v.players().size() == 1
                 && v.players().get(0).equals(playerUUID)
+                && v.role() != null
                 && v.instruction() != null
-                && v.instruction().startsWith(ROLE_SWITCH_INSTRUCTION_PREFIX);
+                && v.instruction().startsWith(roleSwitchInstruction(v.role()));
     }
 
     /**

@@ -18,7 +18,7 @@ final class ScriptReceivers {
             if (ClientState.currentScript == null || !ClientState.currentScript.equals(payload.script())) {
                 ClientState.currentScript = payload.script();
                 // Only notify the player if it's a new script.
-                context.client().player.sendMessage(Text.literal("Script '" + payload.script().name() + "' received."), false);
+                context.client().player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.script_received", payload.script().name()), false);
                 // Clear crossed out roles only when a NEW script is received
                 ClientState.crossedOutRoles.clear();
                 // Initialize custom role support

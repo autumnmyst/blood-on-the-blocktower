@@ -202,7 +202,7 @@ public class ExecutionManager {
 
         // DELAYED: Display execution title and mark as dead after configured delay (using Timer for non-blocking delay)
         Text titleText = Text.literal(playerName).formatted(Formatting.DARK_RED);
-        Text subtitleText = Text.literal("Has Been Executed").formatted(Formatting.DARK_RED);
+        Text subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.has_been_executed").formatted(Formatting.DARK_RED);
 
         if (ServerConfig.EXECUTION_DEATH_TITLE_DELAY > 0) {
             new Timer().schedule(new TimerTask() {
@@ -493,7 +493,7 @@ public class ExecutionManager {
 
         // DELAYED: Display execution title and chat message after configured delay (using Timer for non-blocking delay)
         Text titleText = Text.literal(playerName).formatted(Formatting.DARK_RED);
-        Text subtitleText = Text.literal("Survives Execution").formatted(Formatting.GOLD);
+        Text subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.survives_execution").formatted(Formatting.GOLD);
 
         if (ServerConfig.EXECUTION_DEATH_TITLE_DELAY > 0) {
             new Timer().schedule(new TimerTask() {

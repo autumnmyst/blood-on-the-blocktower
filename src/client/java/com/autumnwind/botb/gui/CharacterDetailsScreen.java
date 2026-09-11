@@ -299,7 +299,7 @@ public class CharacterDetailsScreen extends Screen {
 
             // Artist credit (only for official roles)
             int halfWidth = this.width / 2;
-            Text artistText = Text.literal("Artist: " + details.artist()).formatted(Formatting.GRAY, Formatting.ITALIC);
+            Text artistText = Text.translatable("gui.blood-on-the-blocktower.character_details.artist", details.artist()).formatted(Formatting.GRAY, Formatting.ITALIC);
             int artistX = halfWidth + 110;
             int artistMaxWidth = this.width - artistX - 10;
             int artistY = this.height - 30 + (20 - this.textRenderer.fontHeight * 2) / 2;
@@ -375,7 +375,7 @@ public class CharacterDetailsScreen extends Screen {
 
             List<String> specialRules = AbilityText.bootleggerRules(scriptRole, ClientState.currentScript);
             if (specialRules != null) {
-                this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Special Rules").formatted(Formatting.GOLD, Formatting.BOLD)));
+                this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.special_rules").formatted(Formatting.GOLD, Formatting.BOLD)));
                 String prefix = specialRules.size() > 1 ? "- " : "";
                 for (String rule : specialRules) {
                     for (OrderedText line : textRenderer.wrapLines(Text.literal(prefix + rule), textWidth)) {
@@ -388,7 +388,7 @@ public class CharacterDetailsScreen extends Screen {
 
             if (details != null) {
                 // Official role - show Summary and Examples from RoleDetails
-                this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Summary").formatted(Formatting.GOLD)));
+                this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.summary").formatted(Formatting.GOLD)));
                 for (OrderedText line : textRenderer.wrapLines(Text.literal(details.summary()), textWidth)) {
                     this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
                 }
@@ -398,7 +398,7 @@ public class CharacterDetailsScreen extends Screen {
                 this.addEntry(DocumentEntry.spacer());
 
                 // Examples Section
-                this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Examples").formatted(Formatting.GOLD)));
+                this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.examples").formatted(Formatting.GOLD)));
                 for (OrderedText line : textRenderer.wrapLines(Text.literal(details.examples()), textWidth)) {
                     this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
                 }
@@ -409,7 +409,7 @@ public class CharacterDetailsScreen extends Screen {
                 // Overview section
                 if (almanacRoleData.hasOverview()) {
                     if (needsSpacer) { this.addEntry(DocumentEntry.spacer()); }
-                    this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Overview").formatted(Formatting.GOLD)));
+                    this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.overview").formatted(Formatting.GOLD)));
                     addMultilineText(almanacRoleData.overview(), textWidth);
                     needsSpacer = true;
                 }
@@ -417,7 +417,7 @@ public class CharacterDetailsScreen extends Screen {
                 // Examples section
                 if (almanacRoleData.hasExamples()) {
                     if (needsSpacer) { this.addEntry(DocumentEntry.spacer()); }
-                    this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Examples").formatted(Formatting.GOLD)));
+                    this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.examples").formatted(Formatting.GOLD)));
                     addMultilineText(almanacRoleData.examples(), textWidth);
                     needsSpacer = true;
                 }
@@ -425,7 +425,7 @@ public class CharacterDetailsScreen extends Screen {
                 // How To Run section
                 if (almanacRoleData.hasHowToRun()) {
                     if (needsSpacer) { this.addEntry(DocumentEntry.spacer()); }
-                    this.addEntry(DocumentEntry.title(textRenderer, Text.literal("How To Run").formatted(Formatting.GOLD)));
+                    this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.how_to_run").formatted(Formatting.GOLD)));
                     addMultilineText(almanacRoleData.howToRun(), textWidth);
                     needsSpacer = true;
                 }
@@ -433,7 +433,7 @@ public class CharacterDetailsScreen extends Screen {
                 // Tip section
                 if (almanacRoleData.hasTip()) {
                     if (needsSpacer) { this.addEntry(DocumentEntry.spacer()); }
-                    this.addEntry(DocumentEntry.title(textRenderer, Text.literal("Tip").formatted(Formatting.GOLD)));
+                    this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.tip").formatted(Formatting.GOLD)));
                     addMultilineText(almanacRoleData.tip(), textWidth);
                 }
             }

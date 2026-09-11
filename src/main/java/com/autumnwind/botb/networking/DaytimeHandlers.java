@@ -74,7 +74,7 @@ final class DaytimeHandlers {
                 StateBroadcaster.broadcastDaytimeState(context.server());
 
                 // Send chat message to all players
-                Text message = Text.literal("Nominations are open!").formatted(Formatting.YELLOW);
+                Text message = Text.translatable("message.blood-on-the-blocktower.daytime.nominations_open").formatted(Formatting.YELLOW);
                 for (ServerPlayerEntity player : context.server().getPlayerManager().getPlayerList()) {
                     player.sendMessage(message, false);
 
