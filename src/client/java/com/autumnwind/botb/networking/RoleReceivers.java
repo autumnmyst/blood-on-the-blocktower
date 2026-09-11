@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.server.permissions.Permissions;
 
 /** Client-bound packet receivers for the player's own role, traveler updates, seats, death status, and madnesses. */
 final class RoleReceivers {
@@ -26,8 +27,8 @@ final class RoleReceivers {
 
             // Refresh AssignRolesScreen if currently open (so local grimoire updates)
             context.client().execute(() -> {
-                if (context.client().screen instanceof AssignRolesScreen) {
-                    context.client().setScreen(context.client().screen);
+                if (context.client().gui.screen() instanceof AssignRolesScreen) {
+                    context.client().gui.setScreen(context.client().gui.screen());
                 }
             });
         });
@@ -60,8 +61,8 @@ final class RoleReceivers {
                 }
 
                 // Refresh AssignRolesScreen if currently open (so local grimoire updates)
-                if (context.client().screen instanceof AssignRolesScreen) {
-                    context.client().setScreen(context.client().screen);
+                if (context.client().gui.screen() instanceof AssignRolesScreen) {
+                    context.client().gui.setScreen(context.client().gui.screen());
                 }
             });
         });
@@ -72,15 +73,15 @@ final class RoleReceivers {
 
             // Also update StorytellerState for operators (grimoire seat locations)
             context.client().execute(() -> {
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
+                boolean isOperator = context.client().player != null && context.client().player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
                 if (isOperator) {
                     // Update pending seat numbers to match
                     StorytellerState.PENDING_SEAT_NUMBERS.clear();
                     StorytellerState.PENDING_SEAT_NUMBERS.putAll(payload.seatNumbers());
 
                     // Refresh AssignRolesScreen if currently open
-                    if (context.client().screen instanceof AssignRolesScreen) {
-                        context.client().setScreen(context.client().screen);
+                    if (context.client().gui.screen() instanceof AssignRolesScreen) {
+                        context.client().gui.setScreen(context.client().gui.screen());
                     }
                 }
             });
@@ -92,7 +93,7 @@ final class RoleReceivers {
                 Map<UUID, Boolean> previousDeathStatus = new HashMap<>(ClientState.playerDeathStatus);
                 ClientState.playerDeathStatus = payload.deadPlayers();
 
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
+                boolean isOperator = context.client().player != null && context.client().player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
                 boolean anyDeathChange = false;
 
                 // When a player dies or is revived, update their canNominate status

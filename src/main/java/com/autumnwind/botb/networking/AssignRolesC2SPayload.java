@@ -11,7 +11,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.Optional;
 
 /**
@@ -28,7 +28,7 @@ public record AssignRolesC2SPayload(
         Optional<Script> script,
         Map<UUID, List<Reminder>> reminders
 ) implements CustomPacketPayload {
-    public static final ResourceLocation ASSIGN_ROLES_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "assign_roles");
+    public static final Identifier ASSIGN_ROLES_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "assign_roles");
     public static final CustomPacketPayload.Type<AssignRolesC2SPayload> ID = new CustomPacketPayload.Type<>(ASSIGN_ROLES_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, AssignRolesC2SPayload> CODEC = StreamCodec.composite(

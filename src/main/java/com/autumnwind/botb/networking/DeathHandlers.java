@@ -8,12 +8,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import com.autumnwind.botb.util.ServerCommands;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.entity.EntitySpawnReason;
 
 /** Server-bound packet handlers: Death status updates and ghost vote toggles. */
 final class DeathHandlers {
@@ -23,7 +25,7 @@ final class DeathHandlers {
     static void register() {
         ModPackets.registerGuarded(UpdateDeadPlayersC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 Map<UUID, Boolean> newDeathStatus = payload.deadPlayers();
                 Map<UUID, Integer> seatNumbers = payload.seatNumbers();
                 Map<UUID, Boolean> previousDeathStatus = new HashMap<>(ServerState.PLAYER_DEATH_STATUS);
@@ -61,10 +63,10 @@ final class DeathHandlers {
                                 boolean isDaytime = ServerState.currentNight == ServerState.currentDay
                                         && ServerState.currentDay > 0;
                                 if (isDaytime && !payload.silent()) {
-                                    ServerLevel targetWorld = targetPlayer.serverLevel();
-                                    LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(targetWorld);
+                                    ServerLevel targetWorld = targetPlayer.level();
+                                    LightningBolt lightning = EntityTypes.LIGHTNING_BOLT.create(targetWorld, EntitySpawnReason.TRIGGERED);
                                     if (lightning != null) {
-                                        lightning.moveTo(targetPlayer.getX(), targetPlayer.getY(), targetPlayer.getZ());
+                                        lightning.snapTo(targetPlayer.getX(), targetPlayer.getY(), targetPlayer.getZ());
                                         lightning.setVisualOnly(true);
                                         targetWorld.addFreshEntity(lightning);
                                     }
@@ -181,7 +183,7 @@ final class DeathHandlers {
 
         ModPackets.registerGuarded(ToggleGhostVoteC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (!player.hasPermissions(2)) {
+            if (!player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 return; // Only operators can toggle ghost votes
             }
 

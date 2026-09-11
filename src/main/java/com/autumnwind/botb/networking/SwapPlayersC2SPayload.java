@@ -7,7 +7,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for swapping two players' seats.
@@ -20,7 +20,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record SwapPlayersC2SPayload(UUID player1, UUID player2, Map<UUID, Integer> seatNumbers) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SwapPlayersC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "swap_players"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "swap_players"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SwapPlayersC2SPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, SwapPlayersC2SPayload::player1,

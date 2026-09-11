@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -20,6 +20,8 @@ import net.minecraft.util.FormattedCharSequence;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleGuides;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 /**
  * Advanced Guide screen for storytellers - explains special casing in the Night Order HUD.
@@ -81,7 +83,7 @@ public class AdvancedGuideScreen extends Screen {
                     button -> {
                         selectedCategory = cat;
                         savedScrollAmount = 0.0;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight).build());
             currentY += buttonHeight + buttonSpacing;
@@ -91,14 +93,14 @@ public class AdvancedGuideScreen extends Screen {
         currentY += buttonSpacing;
         this.addRenderableWidget(Button.builder(
                 Component.translatable(KEY_PREFIX + "role_guides").withStyle(ChatFormatting.AQUA),
-                button -> this.minecraft.setScreen(new RoleGuidesScreen(this))
+                button -> this.minecraft.gui.setScreen(new RoleGuidesScreen(this))
         ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight).build());
 
         // Back button
         int backButtonWidth = 60;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.blood-on-the-blocktower.back").withStyle(ChatFormatting.YELLOW),
-                button -> this.minecraft.setScreen(this.parent)
+                button -> this.minecraft.gui.setScreen(this.parent)
         ).bounds(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
 
         // Content widget (right side)
@@ -108,26 +110,30 @@ public class AdvancedGuideScreen extends Screen {
         int contentHeight = this.height - contentY - 40;
 
         this.contentWidget = new GuideContentWidget(this.minecraft, contentWidth, contentHeight, contentY, selectedCategory);
-        this.contentWidget.setX(contentX);
+        this.contentWidget.updateSizeAndPosition(contentWidth, contentHeight, contentX, contentY);
         this.contentWidget.setScrollAmount(savedScrollAmount);
         this.addRenderableWidget(this.contentWidget);
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.centeredText(this.font, this.title, this.width / 2, 10, 0xFFFFFFFF);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         boolean exitKeyPressed = keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_E;
-        boolean openAssignGuiPressed = KeyInputHandler.openAssignGui != null && KeyInputHandler.openAssignGui.matches(keyCode, scanCode);
+        boolean openAssignGuiPressed = KeyInputHandler.openAssignGui != null && KeyInputHandler.openAssignGui.matches(event);
         if (exitKeyPressed || openAssignGuiPressed) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -402,14 +408,14 @@ public class AdvancedGuideScreen extends Screen {
 
         private void addBody(String key, int width) {
             for (FormattedCharSequence line : font.split(Component.translatable(KEY_PREFIX + key), width)) {
-                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
+                this.addEntry(DocumentEntry.text(font, line, 0xFFCCCCCC));
             }
         }
 
         private void addHighlight(String key, int width) {
             MutableComponent highlighted = Component.translatable(KEY_PREFIX + key).withStyle(ChatFormatting.GOLD);
             for (FormattedCharSequence line : font.split(highlighted, width)) {
-                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
+                this.addEntry(DocumentEntry.text(font, line, 0xFFCCCCCC));
             }
         }
 
@@ -417,7 +423,7 @@ public class AdvancedGuideScreen extends Screen {
         private void addAqua(String key, int width) {
             MutableComponent aqua = Component.translatable(KEY_PREFIX + key).withStyle(ChatFormatting.AQUA);
             for (FormattedCharSequence line : font.split(aqua, width)) {
-                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
+                this.addEntry(DocumentEntry.text(font, line, 0xFFCCCCCC));
             }
         }
 
@@ -471,26 +477,33 @@ public class AdvancedGuideScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
                 lastX = x;
                 lastY = y;
                 RoleLink hoveredLink = linkAt(mouseX, mouseY);
                 for (RoleLink link : links) {
                     MutableComponent text = Component.literal(link.label()).withStyle(ChatFormatting.AQUA);
                     if (link == hoveredLink) text.withStyle(ChatFormatting.UNDERLINE);
-                    context.drawString(font, text, x + link.x(), y, 0xCCCCCC, false);
+                    context.text(font, text, x + link.x(), y, 0xFFCCCCCC, false);
                 }
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 RoleLink link = linkAt(mouseX, mouseY);
                 if (button != GLFW.GLFW_MOUSE_BUTTON_1 || link == null) return false;
-                savedScrollAmount = GuideContentWidget.this.getScrollAmount();
+                savedScrollAmount = GuideContentWidget.this.scrollAmount();
                 if (RoleGuides.has(link.role())) {
-                    minecraft.setScreen(new RoleGuideDetailsScreen(link.role(), AdvancedGuideScreen.this, RoleGuides.roles()));
+                    minecraft.gui.setScreen(new RoleGuideDetailsScreen(link.role(), AdvancedGuideScreen.this, RoleGuides.roles()));
                 } else {
-                    minecraft.setScreen(new CharacterDetailsScreen(link.role(), AdvancedGuideScreen.this));
+                    minecraft.gui.setScreen(new CharacterDetailsScreen(link.role(), AdvancedGuideScreen.this));
                 }
                 return true;
             }
@@ -506,7 +519,7 @@ public class AdvancedGuideScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 6;
         }
     }

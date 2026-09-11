@@ -26,6 +26,8 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import java.util.*;
 import com.autumnwind.botb.world.TeamManager;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.scores.TeamColor;
 
 /**
  * Manages the voting process including timers, lever reading, and result calculation.
@@ -88,7 +90,7 @@ public class VotingManager {
             }
 
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                if (!player.hasPermissions(2)) {
+                if (!player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                     player.addEffect(new MobEffectInstance(
                             MobEffects.BLINDNESS,
                             Integer.MAX_VALUE, 0, false, false, false
@@ -326,7 +328,7 @@ public class VotingManager {
                 public void run() {
                     server.execute(() -> {
                         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                            if (!player.hasPermissions(2)) {
+                            if (!player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                                 player.removeEffect(MobEffects.BLINDNESS);
                                 player.removeEffect(MobEffects.NIGHT_VISION);
                             }
@@ -416,7 +418,7 @@ public class VotingManager {
         Component hiddenSubtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.vote_has_been_counted").withStyle(ChatFormatting.LIGHT_PURPLE);
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            boolean hideFromPlayer = organGrinderMode && !player.hasPermissions(2);
+            boolean hideFromPlayer = organGrinderMode && !player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
             // Send result sound - non-operators in OG mode always hear "Not Enough Votes" sound
             String playerSoundType = hideFromPlayer ? PlaySoundS2CPayload.NOT_ENOUGH_VOTES : soundType;
@@ -491,7 +493,7 @@ public class VotingManager {
         PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
         if (playerTeam == null) {
             playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-            playerTeam.setColor(ChatFormatting.WHITE);
+            playerTeam.setColor(Optional.of(TeamColor.WHITE));
         }
         PlayerTeam mfeTeam = scoreboard.getPlayerTeam(TeamManager.MFE_TEAM);
         PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
@@ -505,7 +507,7 @@ public class VotingManager {
         for (UUID playerUuid : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
             if (player != null) {
-                String playerName = player.getGameProfile().getName();
+                String playerName = player.getGameProfile().name();
 
                 // Remove from MFE team if present
                 if (mfeTeam != null && scoreboard.getPlayersTeam(playerName) == mfeTeam) {
@@ -528,8 +530,8 @@ public class VotingManager {
 
         // Also add all operators (storytellers) to the player team
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (player.hasPermissions(2)) {
-                String playerName = player.getGameProfile().getName();
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
+                String playerName = player.getGameProfile().name();
                 // Remove from MFE team if present
                 if (mfeTeam != null && scoreboard.getPlayersTeam(playerName) == mfeTeam) {
                     scoreboard.removePlayerFromTeam(playerName, mfeTeam);
@@ -1039,69 +1041,48 @@ public class VotingManager {
         // Get current dead players
         Set<UUID> deadPlayers = ServerState.deadPlayers();
 
-        // The lever state will change AFTER this event, so we need to schedule an update
-        final UUID finalPlayerUuid = playerUuid;
-        final int finalSeat = matchingSeat;
+        // state is the lever before the click flips it
+        boolean isOn = !state.getValue(LeverBlock.POWERED);
 
-        server.execute(() -> {
-            // Re-check: the vote-lock sweep may have passed this player between the
-            // synchronous locked-votes check above and this deferred execution. If so,
-            // drop the lever flip so we don't raise an indicator block after the sweep
-            // has already lowered it.
-            if (DaytimeState.getLockedVotes().containsKey(finalPlayerUuid)) {
-                return;
+        // Banshee double vote toggle: when lever turns ON, potentially toggle between 1 and 2 votes
+        // First ON keeps default (2 votes), subsequent OFF→ON transitions toggle
+        // Works whenever Banshee has double vote ability (not just during vote)
+        if (isOn && DaytimeState.hasBansheeDoubleVote(playerUuid)) {
+            Boolean wasOn = DaytimeState.getLeverStates().get(playerUuid);
+            // Only process if lever was previously OFF (true OFF→ON transition)
+            if (wasOn == null || !wasOn) {
+                DaytimeState.toggleBansheeDoubleVoteActive(playerUuid);
             }
+        }
 
-            // Re-check cleanup window: scheduleCleanup may have started
-            // between the synchronous gate above and this deferred execution.
-            if (ElectionManager.isCleanupInProgress()) {
-                return;
-            }
+        // Update stored lever state
+        DaytimeState.setLeverState(playerUuid, isOn);
 
-            // Read the NEW lever state (after the flip)
-            BlockState newState = world.getBlockState(pos);
-            boolean isOn = newState.getBlock() instanceof LeverBlock && newState.getValue(LeverBlock.POWERED);
+        // Update indicator block - use exile indicators if exile is active
+        if (DaytimeState.hasActiveExile() || DaytimeState.isExileSupportInProgress()) {
+            // During exile call or exile support: use exile indicators
+            ExileManager.updateExileIndicator(server, matchingSeat, isOn);
+            // Also update exile support vote state
+            DaytimeState.setExileSupportVote(playerUuid, isOn);
+        } else {
+            // Normal vote indicators
+            updateVoteIndicator(server, matchingSeat, playerUuid, isOn, deadPlayers);
+        }
 
-            // Banshee double vote toggle: when lever turns ON, potentially toggle between 1 and 2 votes
-            // First ON keeps default (2 votes), subsequent OFF→ON transitions toggle
-            // Works whenever Banshee has double vote ability (not just during vote)
-            if (isOn && DaytimeState.hasBansheeDoubleVote(finalPlayerUuid)) {
-                Boolean wasOn = DaytimeState.getLeverStates().get(finalPlayerUuid);
-                // Only process if lever was previously OFF (true OFF→ON transition)
-                if (wasOn == null || !wasOn) {
-                    DaytimeState.toggleBansheeDoubleVoteActive(finalPlayerUuid);
-                }
-            }
-
-            // Update stored lever state
-            DaytimeState.setLeverState(finalPlayerUuid, isOn);
-
-            // Update indicator block - use exile indicators if exile is active
-            if (DaytimeState.hasActiveExile() || DaytimeState.isExileSupportInProgress()) {
-                // During exile call or exile support: use exile indicators
-                ExileManager.updateExileIndicator(server, finalSeat, isOn);
-                // Also update exile support vote state
-                DaytimeState.setExileSupportVote(finalPlayerUuid, isOn);
-            } else {
-                // Normal vote indicators
-                updateVoteIndicator(server, finalSeat, finalPlayerUuid, isOn, deadPlayers);
-            }
-
-            // Broadcast updates to clients
-            if (DaytimeState.isVoteInProgress()) {
-                // During vote: broadcast full vote state
-                broadcastVoteUpdate(server);
-            } else if (DaytimeState.isExileSupportInProgress()) {
-                // During exile support: broadcast exile state
-                ExileSupportManager.broadcastExileSupportUpdate(server);
-            } else if (DaytimeState.getCurrentNominee() != null) {
-                // During nomination: broadcast lever states only
-                broadcastLeverStates(server);
-            } else if (DaytimeState.hasActiveExile()) {
-                // During exile call (before support): broadcast lever states
-                broadcastLeverStates(server);
-            }
-        });
+        // Broadcast updates to clients
+        if (DaytimeState.isVoteInProgress()) {
+            // During vote: broadcast full vote state
+            broadcastVoteUpdate(server);
+        } else if (DaytimeState.isExileSupportInProgress()) {
+            // During exile support: broadcast exile state
+            ExileSupportManager.broadcastExileSupportUpdate(server);
+        } else if (DaytimeState.getCurrentNominee() != null) {
+            // During nomination: broadcast lever states only
+            broadcastLeverStates(server);
+        } else if (DaytimeState.hasActiveExile()) {
+            // During exile call (before support): broadcast lever states
+            broadcastLeverStates(server);
+        }
 
         return passResult;
     }

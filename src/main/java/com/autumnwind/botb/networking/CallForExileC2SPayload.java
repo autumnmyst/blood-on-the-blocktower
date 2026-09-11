@@ -7,14 +7,14 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for calling for exile of a traveler.
  */
 public record CallForExileC2SPayload(UUID caller, UUID traveler, boolean override) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CallForExileC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "call_for_exile"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "call_for_exile"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CallForExileC2SPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, CallForExileC2SPayload::caller,

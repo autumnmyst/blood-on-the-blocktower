@@ -8,7 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Represents a single reminder token.
@@ -54,13 +54,13 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
     /**
      * The icon used for custom reminders (when role is empty).
      */
-    public static final ResourceLocation CUSTOM_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png");
-    public static final ResourceLocation DRUNK_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/roles/tb/drunk.png");
-    public static final ResourceLocation POISONED_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/poisoned.png");
-    public static final ResourceLocation VORTOX_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/roles/snv/vortox.png");
-    public static final ResourceLocation PLAYER_REMINDER_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png"); // Placeholder, actual rendering uses player head
-    public static final ResourceLocation GOOD_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/good.png");
-    public static final ResourceLocation EVIL_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/evil.png");
+    public static final Identifier CUSTOM_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png");
+    public static final Identifier DRUNK_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/roles/tb/drunk.png");
+    public static final Identifier POISONED_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/poisoned.png");
+    public static final Identifier VORTOX_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/roles/snv/vortox.png");
+    public static final Identifier PLAYER_REMINDER_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png"); // Placeholder, actual rendering uses player head
+    public static final Identifier GOOD_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/good.png");
+    public static final Identifier EVIL_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/evil.png");
 
     /**
      * Checks if this is a player reminder (for Harpy madness).
@@ -95,7 +95,7 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
      * @return The associated role's icon, or the CUSTOM_ICON if it's a custom reminder.
      * Note: For player reminders, this returns a placeholder. Actual rendering should use player head texture.
      */
-    public ResourceLocation getIcon() {
+    public Identifier getIcon() {
         // Player reminder - return placeholder (should be rendered with player head)
         if (isPlayerReminder()) {
             return PLAYER_REMINDER_ICON;

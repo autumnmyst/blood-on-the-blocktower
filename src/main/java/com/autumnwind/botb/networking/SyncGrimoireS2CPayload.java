@@ -9,7 +9,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * S2C payload for syncing grimoire state from server to other storytellers.
@@ -25,7 +25,7 @@ public record SyncGrimoireS2CPayload(
         int setupOutsiderCount
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncGrimoireS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_grimoire_s2c"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_grimoire_s2c"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncGrimoireS2CPayload> CODEC = new StreamCodec<>() {
         @Override

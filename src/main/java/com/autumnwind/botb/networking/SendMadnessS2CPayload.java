@@ -11,14 +11,14 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Payload for sending madness data to a player.
  * Contains a list of active madnesses for that player.
  */
 public record SendMadnessS2CPayload(List<Madness> madnesses) implements CustomPacketPayload {
-    public static final ResourceLocation SEND_MADNESS_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_madness");
+    public static final Identifier SEND_MADNESS_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_madness");
     public static final CustomPacketPayload.Type<SendMadnessS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_MADNESS_ID);
 
     // Custom codec for Madness list

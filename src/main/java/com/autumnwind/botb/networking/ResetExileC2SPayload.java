@@ -4,7 +4,7 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for resetting the current exile call.
@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record ResetExileC2SPayload() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ResetExileC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "reset_exile"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "reset_exile"));
 
     public static final StreamCodec<ByteBuf, ResetExileC2SPayload> CODEC = StreamCodec.ofMember(
             (value, buf) -> {}, // No data to write

@@ -6,6 +6,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.permissions.Permissions;
 
 /**
  * Utility class for building player counts display text.
@@ -17,7 +18,7 @@ public class PlayerCountsDisplay {
 
     private static boolean isOperator() {
         Minecraft client = Minecraft.getInstance();
-        return client.player != null && client.player.hasPermissions(2);
+        return client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
     }
 
     /** Storytellers count from their own grimoire; players use what the server sent them. */

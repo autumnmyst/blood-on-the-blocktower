@@ -7,6 +7,7 @@ import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.NightOrder;
 import com.autumnwind.botb.util.RoleVisit;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.server.permissions.Permissions;
 
 /** Client-bound packet receivers for day/night state and the storyteller's night order. */
 final class NightOrderReceivers {
@@ -24,7 +25,7 @@ final class NightOrderReceivers {
             // Game start: snapshot the outsider count for the Xaan
             if (gameStarting) {
                 context.client().execute(() -> {
-                    if (context.client().player != null && context.client().player.hasPermissions(2)) {
+                    if (context.client().player != null && context.client().player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                         StorytellerState.setupOutsiderCount = RoleHelpers.countAssignedOutsiders();
                         StorytellerState.syncGrimoire();
                     }
@@ -51,7 +52,7 @@ final class NightOrderReceivers {
         ClientPlayNetworking.registerGlobalReceiver(SyncNightVisitS2CPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 // Only process for operators
-                if (context.client().player == null || !context.client().player.hasPermissions(2)) {
+                if (context.client().player == null || !context.client().player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                     return;
                 }
 

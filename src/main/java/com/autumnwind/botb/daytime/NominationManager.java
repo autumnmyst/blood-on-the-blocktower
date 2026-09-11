@@ -17,6 +17,9 @@ import net.minecraft.world.scores.Scoreboard;
 import java.util.UUID;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.world.TeamManager;
+import net.minecraft.server.permissions.Permissions;
+import java.util.Optional;
+import net.minecraft.world.scores.TeamColor;
 
 /**
  * Manages nomination logic including validation, execution, and visual effects.
@@ -109,13 +112,13 @@ public class NominationManager {
         // All players stay on botb_player team for white glow - travelers only use botb_traveler during exile
         if (nomineePlayer != null) {
             Scoreboard scoreboard = server.getScoreboard();
-            String playerName = nomineePlayer.getGameProfile().getName();
+            String playerName = nomineePlayer.getGameProfile().name();
 
             // Ensure player is on botb_player team for white glow color
             PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
             if (playerTeam == null) {
                 playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-                playerTeam.setColor(ChatFormatting.WHITE);
+                playerTeam.setColor(Optional.of(TeamColor.WHITE));
             }
             if (scoreboard.getPlayersTeam(playerName) != playerTeam) {
                 scoreboard.addPlayerToTeam(playerName, playerTeam);
@@ -173,8 +176,8 @@ public class NominationManager {
         boolean isOGDay = DaytimeState.isOrganGrinderModeActiveToday();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             // On OG days, non-operators see hidden vote counts
-            Component messageSubtitle = (isOGDay && !player.hasPermissions(2)) ? hiddenSubtitleText : subtitleText;
-            player.displayClientMessage(titleText.copy().append(" ").append(messageSubtitle), false);
+            Component messageSubtitle = (isOGDay && !player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) ? hiddenSubtitleText : subtitleText;
+            player.sendSystemMessage(titleText.copy().append(" ").append(messageSubtitle), false);
 
             // Send nomination sound
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.NOMINATION));
@@ -213,12 +216,12 @@ public class NominationManager {
 
                 // Ensure player stays on botb_player team (travelers only use botb_traveler during exile)
                 Scoreboard scoreboard = server.getScoreboard();
-                String playerName = nomineePlayer.getGameProfile().getName();
+                String playerName = nomineePlayer.getGameProfile().name();
 
                 PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
                 if (playerTeam == null) {
                     playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-                    playerTeam.setColor(ChatFormatting.WHITE);
+                    playerTeam.setColor(Optional.of(TeamColor.WHITE));
                 }
                 if (scoreboard.getPlayersTeam(playerName) != playerTeam) {
                     scoreboard.addPlayerToTeam(playerName, playerTeam);
@@ -260,7 +263,7 @@ public class NominationManager {
         if (serverPlayer == null) return;
 
         Scoreboard scoreboard = server.getScoreboard();
-        String playerName = serverPlayer.getGameProfile().getName();
+        String playerName = serverPlayer.getGameProfile().name();
 
         if (apply) {
             // Order matters: the glow takes its colour from the team the player is on when the
@@ -283,7 +286,7 @@ public class NominationManager {
             if (mfeTeam == null) {
                 mfeTeam = scoreboard.addPlayerTeam(TeamManager.MFE_TEAM);
             }
-            mfeTeam.setColor(ChatFormatting.RED);
+            mfeTeam.setColor(Optional.of(TeamColor.RED));
 
             // Verify and retry once if the scoreboard didn't take it.
             if (!scoreboard.addPlayerToTeam(playerName, mfeTeam) || scoreboard.getPlayersTeam(playerName) != mfeTeam) {
@@ -316,7 +319,7 @@ public class NominationManager {
             PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
             if (playerTeam == null) {
                 playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-                playerTeam.setColor(ChatFormatting.WHITE);
+                playerTeam.setColor(Optional.of(TeamColor.WHITE));
             }
             scoreboard.addPlayerToTeam(playerName, playerTeam);
         }

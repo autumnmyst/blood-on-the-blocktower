@@ -10,7 +10,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * C2S payload to send the complete grimoire to a specific player.
@@ -24,7 +24,7 @@ public record SendGrimoireToPlayerC2SPayload(
         Map<UUID, List<Reminder>> reminders,
         List<String> demonBluffs // String format: "" = empty, "ROLE_NAME" = official, "custom:id" = custom
 ) implements CustomPacketPayload {
-    public static final ResourceLocation SEND_GRIMOIRE_TO_PLAYER_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_grimoire_to_player");
+    public static final Identifier SEND_GRIMOIRE_TO_PLAYER_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_grimoire_to_player");
     public static final CustomPacketPayload.Type<SendGrimoireToPlayerC2SPayload> ID = new CustomPacketPayload.Type<>(SEND_GRIMOIRE_TO_PLAYER_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SendGrimoireToPlayerC2SPayload> CODEC = new StreamCodec<>() {

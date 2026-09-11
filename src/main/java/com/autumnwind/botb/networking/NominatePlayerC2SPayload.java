@@ -8,7 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for nominating a player.
@@ -26,7 +26,7 @@ public record NominatePlayerC2SPayload(
         Optional<UUID> voudonPlayerUuid
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<NominatePlayerC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "nominate_player"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "nominate_player"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, NominatePlayerC2SPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, NominatePlayerC2SPayload::nominator,

@@ -8,12 +8,12 @@ import com.autumnwind.botb.util.ScriptRole;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class ClickablePlayer {
     public final UUID uuid;
     public final String playerName;
-    public final ResourceLocation skinTexture;
+    public final Identifier skinTexture;
     public final boolean isSpectator;
     public final boolean disconnected;
     public final int roleX, roleY, headX, headY;
@@ -54,7 +54,7 @@ public class ClickablePlayer {
         return AbilityText.of(role);
     }
 
-    public ResourceLocation getIcon() {
+    public Identifier getIcon() {
         if (scriptRole != null) return scriptRole.getIcon();
         return role.getIcon();
     }

@@ -68,11 +68,9 @@ public class VisitNavigation {
         // Rule 0: During setup, cannot move off Dusk at all (must activate Dusk to start the game)
         if (isSetupPhase && currentlyOnDusk) {
             if (client.player != null) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_to_start")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
             }
             return;
         }
@@ -80,11 +78,9 @@ public class VisitNavigation {
         // Rule 1: Don't allow progressing past Dusk if it's not nighttime
         if (direction > 0 && currentlyOnDusk && !isNightTime) {
             if (client.player != null) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_before_progress")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
             }
             return;
         }
@@ -92,11 +88,9 @@ public class VisitNavigation {
         // Rule 2: Don't allow progressing past Dawn if it's not daytime
         if (direction > 0 && currentlyOnDawn && !isDayTime) {
             if (client.player != null) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_before_progress")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
             }
             return;
         }
@@ -107,11 +101,9 @@ public class VisitNavigation {
         // Rule 3: Don't allow moving backwards FROM Dusk once nighttime has started
         if (direction < 0 && currentlyOnDusk && isNightTime) {
             if (client.player != null) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dusk")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
             }
             return;
         }
@@ -119,11 +111,9 @@ public class VisitNavigation {
         // Rule 4: Don't allow moving backwards FROM Dawn once daytime has started
         if (direction < 0 && currentlyOnDawn && isDayTime) {
             if (client.player != null) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dawn")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
             }
             return;
         }
@@ -193,7 +183,7 @@ public class VisitNavigation {
                             .append(Component.literal(")").withStyle(ChatFormatting.GRAY))
                             .append(Component.literal(reminderSuffix).withStyle(ChatFormatting.GRAY));
 
-                    client.player.displayClientMessage(message, false);
+                    client.player.sendSystemMessage(message);
                 }
             }
         } else {
@@ -218,8 +208,8 @@ public class VisitNavigation {
                 }
 
                 Style teleportStyle = Style.EMPTY
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/botb teleportToSeat " + seat))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport_to_seat", seat))).withColor(ChatFormatting.GREEN);
+                        .withClickEvent(new ClickEvent.RunCommand("/botb teleportToSeat " + seat))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport_to_seat", seat))).withColor(ChatFormatting.GREEN);
 
                 message.append(Component.literal("\n- ").withStyle(ChatFormatting.GRAY))
                         .append(Component.literal(playerName).withStyle(ChatFormatting.WHITE))
@@ -232,7 +222,7 @@ public class VisitNavigation {
                         .append(Component.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport").setStyle(teleportStyle))
                         .append(Component.literal("]").withStyle(ChatFormatting.GRAY));
             }
-            client.player.displayClientMessage(message, false);
+            client.player.sendSystemMessage(message);
         }
     }
 
@@ -476,11 +466,9 @@ public class VisitNavigation {
         if (visit.staticAction() == NightOrder.StaticAction.DUSK) {
             // Dusk can only be activated during the day
             if (isNightTime) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_only_day")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
                 return;
             }
 
@@ -496,11 +484,9 @@ public class VisitNavigation {
         } else if (visit.staticAction() == NightOrder.StaticAction.DAWN) {
             // Dawn can only be activated during the night
             if (isDayTime) {
-                client.player.displayClientMessage(
+                client.player.sendOverlayMessage(
                     Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_only_night")
-                        .withStyle(ChatFormatting.RED),
-                    true
-                );
+                        .withStyle(ChatFormatting.RED));
                 return;
             }
             // Get current banshee ability players to update their indicators at dawn

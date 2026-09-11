@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Represents a single visit in the night order.
@@ -163,7 +163,7 @@ public record RoleVisit(
         return Component.translatable("nightorder.blood-on-the-blocktower.static.unknown");
     }
 
-    public ResourceLocation getIcon() {
+    public Identifier getIcon() {
         if (isRole()) {
             return role.getIcon();
         }
@@ -176,11 +176,11 @@ public record RoleVisit(
 
         if (staticAction != null) {
             return switch (staticAction) {
-                case DAWN -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dawn.png");
-                case NOMINATIONS -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/nominations.png");
-                case DUSK -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dusk.png");
-                case MINION_INFO -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/minion_info.png");
-                case DEMON_INFO -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
+                case DAWN -> Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dawn.png");
+                case NOMINATIONS -> Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/nominations.png");
+                case DUSK -> Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dusk.png");
+                case MINION_INFO -> Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/minion_info.png");
+                case DEMON_INFO -> Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
             };
         }
 

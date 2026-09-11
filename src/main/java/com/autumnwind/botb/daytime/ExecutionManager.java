@@ -21,6 +21,7 @@ import java.util.UUID;
 import com.autumnwind.botb.networking.SendDeathStatusS2CPayload;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.util.ServerCommands;
+import java.util.Set;
 
 /**
  * Manages player execution logic.
@@ -63,8 +64,10 @@ public class ExecutionManager {
                     executionPos.getX() + 0.5,
                     executionPos.getY(),
                     executionPos.getZ() + 0.5,
+                    Set.of(),
                     serverPlayer.getYRot(),
-                    serverPlayer.getXRot()
+                    serverPlayer.getXRot(),
+                    true
             );
         }
 
@@ -120,8 +123,10 @@ public class ExecutionManager {
                                     lockPos.getX() + 0.5,
                                     lockPos.getY(),
                                     lockPos.getZ() + 0.5,
+                                    Set.of(),
                                     p.getYRot(),
-                                    p.getXRot()
+                                    p.getXRot(),
+                                    true
                             );
                         }
                     });
@@ -235,7 +240,7 @@ public class ExecutionManager {
                         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                             p.connection.send(new ClientboundSetTitleTextPacket(titleText));
                             p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
-                            p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
+                            p.sendSystemMessage(titleText.copy().append(" ").append(subtitleText), false);
                         }
 
                         // Schedule anvil cleanup 1 second after title display
@@ -270,7 +275,7 @@ public class ExecutionManager {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 p.connection.send(new ClientboundSetTitleTextPacket(titleText));
                 p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
-                p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
+                p.sendSystemMessage(titleText.copy().append(" ").append(subtitleText), false);
             }
 
             // Schedule anvil cleanup 1 second after title display
@@ -340,8 +345,10 @@ public class ExecutionManager {
                     executionPos.getX() + 0.5,
                     executionPos.getY(),
                     executionPos.getZ() + 0.5,
+                    Set.of(),
                     serverPlayer.getYRot(),
-                    serverPlayer.getXRot()
+                    serverPlayer.getXRot(),
+                    true
             );
         }
 
@@ -397,8 +404,10 @@ public class ExecutionManager {
                                     lockPos.getX() + 0.5,
                                     lockPos.getY(),
                                     lockPos.getZ() + 0.5,
+                                    Set.of(),
                                     p.getYRot(),
-                                    p.getXRot()
+                                    p.getXRot(),
+                                    true
                             );
                         }
                     });
@@ -502,7 +511,7 @@ public class ExecutionManager {
                         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                             p.connection.send(new ClientboundSetTitleTextPacket(titleText));
                             p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
-                            p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
+                            p.sendSystemMessage(titleText.copy().append(" ").append(subtitleText), false);
                         }
 
                         // Schedule anvil cleanup 1 second after title display
@@ -515,7 +524,7 @@ public class ExecutionManager {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 p.connection.send(new ClientboundSetTitleTextPacket(titleText));
                 p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
-                p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
+                p.sendSystemMessage(titleText.copy().append(" ").append(subtitleText), false);
             }
 
             // Schedule anvil cleanup 1 second after title display

@@ -9,7 +9,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for running a vote on the current nominee.
@@ -30,7 +30,7 @@ public record RunVoteC2SPayload(boolean organGrinderMode, List<UUID> bansheeHasA
                                  VoteMultiplierLists voteMultipliers,
                                  Optional<List<UUID>> evilsForLegion) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<RunVoteC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "run_vote"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "run_vote"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RunVoteC2SPayload> CODEC = StreamCodec.composite(
             ByteBufCodecs.BOOL, RunVoteC2SPayload::organGrinderMode,

@@ -8,10 +8,10 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record TeleportPlayersToSeatC2SPayload(int seatNumber, List<UUID> playerUuids) implements CustomPacketPayload {
-    public static final ResourceLocation TELEPORT_PLAYERS_SEAT_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "teleport_players_seat");
+    public static final Identifier TELEPORT_PLAYERS_SEAT_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "teleport_players_seat");
     public static final CustomPacketPayload.Type<TeleportPlayersToSeatC2SPayload> ID = new CustomPacketPayload.Type<>(TELEPORT_PLAYERS_SEAT_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, TeleportPlayersToSeatC2SPayload> CODEC = StreamCodec.composite(

@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.permissions.Permissions;
 
 /** Client-bound packet receivers for nominations, votes, results, the timer, and the clock hands. */
 final class DaytimeReceivers {
@@ -39,7 +40,7 @@ final class DaytimeReceivers {
 
                 // Track minion nomination for Town Crier (only for operators)
                 // Check if this is a new nomination (current is null, new is not)
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
+                boolean isOperator = context.client().player != null && context.client().player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
                 if (isOperator && ClientState.currentNominator == null && payload.currentNominator() != null) {
                     // New nomination - check if nominator is a minion
                     PendingRoleAssignment nominatorAssignment =
@@ -87,8 +88,8 @@ final class DaytimeReceivers {
                 );
 
                 // Refresh AssignRolesScreen if it's open and nomination or exile state changed
-                if ((nominationStateChanged || exileStateChanged) && context.client().screen instanceof AssignRolesScreen assignRolesScreen) {
-                    assignRolesScreen.init(context.client(), context.client().getWindow().getGuiScaledWidth(), context.client().getWindow().getGuiScaledHeight());
+                if ((nominationStateChanged || exileStateChanged) && context.client().gui.screen() instanceof AssignRolesScreen assignRolesScreen) {
+                    assignRolesScreen.init(context.client().getWindow().getGuiScaledWidth(), context.client().getWindow().getGuiScaledHeight());
                 }
             });
         });
@@ -140,7 +141,7 @@ final class DaytimeReceivers {
                 UUID nomineeUuid = ClientState.currentNominee;
 
                 // Legion Vote Hiding: use server-provided storyteller view (authoritative)
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
+                boolean isOperator = context.client().player != null && context.client().player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
                 if (isOperator) {
                     // Update storyteller's MFE view (may differ from ClientState.markedForExecution)
                     StorytellerState.storytellerMFE = payload.storytellerMFE();
@@ -223,20 +224,18 @@ final class DaytimeReceivers {
                 }
 
                 if (context.client().player != null) {
-                    context.client().player.displayClientMessage(resultMessage, false);
+                    context.client().player.sendSystemMessage(resultMessage);
 
                     // For operators: explain when it's a Legion-protected vote (evil-only)
                     if (isOperator && payload.legionProtectedVote()) {
-                        context.client().player.displayClientMessage(
+                        context.client().player.sendSystemMessage(
                             Component.translatable("message.blood-on-the-blocktower.client.legion_evil_only_vote")
-                                .withStyle(ChatFormatting.DARK_PURPLE),
-                            false
-                        );
+                                .withStyle(ChatFormatting.DARK_PURPLE));
                     }
 
                     // Only show voters list if not hiding vote info (supports distant players)
                     if (!hideVoteInfo && !voters.isEmpty()) {
-                        context.client().player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.client.voted"), false);
+                        context.client().player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.client.voted"));
                         for (UUID voterUuid : voters) {
                             String voterName = null;
                             AbstractClientPlayer voter =
@@ -251,11 +250,9 @@ final class DaytimeReceivers {
                             }
 
                             if (voterName != null) {
-                                context.client().player.displayClientMessage(
+                                context.client().player.sendSystemMessage(
                                     Component.translatable("message.blood-on-the-blocktower.client.voter_entry",
-                                        Component.literal(voterName).withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.WHITE),
-                                    false
-                                );
+                                        Component.literal(voterName).withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.WHITE));
                             }
                         }
                     }

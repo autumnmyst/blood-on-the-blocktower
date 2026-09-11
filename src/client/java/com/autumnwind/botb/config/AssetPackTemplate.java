@@ -19,6 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+import net.minecraft.client.Minecraft;
+import net.minecraft.SharedConstants;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.metadata.pack.PackFormat;
 
 /**
  * Writes an empty resource pack to {@code config/botb/asset_pack_template} listing every
@@ -30,7 +34,6 @@ public final class AssetPackTemplate {
     private AssetPackTemplate() {}
 
     private static final String ASSET_ROOT = "assets/" + BloodOnTheBlocktower.MOD_ID;
-    private static final int PACK_FORMAT = 34; // Minecraft 1.21.1
 
     private record Asset(String path, String detail) {}
 
@@ -66,8 +69,9 @@ public final class AssetPackTemplate {
             for (String dir : List.of(CustomSounds.ROLE_RECEIVE_DIR, CustomSounds.VOTE_MUSIC_DIR, CustomSounds.GAME_END_DIR)) {
                 Files.createDirectories(assets.resolve("sounds/" + dir));
             }
+            PackFormat format = SharedConstants.getCurrentVersion().packVersion(PackType.CLIENT_RESOURCES);
             Files.writeString(packDir.resolve("pack.mcmeta"),
-                    "{\n  \"pack\": {\n    \"pack_format\": " + PACK_FORMAT
+                    "{\n  \"pack\": {\n    \"min_format\": [" + format.major() + ", " + format.minor() + "],\n    \"max_format\": " + format.major()
                             + ",\n    \"description\": \"Blood on the Blocktower asset overrides\"\n  }\n}\n");
             Files.writeString(packDir.resolve("README.md"), readme(textures, sounds));
         } catch (IOException e) {
@@ -92,20 +96,20 @@ public final class AssetPackTemplate {
         sb.append("These have no built-in file, but a custom ogg at the path overrides the default sound. ");
         sb.append("Role receive plays the first of these that exists: the role, then its type, then its alignment, then the default.\n\n");
         sb.append("| Path | Plays when |\n|---|---|\n");
-        sb.append("| `sounds/").append(CustomSounds.MADNESS_RECEIVE).append(".ogg` | Gaining a madness. Without it, the role receive chain below is used |\n");
+        sb.append("| `sounds/").append(CustomSounds.MADNESS_RECEIVE).append(".ogg` | Gaining a madness |\n");
         sb.append("| `sounds/").append(CustomSounds.VOTE_MUSIC_DIR).append("organ_grinder.ogg` | Vote music during an Organ Grinder vote |\n");
-        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("victory.ogg` | Game end, for players on the winning team and the storyteller |\n");
-        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("defeat.ogg` | Game end, for players on the losing team |\n");
-        sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("good.ogg` | Role receive, any good role |\n");
-        sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("evil.ogg` | Role receive, any evil role |\n");
+        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("victory.ogg` | Plays on victory |\n");
+        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("defeat.ogg` | Plays on defeat |\n");
+        sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("good.ogg` | Any good role |\n");
+        sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("evil.ogg` | Any evil role |\n");
         for (RoleType type : RoleType.values()) {
             if (type == RoleType.NONE || type == RoleType.FABLED || type == RoleType.LORIC) continue;
             String name = type.name().toLowerCase(Locale.ROOT);
-            sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append(name).append(".ogg` | Role receive, any ").append(name).append(" |\n");
+            sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append(name).append(".ogg` | Any ").append(name).append(" |\n");
         }
         for (Role role : Role.values()) {
             if (role == Role.NO_ROLE || role.getType() == RoleType.FABLED || role.getType() == RoleType.LORIC) continue;
-            sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append(role.getId()).append(".ogg` | Role receive, ").append(role.getDisplayName()).append(" |\n");
+            sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append(role.getId()).append(".ogg` | ").append(role.getDisplayName()).append(" |\n");
         }
         sb.append("\nCustom roles from a script use their id the same way.\n");
 

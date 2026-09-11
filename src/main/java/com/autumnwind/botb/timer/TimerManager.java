@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent;
 import java.util.Timer;
 import java.util.TimerTask;
+import com.autumnwind.botb.world.WorldTime;
+import java.util.UUID;
 
 /**
  * Server-side manager for the storyteller timer with boss bar display
@@ -39,10 +41,11 @@ public class TimerManager {
 
         // Set initial time to dawn if syncing
         if (syncDaylight) {
-            server.overworld().setDayTime(ServerConfig.TIME_DAWN);
+            WorldTime.setOverworldTime(server, ServerConfig.TIME_DAWN);
         }
 
         bossBar = new ServerBossEvent(
+                UUID.randomUUID(),
                 formatTimerText((int) Math.ceil(remainingTime)),
                 BossEvent.BossBarColor.GREEN,
                 BossEvent.BossBarOverlay.PROGRESS
@@ -165,7 +168,7 @@ public class TimerManager {
             long dawnTime = ServerConfig.TIME_DAWN;
             long eveningTime = ServerConfig.TIME_EVENING;
             long targetTime = dawnTime + (long) ((eveningTime - dawnTime) * timerProgress);
-            server.overworld().setDayTime(targetTime);
+            WorldTime.setOverworldTime(server, targetTime);
         }
 
         // Broadcast state update periodically (every ~100ms, which is 2 ticks at 50ms)

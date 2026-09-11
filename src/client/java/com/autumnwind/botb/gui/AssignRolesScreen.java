@@ -12,10 +12,10 @@ import com.autumnwind.botb.util.*;
 import com.autumnwind.botb.util.SetupValidator.ValidationResult;
 import com.autumnwind.botb.voicechat.VoiceChatSidebar;
 import com.autumnwind.botb.voicechat.VoiceChatClientCompat;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,7 +23,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -33,6 +33,11 @@ import static com.autumnwind.botb.gui.assignroles.AssignRolesConstants.*;
 
 import com.autumnwind.botb.util.GamePhase;
 import com.autumnwind.botb.util.ScriptRole;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ARGB;
 
 public class AssignRolesScreen extends Screen {
 
@@ -122,7 +127,7 @@ public class AssignRolesScreen extends Screen {
         int smallSquareSize = 20;
         int buttonSpacing = 5;
 
-        boolean isOperator = this.minecraft != null && this.minecraft.player != null && this.minecraft.player.hasPermissions(2);
+        boolean isOperator = this.minecraft != null && this.minecraft.player != null && this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
         // --- Determine Current Phase ---
         // For operators: use storytellerMFE if set (handles Legion secret marks)
@@ -149,7 +154,7 @@ public class AssignRolesScreen extends Screen {
         Component bluffsText = Component.translatable("gui.blood-on-the-blocktower.assign_roles.bluffs", Component.translatable(StorytellerState.showBluffs ? "gui.blood-on-the-blocktower.assign_roles.show" : "gui.blood-on-the-blocktower.assign_roles.hide"));
         this.addRenderableWidget(Button.builder(bluffsText, b -> {
             StorytellerState.showBluffs = !StorytellerState.showBluffs;
-            this.minecraft.setScreen(this);
+            this.minecraft.gui.setScreen(this);
         }).bounds(bluffsButtonX, buttonY, bluffsButtonWidth, buttonHeight).build());
 
         // ========================================
@@ -171,7 +176,7 @@ public class AssignRolesScreen extends Screen {
                     // inside the builder now, so this one button covers the lot.
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.script_builder"),
-                            button -> this.minecraft.setScreen(new ScriptBuilderScreen(this))
+                            button -> this.minecraft.gui.setScreen(new ScriptBuilderScreen(this))
                     ).bounds(10, 10, importButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.script_builder")))
                     .build());
@@ -208,7 +213,7 @@ public class AssignRolesScreen extends Screen {
                     Component unseatedText = Component.translatable("gui.blood-on-the-blocktower.assign_roles.unseated", Component.translatable(StorytellerState.showUnseated ? "gui.blood-on-the-blocktower.assign_roles.show" : "gui.blood-on-the-blocktower.assign_roles.hide"));
                     this.addRenderableWidget(Button.builder(unseatedText, b -> {
                         StorytellerState.showUnseated = !StorytellerState.showUnseated;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.unseated")))
                     .build());
@@ -217,7 +222,7 @@ public class AssignRolesScreen extends Screen {
                     Component selfText = Component.translatable("gui.blood-on-the-blocktower.assign_roles.self", Component.translatable(StorytellerState.showSelf ? "gui.blood-on-the-blocktower.assign_roles.show" : "gui.blood-on-the-blocktower.assign_roles.hide"));
                     this.addRenderableWidget(Button.builder(selfText, b -> {
                         StorytellerState.showSelf = !StorytellerState.showSelf;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.self")))
                     .build());
@@ -322,7 +327,7 @@ public class AssignRolesScreen extends Screen {
 
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.timer").withStyle(ChatFormatting.YELLOW),
-                            button -> this.minecraft.setScreen(new TimerScreen())
+                            button -> this.minecraft.gui.setScreen(new TimerScreen())
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
@@ -343,7 +348,7 @@ public class AssignRolesScreen extends Screen {
 
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.timer").withStyle(ChatFormatting.YELLOW),
-                            button -> this.minecraft.setScreen(new TimerScreen())
+                            button -> this.minecraft.gui.setScreen(new TimerScreen())
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
@@ -353,7 +358,7 @@ public class AssignRolesScreen extends Screen {
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.hard_reset").withStyle(ChatFormatting.RED),
                             button -> {
                                 ClientPlayNetworking.send(new HardResetVoteC2SPayload());
-                                this.minecraft.setScreen(this); // Refresh to update phase
+                                this.minecraft.gui.setScreen(this); // Refresh to update phase
                             }
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.hard_reset")))
@@ -367,7 +372,7 @@ public class AssignRolesScreen extends Screen {
 
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.timer").withStyle(ChatFormatting.YELLOW),
-                            button -> this.minecraft.setScreen(new TimerScreen())
+                            button -> this.minecraft.gui.setScreen(new TimerScreen())
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
@@ -401,7 +406,7 @@ public class AssignRolesScreen extends Screen {
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.reset").withStyle(ChatFormatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new ResetVoteC2SPayload());
-                                this.minecraft.setScreen(this); // Refresh to update phase
+                                this.minecraft.gui.setScreen(this); // Refresh to update phase
                             }
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_vote")))
@@ -414,7 +419,7 @@ public class AssignRolesScreen extends Screen {
 
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.timer").withStyle(ChatFormatting.YELLOW),
-                            button -> this.minecraft.setScreen(new TimerScreen())
+                            button -> this.minecraft.gui.setScreen(new TimerScreen())
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
@@ -424,7 +429,7 @@ public class AssignRolesScreen extends Screen {
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.hard_reset").withStyle(ChatFormatting.RED),
                             button -> {
                                 ClientPlayNetworking.send(new HardResetVoteC2SPayload());
-                                this.minecraft.setScreen(this); // Refresh to update phase
+                                this.minecraft.gui.setScreen(this); // Refresh to update phase
                             }
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.hard_reset")))
@@ -481,7 +486,7 @@ public class AssignRolesScreen extends Screen {
 
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.timer").withStyle(ChatFormatting.YELLOW),
-                            button -> this.minecraft.setScreen(new TimerScreen())
+                            button -> this.minecraft.gui.setScreen(new TimerScreen())
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
@@ -503,7 +508,7 @@ public class AssignRolesScreen extends Screen {
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.reset").withStyle(ChatFormatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new ResetExileC2SPayload());
-                                this.minecraft.setScreen(this); // Refresh to update phase
+                                this.minecraft.gui.setScreen(this); // Refresh to update phase
                             }
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_exile_call")))
@@ -515,7 +520,7 @@ public class AssignRolesScreen extends Screen {
 
                     this.addRenderableWidget(Button.builder(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.timer").withStyle(ChatFormatting.YELLOW),
-                            button -> this.minecraft.setScreen(new TimerScreen())
+                            button -> this.minecraft.gui.setScreen(new TimerScreen())
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.timer")))
                     .build());
@@ -526,7 +531,7 @@ public class AssignRolesScreen extends Screen {
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.reset").withStyle(ChatFormatting.GOLD),
                             button -> {
                                 ClientPlayNetworking.send(new ResetExileC2SPayload());
-                                this.minecraft.setScreen(this);
+                                this.minecraft.gui.setScreen(this);
                             }
                     ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
                     .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.reset_exile_support")))
@@ -542,7 +547,7 @@ public class AssignRolesScreen extends Screen {
                         Component.translatable("gui.blood-on-the-blocktower.assign_roles.reset_game").withStyle(ChatFormatting.GREEN),
                         button -> {
                             if (this.minecraft.player != null) {
-                                this.minecraft.player.connection.sendUnsignedCommand("botb resetGame");
+                                this.minecraft.player.connection.sendCommand("botb resetGame");
                             }
                         }
                 ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
@@ -554,7 +559,7 @@ public class AssignRolesScreen extends Screen {
                         Component.translatable("gui.blood-on-the-blocktower.assign_roles.full_reset").withStyle(ChatFormatting.RED),
                         button -> {
                             if (this.minecraft.player != null) {
-                                this.minecraft.player.connection.sendUnsignedCommand("botb resetGameHard");
+                                this.minecraft.player.connection.sendCommand("botb resetGameHard");
                             }
                         }
                 ).bounds(topRightX, largeButtonY, actionButtonWidth, buttonHeight)
@@ -575,7 +580,7 @@ public class AssignRolesScreen extends Screen {
 
             this.addRenderableWidget(Button.builder(
                     Component.translatable("gui.blood-on-the-blocktower.assign_roles.storyteller_tools_short").withStyle(ChatFormatting.BOLD),
-                    button -> this.minecraft.setScreen(new StorytellerToolsScreen(this))
+                    button -> this.minecraft.gui.setScreen(new StorytellerToolsScreen(this))
             ).bounds(gearButtonX, gearButtonY, gearButtonSize, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.storyteller_tools")))
             .build());
@@ -587,7 +592,7 @@ public class AssignRolesScreen extends Screen {
 
             this.addRenderableWidget(Button.builder(
                     Component.literal("\u2699").withStyle(ChatFormatting.BOLD),
-                    button -> this.minecraft.setScreen(new SettingsScreen(this))
+                    button -> this.minecraft.gui.setScreen(new SettingsScreen(this))
             ).bounds(settingsButtonX, settingsButtonY, settingsButtonSize, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.assign_roles.tooltip.settings")))
             .build());
@@ -889,21 +894,21 @@ public class AssignRolesScreen extends Screen {
     private void shuffleRoles() {
         if (AssignRolesActions.shuffleRoles()) {
             this.triggerAnimation();
-            this.minecraft.setScreen(this);
+            this.minecraft.gui.setScreen(this);
         }
     }
 
     private void shuffleSeats() {
         if (AssignRolesActions.shuffleSeats()) {
             this.triggerAnimation();
-            this.minecraft.setScreen(this);
+            this.minecraft.gui.setScreen(this);
         }
     }
 
     private void randomizeRoles() {
         if (AssignRolesActions.randomizeRoles()) {
             this.triggerAnimation();
-            this.minecraft.setScreen(this);
+            this.minecraft.gui.setScreen(this);
         }
     }
 
@@ -929,7 +934,7 @@ public class AssignRolesScreen extends Screen {
 
     /** Alt sends only the script; otherwise the full role send. */
     private void sendRolesOrScript() {
-        if (Screen.hasAltDown()) {
+        if (Minecraft.getInstance().hasAltDown()) {
             AssignRolesActions.sendScriptOnly();
             this.onClose();
         } else {
@@ -954,7 +959,7 @@ public class AssignRolesScreen extends Screen {
 
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Update button states
         if (voteButton != null) {
             voteButton.active = ClientState.currentNominee != null && !ClientState.voteInProgress;
@@ -975,14 +980,13 @@ public class AssignRolesScreen extends Screen {
             hardResetButton.active = ClientState.nominationsOpen && !ClientState.voteInProgress;
         }
 
-        this.renderBackground(context, mouseX, mouseY, delta);
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Send Roles button: Alt switches it to script-only. In setup the full button is
         // disabled when setup is invalid unless Shift is held as override; the invalid-setup
         // tooltip is drawn manually below, so the widget tooltip is cleared for that case.
         if (sendRolesButton != null) {
-            boolean scriptOnly = Screen.hasAltDown();
+            boolean scriptOnly = Minecraft.getInstance().hasAltDown();
             boolean hasScript = ClientState.currentScript != null;
             if (currentPhase == GamePhase.SETUP && cachedValidation != null) {
                 if (scriptOnly) {
@@ -992,7 +996,7 @@ public class AssignRolesScreen extends Screen {
                 } else {
                     boolean valid = cachedValidation.isValid();
                     sendRolesButton.setMessage(Component.translatable("gui.blood-on-the-blocktower.assign_roles.send_roles").withStyle(valid ? ChatFormatting.GREEN : ChatFormatting.RED));
-                    sendRolesButton.active = valid || Screen.hasShiftDown();
+                    sendRolesButton.active = valid || Minecraft.getInstance().hasShiftDown();
                     sendRolesButton.setTooltip(valid ? SEND_ROLES_TOOLTIP : null);
                 }
             } else {
@@ -1005,7 +1009,7 @@ public class AssignRolesScreen extends Screen {
         }
 
         // Script name/author display (operators only)
-        boolean isOperator = this.minecraft != null && this.minecraft.player != null && this.minecraft.player.hasPermissions(2);
+        boolean isOperator = this.minecraft != null && this.minecraft.player != null && this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
         if (isOperator && ClientState.currentScript != null) {
             // Position script text based on phase - in setup (with import button), use y=35, otherwise use y=10 (top corner)
             int scriptTextY = (currentPhase == GamePhase.SETUP) ? 35 : 10;
@@ -1021,8 +1025,8 @@ public class AssignRolesScreen extends Screen {
                 authorName = this.font.plainSubstrByWidth(authorName, maxTextWidth - this.font.width("...")) + "...";
             }
 
-            context.drawString(this.font, Component.translatable("gui.blood-on-the-blocktower.assign_roles.script", Component.literal(scriptName).withStyle(ChatFormatting.YELLOW)), 10, scriptTextY, 0xFFFFFF);
-            context.drawString(this.font, Component.translatable("gui.blood-on-the-blocktower.assign_roles.author", Component.literal(authorName).withStyle(ChatFormatting.GRAY)), 10, scriptTextY + 12, 0xFFFFFF);
+            context.text(this.font, Component.translatable("gui.blood-on-the-blocktower.assign_roles.script", Component.literal(scriptName).withStyle(ChatFormatting.YELLOW)), 10, scriptTextY, 0xFFFFFFFF);
+            context.text(this.font, Component.translatable("gui.blood-on-the-blocktower.assign_roles.author", Component.literal(authorName).withStyle(ChatFormatting.GRAY)), 10, scriptTextY + 12, 0xFFFFFFFF);
         }
 
         // Render top bar:
@@ -1043,8 +1047,8 @@ public class AssignRolesScreen extends Screen {
             Component storytellersLine = Component.translatable("gui.blood-on-the-blocktower.assign_roles.storytellers", ClientState.lobbyStorytellerCount);
             int lineHeight = this.font.lineHeight + 6;
             int topY = this.height / 2 - lineHeight;
-            context.drawCenteredString(this.font, playersLine, this.width / 2, topY, 0xFFFFFFFF);
-            context.drawCenteredString(this.font, storytellersLine, this.width / 2, topY + lineHeight, 0xFFFFFFFF);
+            context.centeredText(this.font, playersLine, this.width / 2, topY, 0xFFFFFFFF);
+            context.centeredText(this.font, storytellersLine, this.width / 2, topY + lineHeight, 0xFFFFFFFF);
         }
 
         Component roleHoverText = null;
@@ -1060,7 +1064,7 @@ public class AssignRolesScreen extends Screen {
 
         for (int widgetIndex = 0; widgetIndex < this.playerWidgets.size(); widgetIndex++) {
             ClickablePlayer widget = this.playerWidgets.get(widgetIndex);
-            ResourceLocation roleIcon = widget.getIcon();
+            Identifier roleIcon = widget.getIcon();
             int borderColor = widget.borderColor;
 
             // Calculate fade-in alpha for this player
@@ -1070,21 +1074,13 @@ public class AssignRolesScreen extends Screen {
             }
 
             // Apply alpha to rendering
-            boolean needsAlpha = fadeAlpha < 1.0f;
-            if (needsAlpha) {
-                RenderSystem.enableBlend();
-                RenderSystem.defaultBlendFunc();
-                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, fadeAlpha);
-            }
+            int fadeTint = ARGB.white(fadeAlpha);
 
-            context.blit(roleIcon, widget.roleX, widget.roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
+            context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, widget.roleX, widget.roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, fadeTint);
 
             // Apply alpha to border color
-            if (needsAlpha) {
-                int alpha = (int) (fadeAlpha * 255) << 24;
-                borderColor = (borderColor & 0x00FFFFFF) | alpha;
-            }
-            context.renderOutline(widget.roleX - 1, widget.roleY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
+            borderColor = ARGB.multiplyAlpha(borderColor, fadeAlpha);
+            context.outline(widget.roleX - 1, widget.roleY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
 
             // Draw death indicator (shroud icon overlay)
             // Use ClientState as the single source of truth (operators update it directly)
@@ -1092,16 +1088,13 @@ public class AssignRolesScreen extends Screen {
 
             if (isDead) {
                 // Enable blending for alpha transparency
-                RenderSystem.enableBlend();
-                RenderSystem.defaultBlendFunc();
-                context.blit(SHROUD_ICON, widget.roleX, widget.roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
-                RenderSystem.disableBlend();
+                context.blit(RenderPipelines.GUI_TEXTURED, SHROUD_ICON, widget.roleX, widget.roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, fadeTint);
             }
 
             // Draw orange border if marked
             if (StorytellerState.markedPlayers.contains(widget.uuid)) {
                 int offset = 4;
-                context.renderOutline(widget.roleX - offset, widget.roleY - offset, ROLE_ICON_SIZE + (offset * 2), ROLE_ICON_SIZE + (offset * 2), 0xFFFFA500); // Orange
+                context.outline(widget.roleX - offset, widget.roleY - offset, ROLE_ICON_SIZE + (offset * 2), ROLE_ICON_SIZE + (offset * 2), ARGB.multiplyAlpha(0xFFFFA500, fadeAlpha)); // Orange
             }
 
             // Store nomination/exile highlight info for later rendering (drawn after reminders to appear on top)
@@ -1122,7 +1115,7 @@ public class AssignRolesScreen extends Screen {
 
             widget.nominationHighlight = NominationHighlight.NONE;
 
-            if (isOperator && Screen.hasAltDown() && !Screen.hasControlDown() && !Screen.hasShiftDown()) {
+            if (isOperator && Minecraft.getInstance().hasAltDown() && !Minecraft.getInstance().hasControlDown() && !Minecraft.getInstance().hasShiftDown()) {
                 if (currentPhase == GamePhase.DAY && hasTravelers) {
                     // During DAY: Everyone purple (can call exile), travelers purple (can be exiled)
                     // Only show if there are travelers
@@ -1191,18 +1184,15 @@ public class AssignRolesScreen extends Screen {
 
             if (VoiceChatClientCompat.isPlayerTalking(widget.uuid)) {
                 // Draw white border for talking players (2px thick)
-                context.fill(widget.headX - 2, widget.headY - 2, widget.headX + HEAD_ICON_SIZE + 2, widget.headY + HEAD_ICON_SIZE + 2, 0xFFFFFFFF);
+                context.fill(widget.headX - 2, widget.headY - 2, widget.headX + HEAD_ICON_SIZE + 2, widget.headY + HEAD_ICON_SIZE + 2, ARGB.multiplyAlpha(0xFFFFFFFF, fadeAlpha));
             }
 
             // Handles disconnect fade + exclamation overlay internally.
-            PlayerListUtil.drawPlayerHead(context, minecraft, widget.uuid, widget.headX, widget.headY, HEAD_ICON_SIZE);
+            PlayerListUtil.drawPlayerHead(context, minecraft, widget.uuid, widget.headX, widget.headY, HEAD_ICON_SIZE, fadeAlpha);
 
             // Draw grey fade overlay if player should be faded (darker grey)
             if (shouldFade) {
-                RenderSystem.enableBlend();
-                RenderSystem.defaultBlendFunc();
-                context.fill(widget.headX, widget.headY, widget.headX + HEAD_ICON_SIZE, widget.headY + HEAD_ICON_SIZE, 0xC0000000);
-                RenderSystem.disableBlend();
+                context.fill(widget.headX, widget.headY, widget.headX + HEAD_ICON_SIZE, widget.headY + HEAD_ICON_SIZE, ARGB.multiplyAlpha(0xC0000000, fadeAlpha));
             }
 
             // Render seat number
@@ -1248,10 +1238,10 @@ public class AssignRolesScreen extends Screen {
                     // Draw backgrounds for nominated/MFE status first (fit within outermost border)
                     if (isMFE) {
                         // Red background for MFE (storyteller sees their real MFE)
-                        context.fill(textX - 2, textY - 2, textX + textWidth + 1, textY + textHeight, 0xFFCC0000);
+                        context.fill(textX - 2, textY - 2, textX + textWidth + 1, textY + textHeight, ARGB.multiplyAlpha(0xFFCC0000, fadeAlpha));
                     } else if (isNominated) {
                         // White background for nominated
-                        context.fill(textX - 2, textY - 2, textX + textWidth + 1, textY + textHeight, 0xFFFFFFFF);
+                        context.fill(textX - 2, textY - 2, textX + textWidth + 1, textY + textHeight, ARGB.multiplyAlpha(0xFFFFFFFF, fadeAlpha));
                     }
 
                     // Draw outer border if can nominate - green for double nominations (Banshee), blue otherwise.
@@ -1260,7 +1250,7 @@ public class AssignRolesScreen extends Screen {
                     if (canNominate && !isBishopModeBorder) {
                         int nomRemaining = ClientState.nominationsRemaining.getOrDefault(widget.uuid, 1);
                         int nomBorderColor = nomRemaining >= 2 ? 0xFF00FF00 : 0xFF4FC3F7; // Green for 2+ noms, light blue otherwise
-                        context.renderOutline(textX - 3, textY - 3, textWidth + 5, textHeight + 4, nomBorderColor);
+                        context.outline(textX - 3, textY - 3, textWidth + 5, textHeight + 4, ARGB.multiplyAlpha(nomBorderColor, fadeAlpha));
                     }
 
                     // Draw inner border: orange if can be nominated, purple if can be exiled (travelers)
@@ -1268,25 +1258,25 @@ public class AssignRolesScreen extends Screen {
                     // Dead travelers cannot be called for exile
                     if (canBeExiled && !isDead) {
                         // Purple border for travelers (same size as orange border)
-                        context.renderOutline(textX - 2, textY - 2, textWidth + 3, textHeight + 2, 0xFF9932CC);
+                        context.outline(textX - 2, textY - 2, textWidth + 3, textHeight + 2, ARGB.multiplyAlpha(0xFF9932CC, fadeAlpha));
                     } else if (canBeNominated) {
                         // Orange border for nominatable non-travelers
                         // Half faded opacity for dead players
                         int orangeColor = isDead ? 0x80FF8C00 : 0xFFFF8C00;
-                        context.renderOutline(textX - 2, textY - 2, textWidth + 3, textHeight + 2, orangeColor);
+                        context.outline(textX - 2, textY - 2, textWidth + 3, textHeight + 2, ARGB.multiplyAlpha(orangeColor, fadeAlpha));
                     }
 
                     // Draw text with appropriate styling
                     if (isNominated) {
                         // Black text on white background, no shadow
-                        context.drawString(this.font, Component.literal(seatText), textX, textY, 0xFF000000, false);
+                        context.text(this.font, Component.literal(seatText), textX, textY, ARGB.multiplyAlpha(0xFF000000, fadeAlpha), false);
                     } else if (isMFE) {
                         // White text on red background, no shadow
-                        context.drawString(this.font, Component.literal(seatText), textX, textY, 0xFFFFFFFF, false);
+                        context.text(this.font, Component.literal(seatText), textX, textY, ARGB.multiplyAlpha(0xFFFFFFFF, fadeAlpha), false);
                     } else {
                         // Normal text with shadow
                         int seatColor = shouldFade ? 0x80FFFFFF : 0xFFFFFFFF;
-                        context.drawString(this.font, Component.literal(seatText), textX, textY, seatColor, true);
+                        context.text(this.font, Component.literal(seatText), textX, textY, ARGB.multiplyAlpha(seatColor, fadeAlpha), true);
                     }
                 } else {
                     // Nominations closed - normal rendering with shadow
@@ -1295,17 +1285,17 @@ public class AssignRolesScreen extends Screen {
                     boolean isDaytime = ClientState.currentNight == ClientState.currentDay && ClientState.currentNight > 0;
                     if (canBeExiled && isDaytime && !isDead) {
                         // Purple border for travelers (same size as nomination border)
-                        context.renderOutline(textX - 2, textY - 2, textWidth + 3, textHeight + 2, 0xFF9932CC);
+                        context.outline(textX - 2, textY - 2, textWidth + 3, textHeight + 2, ARGB.multiplyAlpha(0xFF9932CC, fadeAlpha));
                     }
                     int seatColor = shouldFade ? 0x80FFFFFF : 0xFFFFFFFF;
-                    context.drawString(this.font, Component.literal(seatText), textX, textY, seatColor, true);
+                    context.text(this.font, Component.literal(seatText), textX, textY, ARGB.multiplyAlpha(seatColor, fadeAlpha), true);
                 }
             }
 
             if (widget.isMouseOverRole(mouseX, mouseY)) {
                 hoveredRoleWidget = widget;
                 // Show description when shift is held, otherwise show name
-                if (Screen.hasShiftDown() && widget.hasRole()) {
+                if (Minecraft.getInstance().hasShiftDown() && widget.hasRole()) {
                     roleHoverText = Component.literal(widget.getDescription());
                     showingRoleDescription = true;
                 } else {
@@ -1316,18 +1306,18 @@ public class AssignRolesScreen extends Screen {
                 hoveredHeadWidget = widget;
                 if (isOperator) {
                     // Show informative hover text based on key modifiers (check most specific combos first)
-                    if (Screen.hasControlDown() && Screen.hasShiftDown() && Screen.hasAltDown()) {
+                    if (Minecraft.getInstance().hasControlDown() && Minecraft.getInstance().hasShiftDown() && Minecraft.getInstance().hasAltDown()) {
                         nameHoverTextList = Arrays.asList(
                             Component.literal(widget.playerName),
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").withStyle(ChatFormatting.LIGHT_PURPLE).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_grimoire").withStyle(ChatFormatting.WHITE))
                         );
-                    } else if (Screen.hasAltDown() && Screen.hasShiftDown()) {
+                    } else if (Minecraft.getInstance().hasAltDown() && Minecraft.getInstance().hasShiftDown()) {
                         nameHoverTextList = Arrays.asList(
                             Component.literal(widget.playerName),
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").withStyle(ChatFormatting.YELLOW).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.swap_roles").withStyle(ChatFormatting.WHITE)),
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").withStyle(ChatFormatting.LIGHT_PURPLE).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.swap_seats").withStyle(ChatFormatting.WHITE))
                         );
-                    } else if (Screen.hasControlDown() && Screen.hasAltDown()) {
+                    } else if (Minecraft.getInstance().hasControlDown() && Minecraft.getInstance().hasAltDown()) {
                         boolean playerIsDead = ClientState.playerDeathStatus.getOrDefault(widget.uuid, false);
                         boolean hasUsedGhostVote = ClientState.hasUsedGhostVote.getOrDefault(widget.uuid, false);
                         Component sendRolesLine = Component.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").withStyle(ChatFormatting.GREEN).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_roles_to_player").withStyle(ChatFormatting.WHITE));
@@ -1352,17 +1342,17 @@ public class AssignRolesScreen extends Screen {
                                 sendRolesLine
                             );
                         }
-                    } else if (Screen.hasControlDown() && Screen.hasShiftDown()) {
+                    } else if (Minecraft.getInstance().hasControlDown() && Minecraft.getInstance().hasShiftDown()) {
                         nameHoverTextList = Arrays.asList(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").withStyle(ChatFormatting.DARK_RED).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.force_execute_real").withStyle(ChatFormatting.WHITE)),
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").withStyle(ChatFormatting.YELLOW).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.force_execute_fake").withStyle(ChatFormatting.WHITE))
                         );
-                    } else if (Screen.hasShiftDown()) {
+                    } else if (Minecraft.getInstance().hasShiftDown()) {
                         nameHoverTextList = Arrays.asList(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").withStyle(ChatFormatting.AQUA).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.visit_house").withStyle(ChatFormatting.WHITE)),
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").withStyle(ChatFormatting.RED).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.send_to_seat").withStyle(ChatFormatting.WHITE))
                         );
-                    } else if (Screen.hasControlDown()) {
+                    } else if (Minecraft.getInstance().hasControlDown()) {
                         nameHoverTextList = Arrays.asList(
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.left_click").withStyle(ChatFormatting.AQUA).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.mark_dead").withStyle(ChatFormatting.WHITE)),
                             Component.translatable("gui.blood-on-the-blocktower.assign_roles.right_click").withStyle(ChatFormatting.RED).append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.action.teleport_here").withStyle(ChatFormatting.WHITE))
@@ -1378,25 +1368,19 @@ public class AssignRolesScreen extends Screen {
                     nameHoverText = Component.literal(widget.playerName);
                 }
             }
-
-            // Reset shader color after rendering this player (for fade animation)
-            if (needsAlpha) {
-                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-                RenderSystem.disableBlend();
-            }
         }
 
         // Render Bluffs
         for (ClickableBluff bluff : this.bluffWidgets) {
-            ResourceLocation icon = bluff.getIcon();
+            Identifier icon = bluff.getIcon();
             int borderColor = bluff.getBorderColor();
 
-            context.blit(icon, bluff.x, bluff.y, 0, 0, bluff.size, bluff.size, bluff.size, bluff.size);
-            context.renderOutline(bluff.x - 1, bluff.y - 1, bluff.size + 2, bluff.size + 2, borderColor);
+            context.blit(RenderPipelines.GUI_TEXTURED, icon, bluff.x, bluff.y, 0, 0, bluff.size, bluff.size, bluff.size, bluff.size);
+            context.outline(bluff.x - 1, bluff.y - 1, bluff.size + 2, bluff.size + 2, borderColor);
 
             if (bluff.isMouseOver(mouseX, mouseY)) {
                 // Show description when shift is held, otherwise show name
-                if (Screen.hasShiftDown() && bluff.hasRole()) {
+                if (Minecraft.getInstance().hasShiftDown() && bluff.hasRole()) {
                     bluffHoverText = Component.literal(AbilityText.of(bluff.scriptRole));
                     showingBluffDescription = true;
                 } else {
@@ -1417,8 +1401,8 @@ public class AssignRolesScreen extends Screen {
                 PlayerListUtil.drawPlayerHead(context, minecraft, rWidget.reminder.playerUuid().get(), rWidget.x, rWidget.y, rWidget.size);
             } else {
                 // Render normal role icon
-                ResourceLocation icon = rWidget.reminder.getIcon();
-                context.blit(icon, rWidget.x, rWidget.y, 0, 0, rWidget.size, rWidget.size, rWidget.size, rWidget.size);
+                Identifier icon = rWidget.reminder.getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, icon, rWidget.x, rWidget.y, 0, 0, rWidget.size, rWidget.size, rWidget.size, rWidget.size);
             }
 
             int borderColor = 0; // 0 = no border
@@ -1435,7 +1419,7 @@ public class AssignRolesScreen extends Screen {
                 // Show the reminder's role description when shift is held, like roles do.
                 // Alignment reminders (Good/Evil) sit on the NO_ROLE placeholder, which has
                 // no description worth showing, so they keep their plain text.
-                ScriptRole reminderRole = Screen.hasShiftDown() ? resolveReminderRole(rWidget.reminder) : null;
+                ScriptRole reminderRole = Minecraft.getInstance().hasShiftDown() ? resolveReminderRole(rWidget.reminder) : null;
                 if (reminderRole instanceof ScriptRole.Official official && official.role() == Role.NO_ROLE) {
                     reminderRole = null;
                 }
@@ -1454,7 +1438,7 @@ public class AssignRolesScreen extends Screen {
 
             // Draw border if one was set
             if (borderColor != 0) {
-                context.renderOutline(rWidget.x - 1, rWidget.y - 1, rWidget.size + 2, rWidget.size + 2, borderColor);
+                context.outline(rWidget.x - 1, rWidget.y - 1, rWidget.size + 2, rWidget.size + 2, borderColor);
             }
         }
 
@@ -1464,7 +1448,7 @@ public class AssignRolesScreen extends Screen {
         boolean isBishopModeForRender = StorytellerState.getBishopAliveWithAbility(ClientState.playerDeathStatus).isPresent();
         if (storytellerWidget != null && ClientState.nominationsOpen) {
             // Update nomination highlight for storyteller
-            if (isOperator && Screen.hasAltDown() && ClientState.nominationsOpen && ClientState.currentNominee == null) {
+            if (isOperator && Minecraft.getInstance().hasAltDown() && ClientState.nominationsOpen && ClientState.currentNominee == null) {
                 if (isBishopModeForRender && selectedNominator == null) {
                     // Bishop mode: storyteller can nominate (yellow highlight)
                     storytellerWidget.nominationHighlight = NominationHighlight.CAN_NOMINATE;
@@ -1488,16 +1472,16 @@ public class AssignRolesScreen extends Screen {
             }
 
             if (storyteller != null) {
-                ResourceLocation skinTexture = storyteller.getSkin().texture();
-                context.blit(skinTexture, storytellerWidget.headX, storytellerWidget.headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE, 8.0f, 8.0f, 8, 8, 64, 64);
-                context.blit(skinTexture, storytellerWidget.headX, storytellerWidget.headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE, 40.0f, 8.0f, 8, 8, 64, 64);
+                Identifier skinTexture = storyteller.getSkin().body().texturePath();
+                context.blit(RenderPipelines.GUI_TEXTURED, skinTexture, storytellerWidget.headX, storytellerWidget.headY, 8.0f, 8.0f, HEAD_ICON_SIZE, HEAD_ICON_SIZE, 8, 8, 64, 64);
+                context.blit(RenderPipelines.GUI_TEXTURED, skinTexture, storytellerWidget.headX, storytellerWidget.headY, 40.0f, 8.0f, HEAD_ICON_SIZE, HEAD_ICON_SIZE, 8, 8, 64, 64);
 
                 // Draw "ST" label below the head
                 Component stLabel = Component.translatable("gui.blood-on-the-blocktower.assign_roles.storyteller_short").withStyle(ChatFormatting.GOLD);
                 int labelWidth = this.font.width(stLabel);
                 int labelX = storytellerWidget.headX + (HEAD_ICON_SIZE / 2) - (labelWidth / 2);
                 int labelY = storytellerWidget.headY + HEAD_ICON_SIZE + 2;
-                context.drawString(this.font, stLabel, labelX, labelY, 0xFFFFFF);
+                context.text(this.font, stLabel, labelX, labelY, 0xFFFFFFFF);
 
                 // Draw nomination highlight border if applicable
                 int highlightOffset = 3;
@@ -1510,9 +1494,9 @@ public class AssignRolesScreen extends Screen {
                     highlightColor = 0xFF00FF00; // Green for selected as nominator (Bishop mode)
                 }
                 if (highlightColor != 0) {
-                    context.renderOutline(storytellerWidget.headX - highlightOffset, storytellerWidget.headY - highlightOffset,
+                    context.outline(storytellerWidget.headX - highlightOffset, storytellerWidget.headY - highlightOffset,
                             HEAD_ICON_SIZE + (highlightOffset * 2), HEAD_ICON_SIZE + (highlightOffset * 2), highlightColor);
-                    context.renderOutline(storytellerWidget.headX - highlightOffset + 1, storytellerWidget.headY - highlightOffset + 1,
+                    context.outline(storytellerWidget.headX - highlightOffset + 1, storytellerWidget.headY - highlightOffset + 1,
                             HEAD_ICON_SIZE + (highlightOffset * 2) - 2, HEAD_ICON_SIZE + (highlightOffset * 2) - 2, highlightColor);
                 }
 
@@ -1554,11 +1538,11 @@ public class AssignRolesScreen extends Screen {
                                 : 0;
                         if (underlayColor != 0) {
                             // Draw thick underlay (3 pixels)
-                            context.renderOutline(widget.roleX - highlightOffset, widget.roleY - highlightOffset,
+                            context.outline(widget.roleX - highlightOffset, widget.roleY - highlightOffset,
                                     ROLE_ICON_SIZE + (highlightOffset * 2), ROLE_ICON_SIZE + (highlightOffset * 2), underlayColor);
-                            context.renderOutline(widget.roleX - highlightOffset + 1, widget.roleY - highlightOffset + 1,
+                            context.outline(widget.roleX - highlightOffset + 1, widget.roleY - highlightOffset + 1,
                                     ROLE_ICON_SIZE + (highlightOffset * 2) - 2, ROLE_ICON_SIZE + (highlightOffset * 2) - 2, underlayColor);
-                            context.renderOutline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
+                            context.outline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
                                     ROLE_ICON_SIZE + (highlightOffset * 2) - 4, ROLE_ICON_SIZE + (highlightOffset * 2) - 4, underlayColor);
                         }
                     }
@@ -1569,17 +1553,17 @@ public class AssignRolesScreen extends Screen {
                             || widget.nominationHighlight == NominationHighlight.SELECTED_EXILE_CALLER) {
                         // Thin 2-pixel border tracing inner edge of thick border (offset by 1 pixel inward)
                         int innerOffset = highlightOffset - 1; // Move 1 pixel inward
-                        context.renderOutline(widget.roleX - innerOffset, widget.roleY - innerOffset,
+                        context.outline(widget.roleX - innerOffset, widget.roleY - innerOffset,
                                 ROLE_ICON_SIZE + (innerOffset * 2), ROLE_ICON_SIZE + (innerOffset * 2), color);
-                        context.renderOutline(widget.roleX - innerOffset + 1, widget.roleY - innerOffset + 1,
+                        context.outline(widget.roleX - innerOffset + 1, widget.roleY - innerOffset + 1,
                                 ROLE_ICON_SIZE + (innerOffset * 2) - 2, ROLE_ICON_SIZE + (innerOffset * 2) - 2, color);
                     } else {
                         // Thick border - 3 pixels
-                        context.renderOutline(widget.roleX - highlightOffset, widget.roleY - highlightOffset,
+                        context.outline(widget.roleX - highlightOffset, widget.roleY - highlightOffset,
                                 ROLE_ICON_SIZE + (highlightOffset * 2), ROLE_ICON_SIZE + (highlightOffset * 2), color);
-                        context.renderOutline(widget.roleX - highlightOffset + 1, widget.roleY - highlightOffset + 1,
+                        context.outline(widget.roleX - highlightOffset + 1, widget.roleY - highlightOffset + 1,
                                 ROLE_ICON_SIZE + (highlightOffset * 2) - 2, ROLE_ICON_SIZE + (highlightOffset * 2) - 2, color);
-                        context.renderOutline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
+                        context.outline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
                                 ROLE_ICON_SIZE + (highlightOffset * 2) - 4, ROLE_ICON_SIZE + (highlightOffset * 2) - 4, color);
                     }
                 }
@@ -1589,7 +1573,7 @@ public class AssignRolesScreen extends Screen {
         // Draw swap selection highlight (yellow for role swap, magenta for seat swap)
         // Works anytime with Alt+Shift held - show borders on ALL eligible players when keys held.
         // Exclude Ctrl so Ctrl+Shift+Alt (send grimoire) doesn't show this highlight.
-        if (isOperator && Screen.hasAltDown() && Screen.hasShiftDown() && !Screen.hasControlDown()) {
+        if (isOperator && Minecraft.getInstance().hasAltDown() && Minecraft.getInstance().hasShiftDown() && !Minecraft.getInstance().hasControlDown()) {
             for (ClickablePlayer widget : this.playerWidgets) {
                 int highlightOffset = 5;
                 // Eligibility: role swap needs an assigned role, and seat swap also needs a seat.
@@ -1612,15 +1596,15 @@ public class AssignRolesScreen extends Screen {
 
                 if (selectedSwapPlayer1 != null && widget.uuid.equals(selectedSwapPlayer1)) {
                     // Draw thick border - 3 pixels around first selected
-                    context.renderOutline(widget.roleX - highlightOffset, widget.roleY - highlightOffset,
+                    context.outline(widget.roleX - highlightOffset, widget.roleY - highlightOffset,
                             ROLE_ICON_SIZE + (highlightOffset * 2), ROLE_ICON_SIZE + (highlightOffset * 2), color);
-                    context.renderOutline(widget.roleX - highlightOffset + 1, widget.roleY - highlightOffset + 1,
+                    context.outline(widget.roleX - highlightOffset + 1, widget.roleY - highlightOffset + 1,
                             ROLE_ICON_SIZE + (highlightOffset * 2) - 2, ROLE_ICON_SIZE + (highlightOffset * 2) - 2, color);
-                    context.renderOutline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
+                    context.outline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
                             ROLE_ICON_SIZE + (highlightOffset * 2) - 4, ROLE_ICON_SIZE + (highlightOffset * 2) - 4, color);
                 } else {
                     // Highlight as potential target (thinner border)
-                    context.renderOutline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
+                    context.outline(widget.roleX - highlightOffset + 2, widget.roleY - highlightOffset + 2,
                             ROLE_ICON_SIZE + (highlightOffset * 2) - 4, ROLE_ICON_SIZE + (highlightOffset * 2) - 4, color);
                 }
             }
@@ -1656,7 +1640,7 @@ public class AssignRolesScreen extends Screen {
                 List<Component> tooltipTextLines = wrappedLines.stream()
                         .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                         .collect(Collectors.toList());
-                context.renderComponentTooltip(this.font, tooltipTextLines, mouseX, mouseY);
+                context.setComponentTooltipForNextFrame(this.font, tooltipTextLines, mouseX, mouseY);
             } else {
                 // Wrap role name if needed
                 String roleNameString = bluffHoverText.getString();
@@ -1666,7 +1650,7 @@ public class AssignRolesScreen extends Screen {
                 List<Component> tooltipTextLines = wrappedLines.stream()
                         .map(line -> Component.literal(line.getString()))
                         .collect(Collectors.toList());
-                context.renderComponentTooltip(this.font, tooltipTextLines, mouseX, mouseY);
+                context.setComponentTooltipForNextFrame(this.font, tooltipTextLines, mouseX, mouseY);
             }
         } else if (roleHoverText != null) {
             // Check if we're showing a description (not just if shift is held)
@@ -1680,7 +1664,7 @@ public class AssignRolesScreen extends Screen {
                 if (ClientState.hintsEnabled) {
                     tooltipTextLines.add(Component.translatable("gui.blood-on-the-blocktower.assign_roles.click_full_description").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
                 }
-                context.renderComponentTooltip(this.font, tooltipTextLines, mouseX, mouseY);
+                context.setComponentTooltipForNextFrame(this.font, tooltipTextLines, mouseX, mouseY);
             } else {
                 // Wrap role name if needed
                 String roleNameString = roleHoverText.getString();
@@ -1702,12 +1686,12 @@ public class AssignRolesScreen extends Screen {
                     tooltipTextLines = new ArrayList<>(tooltipTextLines);
                     tooltipTextLines.add(Component.translatable("gui.blood-on-the-blocktower.assign_roles.shift_details").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
                 }
-                context.renderComponentTooltip(this.font, tooltipTextLines, mouseX, mouseY);
+                context.setComponentTooltipForNextFrame(this.font, tooltipTextLines, mouseX, mouseY);
             }
         } else if (nameHoverTextList != null) {
-            context.renderComponentTooltip(this.font, nameHoverTextList, mouseX, mouseY);
+            context.setComponentTooltipForNextFrame(this.font, nameHoverTextList, mouseX, mouseY);
         } else if (nameHoverText != null) {
-            context.renderTooltip(this.font, nameHoverText, mouseX, mouseY);
+            context.setTooltipForNextFrame(this.font, nameHoverText, mouseX, mouseY);
         } else if (reminderHoverText != null) {
             if (showingReminderDescription) {
                 int tooltipMaxWidth = 170;
@@ -1716,14 +1700,14 @@ public class AssignRolesScreen extends Screen {
                 List<Component> tooltipTextLines = wrappedLines.stream()
                         .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                         .collect(Collectors.toList());
-                context.renderComponentTooltip(this.font, tooltipTextLines, mouseX, mouseY);
+                context.setComponentTooltipForNextFrame(this.font, tooltipTextLines, mouseX, mouseY);
             } else {
-                context.renderTooltip(this.font, reminderHoverText, mouseX, mouseY);
+                context.setTooltipForNextFrame(this.font, reminderHoverText, mouseX, mouseY);
             }
         } else if (storytellerHoverText != null) {
-            context.renderTooltip(this.font, storytellerHoverText, mouseX, mouseY);
+            context.setTooltipForNextFrame(this.font, storytellerHoverText, mouseX, mouseY);
         } else if (sendRolesButton != null && currentPhase == GamePhase.SETUP && cachedValidation != null
-                && !cachedValidation.isValid() && !Screen.hasAltDown()) {
+                && !cachedValidation.isValid() && !Minecraft.getInstance().hasAltDown()) {
             // Manual tooltip for Send Roles button (no text wrapping)
             if (mouseX >= sendRolesButton.getX() && mouseX < sendRolesButton.getX() + sendRolesButton.getWidth() &&
                 mouseY >= sendRolesButton.getY() && mouseY < sendRolesButton.getY() + sendRolesButton.getHeight()) {
@@ -1735,12 +1719,12 @@ public class AssignRolesScreen extends Screen {
                 errorLines.add(Component.literal("")); // Empty line
                 errorLines.add(Component.translatable("gui.blood-on-the-blocktower.assign_roles.hold_shift_override").withStyle(ChatFormatting.YELLOW, ChatFormatting.ITALIC));
                 errorLines.add(Component.translatable("gui.blood-on-the-blocktower.assign_roles.hold_alt_script").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-                context.renderComponentTooltip(this.font, errorLines, mouseX, mouseY);
+                context.setComponentTooltipForNextFrame(this.font, errorLines, mouseX, mouseY);
             }
         }
 
         // Render Day/Night indicator in top-left for non-operators
-        if (!this.minecraft.player.hasPermissions(2)) {
+        if (!this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             int dayNightX = 10;
             int dayNightY = 10;
             int iconSize = 20;
@@ -1748,7 +1732,7 @@ public class AssignRolesScreen extends Screen {
             int verticalSpacing = 4;
 
             // Night indicator (Dusk icon + number)
-            context.blit(DUSK_ICON, dayNightX, dayNightY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            context.blit(RenderPipelines.GUI_TEXTURED, DUSK_ICON, dayNightX, dayNightY, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
             // Calculate night number size
             String nightText = String.valueOf(ClientState.currentNight);
@@ -1764,11 +1748,11 @@ public class AssignRolesScreen extends Screen {
             // White night number (centered in background)
             int nightTextX = nightNumX + padding;
             int nightTextY = nightNumY + padding;
-            context.drawString(this.font, Component.literal(nightText), nightTextX, nightTextY, 0xFFFFFFFF, false);
+            context.text(this.font, Component.literal(nightText), nightTextX, nightTextY, 0xFFFFFFFF, false);
 
             // Day indicator (Dawn icon + number) below night
             int dayY = dayNightY + iconSize + verticalSpacing;
-            context.blit(DAWN_ICON, dayNightX, dayY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            context.blit(RenderPipelines.GUI_TEXTURED, DAWN_ICON, dayNightX, dayY, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
             // Calculate day number size
             String dayText = String.valueOf(ClientState.currentDay);
@@ -1784,7 +1768,7 @@ public class AssignRolesScreen extends Screen {
             // White day number (centered in background)
             int dayTextX = dayNumX + padding;
             int dayTextY = dayNumY + padding;
-            context.drawString(this.font, Component.literal(dayText), dayTextX, dayTextY, 0xFFFFFFFF, false);
+            context.text(this.font, Component.literal(dayText), dayTextX, dayTextY, 0xFFFFFFFF, false);
         }
 
         // Render hints for non-operators (if enabled)
@@ -1794,8 +1778,8 @@ public class AssignRolesScreen extends Screen {
                     .append(Component.literal("|").withStyle(ChatFormatting.GRAY))
                     .append(Component.translatable("gui.blood-on-the-blocktower.assign_roles.hint_click_head").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
             Component hideText = Component.translatable("gui.blood-on-the-blocktower.assign_roles.hint_hide").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC);
-            context.drawCenteredString(this.font, hintText, this.width / 2, hintY, 0xFFFFFF);
-            context.drawCenteredString(this.font, hideText, this.width / 2, hintY + 10, 0xFFFFFF);
+            context.centeredText(this.font, hintText, this.width / 2, hintY, 0xFFFFFFFF);
+            context.centeredText(this.font, hideText, this.width / 2, hintY + 10, 0xFFFFFFFF);
         }
 
         // Render VoiceChatSidebar on top for non-operators (force render to bypass the screen check and always show expanded)
@@ -1834,11 +1818,15 @@ public class AssignRolesScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        boolean isOperator = minecraft.player.hasPermissions(2);
-        boolean isShiftDown = Screen.hasShiftDown();
-        boolean isCtrlDown = Screen.hasControlDown();
-        boolean isAltDown = Screen.hasAltDown();
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+
+        boolean isOperator = minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+        boolean isShiftDown = Minecraft.getInstance().hasShiftDown();
+        boolean isCtrlDown = Minecraft.getInstance().hasControlDown();
+        boolean isAltDown = Minecraft.getInstance().hasAltDown();
 
         // CTRL + SHIFT + CLICK on storyteller = Force Execute (Operator only)
         if (isOperator && isCtrlDown && isShiftDown && !isAltDown && ClientState.nominationsOpen) {
@@ -1882,7 +1870,7 @@ public class AssignRolesScreen extends Screen {
                                 ClientState.voteInProgress;
                         if (isBlocked) {
                             if (this.minecraft.player != null) {
-                                this.minecraft.player.displayClientMessage(Component.translatable("gui.blood-on-the-blocktower.assign_roles.cannot_swap_seats").withStyle(ChatFormatting.RED), true);
+                                this.minecraft.player.sendOverlayMessage(Component.translatable("gui.blood-on-the-blocktower.assign_roles.cannot_swap_seats").withStyle(ChatFormatting.RED));
                             }
                             return true;
                         }
@@ -1892,7 +1880,7 @@ public class AssignRolesScreen extends Screen {
                         // First selection - mark for swap
                         selectedSwapPlayer1 = widget.uuid;
                         selectedSwapType = clickSwapType;
-                        this.minecraft.setScreen(this); // Refresh to show selection
+                        this.minecraft.gui.setScreen(this); // Refresh to show selection
                         return true;
                     } else if (!selectedSwapPlayer1.equals(widget.uuid)) {
                         // Second selection - must match swap type
@@ -1900,7 +1888,7 @@ public class AssignRolesScreen extends Screen {
                             // Different swap type - reset and start new selection
                             selectedSwapPlayer1 = widget.uuid;
                             selectedSwapType = clickSwapType;
-                            this.minecraft.setScreen(this);
+                            this.minecraft.gui.setScreen(this);
                             return true;
                         }
 
@@ -1951,13 +1939,13 @@ public class AssignRolesScreen extends Screen {
                         // Clear selection and refresh
                         selectedSwapPlayer1 = null;
                         selectedSwapType = null;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                         return true;
                     } else {
                         // Clicked the same player - deselect
                         selectedSwapPlayer1 = null;
                         selectedSwapType = null;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                         return true;
                     }
                 }
@@ -1993,7 +1981,7 @@ public class AssignRolesScreen extends Screen {
                         // DAY phase before nominations open: exile flow only.
                         if (selectedExileCaller == null) {
                             selectedExileCaller = widget.uuid;
-                            this.minecraft.setScreen(this);
+                            this.minecraft.gui.setScreen(this);
                             return true;
                         } else {
                             // Override bypasses the daily-slot check (canBeExiled value), but
@@ -2002,7 +1990,7 @@ public class AssignRolesScreen extends Screen {
                             if (isTraveler && (canBeExiled || override)) {
                                 ClientPlayNetworking.send(new CallForExileC2SPayload(selectedExileCaller, widget.uuid, override));
                                 selectedExileCaller = null;
-                                this.minecraft.setScreen(this);
+                                this.minecraft.gui.setScreen(this);
                                 return true;
                             }
                             return true; // Ignore non-traveler second click
@@ -2019,7 +2007,7 @@ public class AssignRolesScreen extends Screen {
                                 selectedExileCaller = widget.uuid; // Exile flow only (when there are travelers)
                             }
                             // If neither condition met (can't nominate AND no travelers), ignore
-                            this.minecraft.setScreen(this);
+                            this.minecraft.gui.setScreen(this);
                             return true;
                         } else if (selectedNominator != null) {
                             // Second click in nomination flow
@@ -2029,7 +2017,7 @@ public class AssignRolesScreen extends Screen {
                                 // Target is a traveler - exile using nominator as caller
                                 ClientPlayNetworking.send(new CallForExileC2SPayload(selectedNominator, widget.uuid, override));
                                 selectedNominator = null;
-                                this.minecraft.setScreen(this);
+                                this.minecraft.gui.setScreen(this);
                                 return true;
                             } else if (canBeNominated || override) {
                                 // Target is nominatable (or forced) - complete nomination.
@@ -2051,7 +2039,7 @@ public class AssignRolesScreen extends Screen {
                                 ));
                                 selectedNominator = null;
                                 selectedNominee = null;
-                                this.minecraft.setScreen(this);
+                                this.minecraft.gui.setScreen(this);
                                 return true;
                             }
                             return true; // Ignore invalid second click
@@ -2061,7 +2049,7 @@ public class AssignRolesScreen extends Screen {
                             if (isTraveler && (canBeExiled || override)) {
                                 ClientPlayNetworking.send(new CallForExileC2SPayload(selectedExileCaller, widget.uuid, override));
                                 selectedExileCaller = null;
-                                this.minecraft.setScreen(this);
+                                this.minecraft.gui.setScreen(this);
                                 return true;
                             }
                             return true; // Ignore non-traveler second click
@@ -2078,7 +2066,7 @@ public class AssignRolesScreen extends Screen {
                 if (this.minecraft.player != null) {
                     // In Bishop mode, clicking on storyteller widget selects them as the nominator
                     selectedNominator = this.minecraft.player.getUUID();
-                    this.minecraft.setScreen(this);
+                    this.minecraft.gui.setScreen(this);
                     return true;
                 }
             }
@@ -2109,7 +2097,7 @@ public class AssignRolesScreen extends Screen {
                     // Clear selection
                     selectedNominator = null;
                     selectedNominee = null;
-                    this.minecraft.setScreen(this);
+                    this.minecraft.gui.setScreen(this);
                     return true;
                 }
             }
@@ -2122,7 +2110,7 @@ public class AssignRolesScreen extends Screen {
                 if (bluff.isMouseOver(mouseX, mouseY)) {
                     // Shift+click opens details, normal click selects role
                     if (isShiftDown && bluff.hasRole()) {
-                        this.minecraft.setScreen(new CharacterDetailsScreen(bluff.scriptRole, this));
+                        this.minecraft.gui.setScreen(new CharacterDetailsScreen(bluff.scriptRole, this));
                         return true;
                     }
                     if (!isShiftDown) {
@@ -2139,7 +2127,7 @@ public class AssignRolesScreen extends Screen {
                         // Shift-click: Open character details screen for the associated role
                         ScriptRole reminderRole = resolveReminderRole(rWidget.reminder);
                         if (reminderRole != null) {
-                            this.minecraft.setScreen(new CharacterDetailsScreen(reminderRole, this));
+                            this.minecraft.gui.setScreen(new CharacterDetailsScreen(reminderRole, this));
                         }
                         // If no associated role, do nothing on shift-click
                         return true;
@@ -2160,7 +2148,7 @@ public class AssignRolesScreen extends Screen {
                             // Sync grimoire with other storytellers
                             StorytellerState.syncGrimoire();
                         }
-                        this.minecraft.setScreen(this); // Refresh screen
+                        this.minecraft.gui.setScreen(this); // Refresh screen
                         return true;
                     }
                 }
@@ -2174,7 +2162,7 @@ public class AssignRolesScreen extends Screen {
                     //   Ctrl+click  → toggle the night-order mark (operators only,
                     //                 on assigned + markable players)
                     if (isShiftDown && !isCtrlDown && widget.hasRole()) {
-                        this.minecraft.setScreen(new CharacterDetailsScreen(widget.scriptRole, this));
+                        this.minecraft.gui.setScreen(new CharacterDetailsScreen(widget.scriptRole, this));
                         return true;
                     }
 
@@ -2235,7 +2223,7 @@ public class AssignRolesScreen extends Screen {
                         ));
                         // Show feedback message
                         if (minecraft.player != null) {
-                            minecraft.player.displayClientMessage(Component.translatable("gui.blood-on-the-blocktower.assign_roles.sent_grimoire", widget.playerName).withStyle(ChatFormatting.GREEN), false);
+                            minecraft.player.sendSystemMessage(Component.translatable("gui.blood-on-the-blocktower.assign_roles.sent_grimoire", widget.playerName).withStyle(ChatFormatting.GREEN));
                         }
                         return true;
                     }
@@ -2261,7 +2249,7 @@ public class AssignRolesScreen extends Screen {
                             // Send to server
                             ClientPlayNetworking.send(new ToggleGhostVoteC2SPayload(widget.uuid, newState));
 
-                            this.minecraft.setScreen(this); // Refresh screen
+                            this.minecraft.gui.setScreen(this); // Refresh screen
                         }
                         return true;
                     }
@@ -2308,12 +2296,12 @@ public class AssignRolesScreen extends Screen {
 
                         // Rebuild night order to show/hide triggered visits
                         NightOrderHudManager.rebuildActiveNightOrder();
-                        this.minecraft.setScreen(this); // Refresh screen
+                        this.minecraft.gui.setScreen(this); // Refresh screen
                         return true;
                     }
                     // NORMAL CLICK = Add Reminder
                     if (!isShiftDown && !isCtrlDown) {
-                        this.minecraft.setScreen(new ReminderChooseScreen(Component.translatable("gui.blood-on-the-blocktower.assign_roles.add_reminder_for", widget.playerName), widget.uuid, this));
+                        this.minecraft.gui.setScreen(new ReminderChooseScreen(Component.translatable("gui.blood-on-the-blocktower.assign_roles.add_reminder_for", widget.playerName), widget.uuid, this));
                         return true;
                     }
                     // SHIFT + CLICK = Teleport (Operator only)
@@ -2364,20 +2352,28 @@ public class AssignRolesScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (KeyInputHandler.openAssignGui.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
+        if (KeyInputHandler.openAssignGui.matches(event) || keyCode == GLFW.GLFW_KEY_E) {
             this.onClose();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    public boolean keyReleased(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         // Clear nomination and exile selection when Alt is released
         if (keyCode == GLFW.GLFW_KEY_LEFT_ALT || keyCode == GLFW.GLFW_KEY_RIGHT_ALT) {
             boolean needsRefresh = false;
@@ -2397,7 +2393,7 @@ public class AssignRolesScreen extends Screen {
                 needsRefresh = true;
             }
             if (needsRefresh) {
-                this.minecraft.setScreen(this); // Refresh to clear highlights
+                this.minecraft.gui.setScreen(this); // Refresh to clear highlights
                 return true;
             }
         }
@@ -2406,21 +2402,21 @@ public class AssignRolesScreen extends Screen {
             if (selectedSwapPlayer1 != null) {
                 selectedSwapPlayer1 = null;
                 selectedSwapType = null;
-                this.minecraft.setScreen(this); // Refresh to clear highlights
+                this.minecraft.gui.setScreen(this); // Refresh to clear highlights
                 return true;
             }
         }
-        return super.keyReleased(keyCode, scanCode, modifiers);
+        return super.keyReleased(event);
     }
 
     private void openRoleSelectionScreen(UUID targetPlayerUUID) {
         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(minecraft, targetPlayerUUID);
         Component nameText = info != null ? Component.literal(info.name()) : Component.translatable("gui.blood-on-the-blocktower.assign_roles.unknown_player");
-        minecraft.setScreen(new RoleSelectionScreen(Component.translatable("gui.blood-on-the-blocktower.assign_roles.select_role_for", nameText), targetPlayerUUID, this));
+        minecraft.gui.setScreen(new RoleSelectionScreen(Component.translatable("gui.blood-on-the-blocktower.assign_roles.select_role_for", nameText), targetPlayerUUID, this));
     }
 
     private void openBluffSelectionScreen(int bluffIndex) {
-        minecraft.setScreen(new RoleSelectionScreen(Component.translatable("gui.blood-on-the-blocktower.assign_roles.select_bluff_role"), bluffIndex, this));
+        minecraft.gui.setScreen(new RoleSelectionScreen(Component.translatable("gui.blood-on-the-blocktower.assign_roles.select_bluff_role"), bluffIndex, this));
     }
 
     /**
@@ -2430,14 +2426,14 @@ public class AssignRolesScreen extends Screen {
      *   - Expanded (isRoleHudVisible): "Players: X | Townsfolk: Y Outsiders: Z Minions: W Demon: V"
      *   - Compressed (!isRoleHudVisible): "Y : Z : W : V" with colored numbers
      */
-    private void renderPlayerCounts(GuiGraphics context) {
-        boolean isOperatorLocal = this.minecraft != null && this.minecraft.player != null && this.minecraft.player.hasPermissions(2);
+    private void renderPlayerCounts(GuiGraphicsExtractor context) {
+        boolean isOperatorLocal = this.minecraft != null && this.minecraft.player != null && this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
         // Storytellers always see compressed format, while non-storytellers see toggle-based format
         boolean useFullFormat = !isOperatorLocal && ClientState.isRoleHudVisible;
         Component countText = PlayerCountsDisplay.buildPlayerCountsText(useFullFormat);
         if (countText != null) {
-            context.drawCenteredString(this.font, countText, this.width / 2, 10, 0xFFFFFF);
+            context.centeredText(this.font, countText, this.width / 2, 10, 0xFFFFFFFF);
         }
     }
 
@@ -2445,7 +2441,7 @@ public class AssignRolesScreen extends Screen {
      * Renders setup validation counts at the top center of the screen.
      * Shows expected vs actual role type counts with color coding.
      */
-    private void renderSetupCounts(GuiGraphics context, int mouseX, int mouseY) {
+    private void renderSetupCounts(GuiGraphicsExtractor context, int mouseX, int mouseY) {
         if (cachedValidation == null) return;
 
         SetupValidator.SetupCounts expected = cachedValidation.expectedCounts();
@@ -2540,18 +2536,18 @@ public class AssignRolesScreen extends Screen {
 
         // Draw centered
         int textWidth = this.font.width(countsText);
-        context.drawString(this.font, countsText, centerX - textWidth / 2, y, 0xFFFFFF);
+        context.text(this.font, countsText, centerX - textWidth / 2, y, 0xFFFFFFFF);
 
         // Draw "VALID" or "INVALID" indicator
         int indicatorY = y + 12;
         if (cachedValidation.isValid()) {
             Component validText = Component.translatable("gui.blood-on-the-blocktower.assign_roles.setup_valid").withStyle(ChatFormatting.GREEN);
             int validWidth = this.font.width(validText);
-            context.drawString(this.font, validText, centerX - validWidth / 2, indicatorY, 0xFFFFFF);
+            context.text(this.font, validText, centerX - validWidth / 2, indicatorY, 0xFFFFFFFF);
         } else {
             Component invalidText = Component.translatable("gui.blood-on-the-blocktower.assign_roles.setup_invalid").withStyle(ChatFormatting.RED);
             int invalidWidth = this.font.width(invalidText);
-            context.drawString(this.font, invalidText, centerX - invalidWidth / 2, indicatorY, 0xFFFFFF);
+            context.text(this.font, invalidText, centerX - invalidWidth / 2, indicatorY, 0xFFFFFFFF);
         }
     }
 

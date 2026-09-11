@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Collection;
 import java.util.Random;
 import java.util.UUID;
+import net.minecraft.server.permissions.Permissions;
 
 /**
  * Storyteller monitoring + gating of private messages (/msg, /tell, /w, all aliases).
@@ -74,7 +75,7 @@ public class MessageCommandMixin {
         MinecraftServer server = source.getServer();
         if (server == null) return;
 
-        boolean senderIsOp = sender.hasPermissions(2);
+        boolean senderIsOp = sender.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
         WhisperSettings settings = WhisperSettingsManager.get();
 
         // Validate every non-op→non-op pair. First failure cancels the whole whisper.
@@ -83,7 +84,7 @@ public class MessageCommandMixin {
             if (target == null) continue;
             if (target.getUUID().equals(sender.getUUID())) continue;
 
-            boolean targetIsOp = target.hasPermissions(2);
+            boolean targetIsOp = target.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
             if (senderIsOp || targetIsOp) continue;
 
             Component denial = checkPlayerToPlayerWhisper(sender, target, settings);
@@ -91,7 +92,7 @@ public class MessageCommandMixin {
                 // Always chat (false), never actionbar, since denial reasons are worth
                 // logging in the player's chat history rather than flashing past as
                 // a transient HUD popup.
-                sender.displayClientMessage(denial, false);
+                sender.sendSystemMessage(denial, false);
                 ci.cancel();
                 return;
             }
@@ -126,8 +127,8 @@ public class MessageCommandMixin {
         }
 
         if (!settings.rangeUnlimited()) {
-            ServerLevel senderWorld = sender.serverLevel();
-            ServerLevel targetWorld = target.serverLevel();
+            ServerLevel senderWorld = sender.level();
+            ServerLevel targetWorld = target.level();
             // With a finite range set, cross-dimension whispers are blocked even if the
             // straight-line distance would be in range, since different worlds aren't audible
             // from one another.
@@ -200,7 +201,7 @@ public class MessageCommandMixin {
                                                 ServerPlayer target,
                                                 PlayerChatMessage message,
                                                 WhisperSettings settings) {
-        boolean targetIsOp = target.hasPermissions(2);
+        boolean targetIsOp = target.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
         String targetName = target.getName().getString();
 
         // Public notice only when both parties are non-operators AND broadcast is on.
@@ -212,7 +213,7 @@ public class MessageCommandMixin {
                             Component.literal(targetName).withStyle(s -> s.withColor(ChatFormatting.YELLOW).withItalic(false)))
                     .withStyle(s -> s.withColor(PALE_PURPLE).withItalic(true));
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-                p.displayClientMessage(publicMsg, false);
+                p.sendSystemMessage(publicMsg, false);
             }
         }
 
@@ -256,10 +257,10 @@ public class MessageCommandMixin {
                 .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
                 .append(message.decoratedContent().copy());
         for (ServerPlayer op : server.getPlayerList().getPlayers()) {
-            if (!op.hasPermissions(2)) continue;
+            if (!op.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) continue;
             if (op.getUUID().equals(sender.getUUID())) continue;
             if (op.getUUID().equals(target.getUUID())) continue;
-            op.displayClientMessage(opMsg, false);
+            op.sendSystemMessage(opMsg, false);
         }
     }
 

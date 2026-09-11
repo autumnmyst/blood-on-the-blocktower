@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * S2C payload to sync storytellers' night visit index to Dawn or Dusk.
@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record SyncNightVisitS2CPayload(String visitType) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncNightVisitS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_night_visit"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_night_visit"));
 
     public static final StreamCodec<ByteBuf, SyncNightVisitS2CPayload> CODEC = StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8, SyncNightVisitS2CPayload::visitType,

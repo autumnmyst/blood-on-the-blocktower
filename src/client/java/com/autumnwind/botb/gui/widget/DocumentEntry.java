@@ -3,7 +3,7 @@ package com.autumnwind.botb.gui.widget;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -31,8 +31,11 @@ public abstract class DocumentEntry extends ContainerObjectSelectionList.Entry<D
     public static DocumentEntry title(Font textRenderer, Component text) {
         return new DocumentEntry() {
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawString(textRenderer, text, x, y, 0xFFFFFF);
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
+                context.text(textRenderer, text, x, y, 0xFFFFFFFF);
             }
         };
     }
@@ -41,8 +44,11 @@ public abstract class DocumentEntry extends ContainerObjectSelectionList.Entry<D
     public static DocumentEntry text(Font textRenderer, FormattedCharSequence text, int color) {
         return new DocumentEntry() {
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawString(textRenderer, text, x, y, color, false);
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
+                context.text(textRenderer, text, x, y, color, false);
             }
         };
     }
@@ -51,7 +57,8 @@ public abstract class DocumentEntry extends ContainerObjectSelectionList.Entry<D
     public static DocumentEntry spacer() {
         return new DocumentEntry() {
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+
             }
         };
     }

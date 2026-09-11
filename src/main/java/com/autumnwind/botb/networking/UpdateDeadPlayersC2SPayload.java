@@ -9,7 +9,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * C2S payload for updating dead player status only.
@@ -31,7 +31,7 @@ public record UpdateDeadPlayersC2SPayload(
         boolean voudonModeActive,
         Optional<UUID> voudonPlayerUuid
 ) implements CustomPacketPayload {
-    public static final ResourceLocation UPDATE_DEAD_PLAYERS_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "update_dead_players");
+    public static final Identifier UPDATE_DEAD_PLAYERS_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "update_dead_players");
     public static final CustomPacketPayload.Type<UpdateDeadPlayersC2SPayload> ID = new CustomPacketPayload.Type<>(UPDATE_DEAD_PLAYERS_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, UpdateDeadPlayersC2SPayload> CODEC = StreamCodec.composite(

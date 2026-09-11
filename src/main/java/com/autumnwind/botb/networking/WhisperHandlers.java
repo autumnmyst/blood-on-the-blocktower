@@ -4,6 +4,7 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.config.WhisperSettingsManager;
 import com.autumnwind.botb.daytime.*;
 import java.util.*;
+import net.minecraft.server.permissions.Permissions;
 
 /** Server-bound packet handlers: Whisper settings changes. */
 final class WhisperHandlers {
@@ -12,7 +13,7 @@ final class WhisperHandlers {
 
     static void register() {
         ModPackets.registerGuarded(UpdateWhisperSettingsC2SPayload.ID, (payload, context) -> {
-            if (!context.player().hasPermissions(2)) {
+            if (!context.player().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 return;
             }
             WhisperSettingsManager.set(payload.settings());

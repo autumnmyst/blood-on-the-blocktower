@@ -1,7 +1,8 @@
 package com.autumnwind.botb.gui;
 
+import com.autumnwind.botb.hud.GameEndAnimationHUD;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
@@ -23,18 +24,22 @@ public class GameEndHoldingScreen extends Screen {
 
         // Lock and hide the mouse cursor using GLFW
         GLFW.glfwSetInputMode(
-            client.getWindow().getWindow(),
+            client.getWindow().handle(),
             GLFW.GLFW_CURSOR,
             GLFW.GLFW_CURSOR_DISABLED
         );
 
         // Hide HUD like F1 key (hides hotbar, items, hands)
-        client.options.hideGui = true;
+        if (!client.gui.hud.isHidden()) client.gui.hud.toggle();
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        // Don't render anything - the animation overlay handles all visuals
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        GameEndAnimationHUD.render(context, Minecraft.getInstance());
     }
 
     @Override
@@ -54,12 +59,12 @@ public class GameEndHoldingScreen extends Screen {
 
         // Restore normal mouse cursor when screen closes
         GLFW.glfwSetInputMode(
-            client.getWindow().getWindow(),
+            client.getWindow().handle(),
             GLFW.GLFW_CURSOR,
             GLFW.GLFW_CURSOR_NORMAL
         );
 
         // Restore HUD visibility
-        client.options.hideGui = false;
+        if (client.gui.hud.isHidden()) client.gui.hud.toggle();
     }
 }

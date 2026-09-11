@@ -6,7 +6,7 @@ import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
@@ -37,9 +37,9 @@ public class CustomSoundInstance extends AbstractSoundInstance {
         if (customPath == null) {
             return super.resolve(soundManager);
         }
-        WeighedSoundEvents set = new WeighedSoundEvents(this.location, null);
+        WeighedSoundEvents set = new WeighedSoundEvents(this.identifier, null);
         // Music is streamed rather than fully loaded, the way vanilla handles long tracks
-        set.addSound(new Sound(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, customPath),
+        set.addSound(new Sound(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, customPath),
                 ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
                 Sound.Type.FILE, looping, false, 16));
         this.sound = set.getSound(this.random);

@@ -5,13 +5,14 @@ import com.autumnwind.botb.util.PlayerListUtil;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.server.permissions.Permissions;
 
 /**
  * Displays voting information during an active vote.
@@ -23,7 +24,7 @@ public class VoteHUD {
     /**
      * Renders the vote HUD if there's an active nomination or vote in progress.
      */
-    public static void render(GuiGraphics context, Minecraft client) {
+    public static void render(GuiGraphicsExtractor context, Minecraft client) {
         // Show if there's a nomination OR a vote in progress
         UUID nomineeUuid = ClientState.currentNominee;
         if (nomineeUuid == null) {
@@ -44,7 +45,7 @@ public class VoteHUD {
         boolean isNominee = client.player.getUUID().equals(nomineeUuid);
 
         // Check if player is an operator (for Organ Grinder mode visibility)
-        boolean isOperator = client.player.hasPermissions(2);
+        boolean isOperator = client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
         // Organ Grinder hides vote info from everyone but the storyteller. The day-scoped flag
         // is the one that matters here: it is set when the day's first OG vote starts and holds

@@ -4,7 +4,7 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Broadcast when the server resets game state (either normal or hard reset) to clear
@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record ResetRevealActiveS2CPayload() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ResetRevealActiveS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "reset_reveal_active"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "reset_reveal_active"));
 
     public static final StreamCodec<ByteBuf, ResetRevealActiveS2CPayload> CODEC = StreamCodec.ofMember(
             (value, buf) -> {},

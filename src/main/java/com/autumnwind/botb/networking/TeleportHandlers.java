@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 
 /** Server-bound packet handlers: Moving players between seats, homes, the town square, and the storyteller. */
 final class TeleportHandlers {
@@ -20,13 +21,13 @@ final class TeleportHandlers {
     static void register() {
         ModPackets.registerGuarded(TeleportToSeatC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 int seat = payload.seatNumber();
                 BlockPos pos = ServerConfig.SEAT_HOMES.get(seat);
-                ServerLevel world = player.serverLevel();
+                ServerLevel world = player.level();
 
                 if (pos != null) {
-                    player.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, player.getYRot(), player.getXRot());
+                    player.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), player.getYRot(), player.getXRot(), true);
 
                     // Find the player assigned to this seat and play doorbell/doorknock sound for them
                     String soundType = payload.useDoorknock() ? PlaySoundS2CPayload.DOORKNOCK : PlaySoundS2CPayload.DOORBELL;
@@ -38,38 +39,38 @@ final class TeleportHandlers {
                         }
                     }
                 } else {
-                    player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat).withStyle(ChatFormatting.RED), false);
+                    player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat).withStyle(ChatFormatting.RED), false);
                 }
             }
         });
 
         ModPackets.registerGuarded(TeleportPlayersToSeatC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 int seat = payload.seatNumber();
                 BlockPos pos = ServerConfig.SEAT_HOMES.get(seat);
-                ServerLevel world = player.serverLevel();
+                ServerLevel world = player.level();
 
                 if (pos != null) {
                     // Teleport all specified players to the seat
                     for (UUID playerUuid : payload.playerUuids()) {
                         ServerPlayer targetPlayer = context.server().getPlayerList().getPlayer(playerUuid);
                         if (targetPlayer != null) {
-                            targetPlayer.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, targetPlayer.getYRot(), targetPlayer.getXRot());
+                            targetPlayer.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), targetPlayer.getYRot(), targetPlayer.getXRot(), true);
                         }
                     }
                 } else {
-                    player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat).withStyle(ChatFormatting.RED), false);
+                    player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat).withStyle(ChatFormatting.RED), false);
                 }
             }
         });
 
         ModPackets.registerGuarded(TeleportPlayersToTownSquareSeatC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 int seat = payload.seatNumber();
                 BlockPos pos = ServerConfig.TOWN_SQUARE_SEATS.get(seat);
-                ServerLevel world = player.serverLevel();
+                ServerLevel world = player.level();
 
                 if (pos != null) {
                     // Teleport all specified players to their town square seat
@@ -82,35 +83,35 @@ final class TeleportHandlers {
                                     "voicechat leave"
                             );
 
-                            targetPlayer.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, targetPlayer.getYRot(), targetPlayer.getXRot());
+                            targetPlayer.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), targetPlayer.getYRot(), targetPlayer.getXRot(), true);
                         }
                     }
                 } else {
-                    player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.teleport.town_square_seat_not_set", seat).withStyle(ChatFormatting.RED), false);
+                    player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.teleport.town_square_seat_not_set", seat).withStyle(ChatFormatting.RED), false);
                 }
             }
         });
 
         ModPackets.registerGuarded(TeleportToTownSquareC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 BlockPos pos = ServerConfig.TOWN_SQUARE;
-                ServerLevel world = player.serverLevel();
+                ServerLevel world = player.level();
 
                 if (pos != null) {
                     // Leave voice chat group before teleporting
                     ModPackets.leaveVoiceChatGroup(player);
 
-                    player.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, player.getYRot(), player.getXRot());
+                    player.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), player.getYRot(), player.getXRot(), true);
                 } else {
-                    player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.teleport.town_square_not_set").withStyle(ChatFormatting.RED), false);
+                    player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.teleport.town_square_not_set").withStyle(ChatFormatting.RED), false);
                 }
             }
         });
 
         ModPackets.registerGuarded(TeleportPlayerToStorytellerC2SPayload.ID, (payload, context) -> {
             ServerPlayer storyteller = context.player();
-            if (storyteller.hasPermissions(2)) {
+            if (storyteller.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 UUID targetUuid = payload.playerUuid();
                 ServerPlayer targetPlayer = context.server().getPlayerList().getPlayer(targetUuid);
 
@@ -118,19 +119,17 @@ final class TeleportHandlers {
                     // Put the target into the storyteller's voice chat group (or out of any group)
                     VoiceChatServerCompat.matchGroup(storyteller.getUUID(), targetUuid);
 
-                    ServerLevel world = storyteller.serverLevel();
-                    targetPlayer.teleportTo(world,
-                        storyteller.getX(), storyteller.getY(), storyteller.getZ(),
-                        targetPlayer.getYRot(), targetPlayer.getXRot());
+                    ServerLevel world = storyteller.level();
+                    targetPlayer.teleportTo(world, storyteller.getX(), storyteller.getY(), storyteller.getZ(), Set.of(), targetPlayer.getYRot(), targetPlayer.getXRot(), true);
                 } else {
-                    storyteller.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.teleport.target_not_found").withStyle(ChatFormatting.RED), false);
+                    storyteller.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.teleport.target_not_found").withStyle(ChatFormatting.RED), false);
                 }
             }
         });
 
         ModPackets.registerGuarded(CallBackC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 // Play call back sound for all players
                 for (ServerPlayer onlinePlayer : context.server().getPlayerList().getPlayers()) {
                     ServerPlayNetworking.send(onlinePlayer, new PlaySoundS2CPayload(PlaySoundS2CPayload.CALL_BACK));

@@ -5,7 +5,7 @@ import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleVisit;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * Facade for the Night Order HUD system.
@@ -107,7 +107,7 @@ public class NightOrderHudManager {
     /**
      * Renders the Night Order HUD at the top of the screen.
      */
-    public static void render(GuiGraphics context, Minecraft client) {
+    public static void render(GuiGraphicsExtractor context, Minecraft client) {
         VisitRenderer.render(context, client);
     }
 

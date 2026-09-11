@@ -6,6 +6,7 @@ import com.autumnwind.botb.util.Script;
 import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 
 /** Server-bound packet handlers: Script upload and re-send on request. */
 final class ScriptHandlers {
@@ -23,7 +24,7 @@ final class ScriptHandlers {
 
         // Script-only send: cache and broadcast, roles and seats untouched.
         ModPackets.registerGuarded(SendScriptC2SPayload.ID, (payload, context) -> {
-            if (!context.player().hasPermissions(2)) {
+            if (!context.player().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 return;
             }
             ServerState.currentScript = payload.script();

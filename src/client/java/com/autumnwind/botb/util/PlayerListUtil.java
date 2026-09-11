@@ -2,14 +2,15 @@ package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.StorytellerState;
-import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.GameType;
+import net.minecraft.util.ARGB;
 
 /**
  * Utility for getting all players on the server regardless of render distance.
@@ -26,15 +27,15 @@ public class PlayerListUtil {
      * player left the server (i.e., it's served from {@link #CACHED_INFO} rather than
      * a live {@code PlayerListEntry}).
      */
-    public record PlayerInfo(UUID uuid, String name, ResourceLocation skinTexture, boolean isSpectator, boolean disconnected) {}
+    public record PlayerInfo(UUID uuid, String name, Identifier skinTexture, boolean isSpectator, boolean disconnected) {}
 
     private static final Map<UUID, PlayerInfo> CACHED_INFO = new HashMap<>();
 
-    private static final ResourceLocation DISCONNECT_OVERLAY =
-            ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png");
+    private static final Identifier DISCONNECT_OVERLAY =
+            Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png");
 
     private static PlayerInfo fromEntry(net.minecraft.client.multiplayer.PlayerInfo entry) {
-        UUID uuid = entry.getProfile().getId();
+        UUID uuid = entry.getProfile().id();
         Minecraft client = Minecraft.getInstance();
         boolean haveLiveEntity = client != null && client.level != null
                 && client.level.getPlayerByUUID(uuid) != null;
@@ -55,7 +56,7 @@ public class PlayerListUtil {
         PlayerInfo info = new PlayerInfo(
                 uuid,
                 resolvedName,
-                entry.getSkin().texture(),
+                entry.getSkin().body().texturePath(),
                 entry.getGameMode() == GameType.SPECTATOR,
                 false
         );
@@ -88,7 +89,7 @@ public class PlayerListUtil {
             String s = displayName.getString();
             if (s != null && !s.isEmpty()) return s;
         }
-        return entry.getProfile().getName();
+        return entry.getProfile().name();
     }
 
     /**
@@ -113,7 +114,7 @@ public class PlayerListUtil {
 
         Map<UUID, PlayerInfo> result = new HashMap<>();
         for (net.minecraft.client.multiplayer.PlayerInfo entry : client.getConnection().getOnlinePlayers()) {
-            result.put(entry.getProfile().getId(), fromEntry(entry));
+            result.put(entry.getProfile().id(), fromEntry(entry));
         }
         return result;
     }
@@ -154,30 +155,33 @@ public class PlayerListUtil {
      * <p>
      * Does nothing if we have never cached info for the UUID.
      */
-    public static void drawPlayerHead(GuiGraphics context, Minecraft client, UUID uuid, int x, int y, int size) {
+    public static void drawPlayerHead(GuiGraphicsExtractor context, Minecraft client, UUID uuid, int x, int y, int size) {
+        drawPlayerHead(context, client, uuid, x, y, size, 1f);
+    }
+
+    public static void drawPlayerHead(GuiGraphicsExtractor context, Minecraft client, UUID uuid, int x, int y, int size, float alpha) {
         PlayerInfo info = getPlayerOrCached(client, uuid);
         if (info == null) return;
-        drawPlayerHead(context, info, x, y, size);
+        drawPlayerHead(context, info, x, y, size, alpha);
     }
 
     /**
-     * Like {@link #drawPlayerHead(GuiGraphics, Minecraft, UUID, int, int, int)} but
+     * Like {@link #drawPlayerHead(GuiGraphicsExtractor, Minecraft, UUID, int, int, int)} but
      * using a pre-resolved {@link PlayerInfo}, useful when the caller already has the
      * record and wants to avoid the second lookup.
      */
-    public static void drawPlayerHead(GuiGraphics context, PlayerInfo info, int x, int y, int size) {
+    public static void drawPlayerHead(GuiGraphicsExtractor context, PlayerInfo info, int x, int y, int size) {
+        drawPlayerHead(context, info, x, y, size, 1f);
+    }
+
+    /** Same, with the whole head faded by {@code alpha} (0 to 1), for reveal animations. */
+    public static void drawPlayerHead(GuiGraphicsExtractor context, PlayerInfo info, int x, int y, int size, float alpha) {
         boolean disconnected = info.disconnected();
+        int skinTint = ARGB.white(disconnected ? alpha * 0.4f : alpha);
+        context.blit(RenderPipelines.GUI_TEXTURED, info.skinTexture(), x, y, 8.0f, 8.0f, size, size, 8, 8, 64, 64, skinTint);
+        context.blit(RenderPipelines.GUI_TEXTURED, info.skinTexture(), x, y, 40.0f, 8.0f, size, size, 8, 8, 64, 64, skinTint);
         if (disconnected) {
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.setShaderColor(1f, 1f, 1f, 0.4f);
-        }
-        context.blit(info.skinTexture(), x, y, size, size, 8.0f, 8.0f, 8, 8, 64, 64);
-        context.blit(info.skinTexture(), x, y, size, size, 40.0f, 8.0f, 8, 8, 64, 64);
-        if (disconnected) {
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-            context.blit(DISCONNECT_OVERLAY, x, y, size, size, 0f, 0f, 108, 108, 108, 108);
-            RenderSystem.disableBlend();
+            context.blit(RenderPipelines.GUI_TEXTURED, DISCONNECT_OVERLAY, x, y, 0f, 0f, size, size, 108, 108, 108, 108, ARGB.white(alpha));
         }
     }
 }

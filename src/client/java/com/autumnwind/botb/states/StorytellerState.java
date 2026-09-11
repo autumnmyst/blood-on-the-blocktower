@@ -8,8 +8,9 @@ import com.autumnwind.botb.util.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.*;
+import net.minecraft.server.permissions.Permissions;
 
 public class StorytellerState {
 
@@ -178,7 +179,7 @@ public class StorytellerState {
 
     // Current visit instructions HUD state (populated by showCurrentVisitInfo)
     public static ScriptRole currentVisitScriptRole = null; // Unified: Official, Custom, or null
-    public static ResourceLocation currentVisitIcon = null; // Icon for current visit (supports custom roles)
+    public static Identifier currentVisitIcon = null; // Icon for current visit (supports custom roles)
     public static String currentVisitInstructions = null;
     public static boolean currentVisitIsGood = true; // Alignment of the role for coloring
     public static Component currentVisitExtraInfo = null; // Extra info from NightOrderInfoGenerator
@@ -354,7 +355,7 @@ public class StorytellerState {
      */
     public static void syncGrimoire() {
         Minecraft client = Minecraft.getInstance();
-        if (client.player == null || !client.player.hasPermissions(2)) {
+        if (client.player == null || !client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             return; // Only operators can sync
         }
 

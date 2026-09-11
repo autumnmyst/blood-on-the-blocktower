@@ -7,7 +7,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Server-to-Client payload for broadcasting traveler role updates to all players.
@@ -20,7 +20,7 @@ public record SendTravelerUpdateS2CPayload(
         PendingRoleAssignment assignment
 ) implements CustomPacketPayload {
 
-    public static final ResourceLocation ID_LOCATION = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_traveler_update");
+    public static final Identifier ID_LOCATION = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_traveler_update");
     public static final CustomPacketPayload.Type<SendTravelerUpdateS2CPayload> ID = new CustomPacketPayload.Type<>(ID_LOCATION);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SendTravelerUpdateS2CPayload> CODEC = StreamCodec.composite(

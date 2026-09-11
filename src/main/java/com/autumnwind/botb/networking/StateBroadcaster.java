@@ -13,6 +13,7 @@ import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.permissions.Permissions;
 
 /** Sends game state to clients: full catch-up on join, and broadcasts when daytime, day/night, clock hands, whisper settings, custom names, or lobby counts change. */
 public final class StateBroadcaster {
@@ -218,7 +219,7 @@ public final class StateBroadcaster {
         List<ServerPlayer> online = server.getPlayerList().getPlayers();
         int storytellers = 0;
         for (ServerPlayer p : online) {
-            if (p.hasPermissions(2)) storytellers++;
+            if (p.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) storytellers++;
         }
         return new LobbyCountsS2CPayload(online.size() - storytellers, storytellers);
     }
@@ -243,7 +244,7 @@ public final class StateBroadcaster {
 
     /** Sends current lobby counts to one player (used on join). */
     public static void sendLobbyCountsTo(ServerPlayer player) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         if (server == null) return;
         ServerPlayNetworking.send(player, computeLobbyCounts(server));
     }

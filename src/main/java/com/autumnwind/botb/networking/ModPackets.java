@@ -30,7 +30,7 @@ public class ModPackets {
                 handler.receive(payload, context);
             } catch (Exception e) {
                 BloodOnTheBlocktower.LOGGER.error("Error handling packet {} from {}",
-                        id.id(), context.player().getGameProfile().getName(), e);
+                        id.id(), context.player().getGameProfile().name(), e);
             }
         });
     }

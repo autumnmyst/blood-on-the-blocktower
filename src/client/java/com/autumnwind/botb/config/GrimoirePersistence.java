@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import com.autumnwind.botb.util.RoleType;
+import net.minecraft.client.Minecraft;
 
 /**
  * Saves and restores the local grimoire view (the StorytellerState fields a player

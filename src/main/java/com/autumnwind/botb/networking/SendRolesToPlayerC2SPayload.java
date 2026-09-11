@@ -13,7 +13,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Targeted Send Roles: same data as {@link AssignRolesC2SPayload}, but only the named player's client
@@ -27,7 +27,7 @@ public record SendRolesToPlayerC2SPayload(
         Optional<Script> script,
         Map<UUID, List<Reminder>> reminders
 ) implements CustomPacketPayload {
-    public static final ResourceLocation SEND_ROLES_TO_PLAYER_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_roles_to_player");
+    public static final Identifier SEND_ROLES_TO_PLAYER_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_roles_to_player");
     public static final CustomPacketPayload.Type<SendRolesToPlayerC2SPayload> ID = new CustomPacketPayload.Type<>(SEND_ROLES_TO_PLAYER_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SendRolesToPlayerC2SPayload> CODEC = StreamCodec.composite(

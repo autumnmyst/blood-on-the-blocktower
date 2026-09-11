@@ -8,6 +8,7 @@ import com.autumnwind.botb.util.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import java.util.*;
+import net.minecraft.server.permissions.Permissions;
 
 /**
  * Action methods for the AssignRolesScreen (shuffle, randomize, send roles, etc.)
@@ -38,7 +39,7 @@ public class AssignRolesActions {
         List<PendingRoleAssignment> assignments = new ArrayList<>(StorytellerState.PENDING_ROLES.values());
         Collections.shuffle(assignments); // Shuffle the roles
         StorytellerState.PENDING_ROLES.clear(); // Clear existing assignments and marks (only for operators)
-        if (client.player != null && client.player.hasPermissions(2)) {
+        if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             StorytellerState.markedPlayers.clear(); // Clear all marks before re-evaluating
         }
 
@@ -50,7 +51,7 @@ public class AssignRolesActions {
             PendingRoleAssignment newAssignment = assignments.get(i);
             StorytellerState.PENDING_ROLES.put(playerUUID, newAssignment);
 
-            if (client.player != null && client.player.hasPermissions(2)) {
+            if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 // Find the role in the "Other Nights" list to check its default mark status
                 boolean markedByDefault = NightOrder.getOtherNightOrder().stream()
                         .filter(info -> info.isRole() && info.getRole() == newAssignment.role())
@@ -65,14 +66,14 @@ public class AssignRolesActions {
         }
 
         // Rebuild the HUD list (only needed for operators)
-        if (client.player != null && client.player.hasPermissions(2)) {
+        if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             NightOrderHudManager.rebuildActiveNightOrder();
         }
 
         // Mid-game: every role change is surfaced as a triggered visit. createRoleSwitchTrigger
         // self-gates on the storyteller toggle and enforces the "replace upcoming trigger for
         // the same player" rule, so every change can be announced unconditionally here.
-        if (isMidGame && client.player != null && client.player.hasPermissions(2)) {
+        if (isMidGame && client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             fireRoleSwitchTriggersForChangedPlayers(oldRoles);
         }
 
@@ -163,7 +164,7 @@ public class AssignRolesActions {
         }
 
         // Rebuild night order
-        if (client.player != null && client.player.hasPermissions(2)) {
+        if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             NightOrderHudManager.rebuildActiveNightOrder();
         }
 
@@ -297,7 +298,7 @@ public class AssignRolesActions {
 
         // Clear existing assignments and marks
         StorytellerState.PENDING_ROLES.clear();
-        if (client.player != null && client.player.hasPermissions(2)) {
+        if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             StorytellerState.markedPlayers.clear();
         }
         StorytellerState.REMINDERS.clear();
@@ -334,7 +335,7 @@ public class AssignRolesActions {
                 }
 
                 // Check for default marking
-                if (client.player != null && client.player.hasPermissions(2)) {
+                if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                     boolean markedByDefault;
 
                     if (scriptRole.isCustom()) {
@@ -361,12 +362,12 @@ public class AssignRolesActions {
         }
 
         // Rebuild night order
-        if (client.player != null && client.player.hasPermissions(2)) {
+        if (client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             NightOrderHudManager.rebuildActiveNightOrder();
         }
 
         // Mid-game: fire triggers for changed roles (same rules as shuffleRoles).
-        if (isMidGame && client.player != null && client.player.hasPermissions(2)) {
+        if (isMidGame && client.player != null && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             fireRoleSwitchTriggersForChangedPlayers(oldRoles);
         }
 

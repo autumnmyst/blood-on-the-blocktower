@@ -6,7 +6,7 @@ import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -84,11 +84,11 @@ public class ElectionManager {
         if (blockName == null || blockName.isEmpty()) {
             return null;
         }
-        ResourceLocation id = ResourceLocation.tryParse(blockName);
+        Identifier id = Identifier.tryParse(blockName);
         if (id == null) {
             return null;
         }
-        return BuiltInRegistries.BLOCK.get(id);
+        return BuiltInRegistries.BLOCK.getValue(id);
     }
 
     /**
@@ -148,8 +148,10 @@ public class ElectionManager {
                         seatPos.getX() + 0.5,
                         seatPos.getY(),
                         seatPos.getZ() + 0.5,
+                        Set.of(),
                         player.getYRot(),
-                        player.getXRot()
+                        player.getXRot(),
+                        true
                 );
             }
         }
@@ -184,8 +186,10 @@ public class ElectionManager {
                             targetX,
                             seatPos.getY(),
                             targetZ,
+                            Set.of(),
                             player.getYRot(),
-                            player.getXRot()
+                            player.getXRot(),
+                            true
                     );
                 }
             }

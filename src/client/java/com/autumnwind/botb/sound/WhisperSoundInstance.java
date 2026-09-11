@@ -5,6 +5,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.client.Minecraft;
 
 /**
  * Whisper audio cue with a 1s fade-in / 1s sustain / 1s fade-out envelope. Total

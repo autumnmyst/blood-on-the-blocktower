@@ -1,6 +1,6 @@
 package com.autumnwind.botb.util;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Sealed interface representing either an official Role enum, a CustomRole, or a NonPlayerCharacter.
@@ -31,7 +31,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
     /**
      * Get the role icon texture identifier.
      */
-    ResourceLocation getIcon();
+    Identifier getIcon();
 
     /**
      * Check if this role is good by default.
@@ -91,7 +91,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
         }
 
         @Override
-        public ResourceLocation getIcon() {
+        public Identifier getIcon() {
             return role.getIcon();
         }
 
@@ -131,7 +131,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
         }
 
         @Override
-        public ResourceLocation getIcon() {
+        public Identifier getIcon() {
             // If this custom role has no image URLs, check if it's an official role wrapper
             // (Official travelers/fabled are wrapped as CustomRole for compatibility)
             if (customRole.imageUrls().isEmpty()) {
@@ -182,7 +182,7 @@ public sealed interface ScriptRole permits ScriptRole.Official, ScriptRole.Custo
         }
 
         @Override
-        public ResourceLocation getIcon() {
+        public Identifier getIcon() {
             // If this fabled has no image URL, check if it's an official fabled/loric wrapper
             String imageUrl = fabledCharacter.imageUrl();
             if (imageUrl == null || imageUrl.isEmpty()) {

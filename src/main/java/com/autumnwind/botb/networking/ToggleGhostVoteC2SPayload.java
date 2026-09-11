@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for toggling a player's ghost vote used status.
@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record ToggleGhostVoteC2SPayload(UUID playerUuid, boolean setUsed) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ToggleGhostVoteC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "toggle_ghost_vote"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "toggle_ghost_vote"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ToggleGhostVoteC2SPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ToggleGhostVoteC2SPayload::playerUuid,

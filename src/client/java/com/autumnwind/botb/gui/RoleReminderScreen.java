@@ -11,7 +11,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.EditBox;
@@ -21,7 +22,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 /**
  * Screen for selecting role-based associated reminders.
@@ -82,7 +86,7 @@ public class RoleReminderScreen extends Screen {
         this.addRenderableWidget(this.roleGridWidget);
 
         // Done button
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.setScreen(this.parentScreen))
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.gui.setScreen(this.parentScreen))
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20)
                 .build());
     }
@@ -118,7 +122,7 @@ public class RoleReminderScreen extends Screen {
                 .add(reminder);
 
         // Handle special reminder logic
-        if (minecraft != null && minecraft.player != null && minecraft.player.hasPermissions(2)) {
+        if (minecraft != null && minecraft.player != null && minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(targetPlayerUUID);
             Role assignedRole = (assignment != null) ? assignment.role() : Role.NO_ROLE;
 
@@ -214,7 +218,7 @@ public class RoleReminderScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.minecraft.setScreen(this.parentScreen);
+        this.minecraft.gui.setScreen(this.parentScreen);
     }
 
     private boolean hasOtherNightsAbility(Role role) {
@@ -231,20 +235,24 @@ public class RoleReminderScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFF);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openAssignGui.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openAssignGui.matches(event) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.searchField.isFocused()) {
-            this.minecraft.setScreen(this.parentScreen);
+            this.minecraft.gui.setScreen(this.parentScreen);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     // Role grid widget - supports both official and custom roles via ScriptRole
@@ -271,8 +279,8 @@ public class RoleReminderScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
-            return super.getScrollbarPosition() + 30;
+        protected int scrollBarX() {
+            return super.scrollBarX() + 30;
         }
 
         public class RoleGridEntry extends ContainerObjectSelectionList.Entry<RoleGridEntry> {
@@ -284,7 +292,10 @@ public class RoleReminderScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
                 this.entryY = y;
                 int itemWidth = 75;
 
@@ -299,11 +310,11 @@ public class RoleReminderScreen extends Screen {
                             mouseY >= y + 5 && mouseY < y + 5 + borderWidth;
 
                     int borderColor = scriptRole.getTeam().getColor();
-                    ResourceLocation icon = scriptRole.getIcon();
+                    Identifier icon = scriptRole.getIcon();
 
                     // Draw icon
-                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
-                    context.blit(icon, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                    context.outline(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.blit(RenderPipelines.GUI_TEXTURED, icon, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
 
                     int textCenterX = borderX + (borderWidth / 2);
                     String roleNameString = scriptRole.getDisplayName();
@@ -322,7 +333,7 @@ public class RoleReminderScreen extends Screen {
                     for (int j = 0; j < textLines.size(); j++) {
                         Component line = textLines.get(j);
                         int currentLineY = startY + (j * minecraft.font.lineHeight);
-                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
+                        context.centeredText(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFFFF);
                     }
 
                     // Show role description on hover
@@ -333,13 +344,17 @@ public class RoleReminderScreen extends Screen {
                         List<Component> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
+                        context.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     int itemWidth = 75;
                     int rowX = RoleGridWidget.this.getRowLeft();
@@ -347,15 +362,15 @@ public class RoleReminderScreen extends Screen {
                     for (int i = 0; i < this.rolesInRow.size(); i++) {
                         int roleX = rowX + i * itemWidth;
                         int roleY = this.entryY;
-                        int roleHeight = RoleGridWidget.this.itemHeight;
+                        int roleHeight = RoleGridWidget.this.defaultEntryHeight;
 
                         if (mouseX >= roleX && mouseX < roleX + itemWidth && mouseY >= roleY && mouseY < roleY + roleHeight) {
                             ScriptRole selectedRole = this.rolesInRow.get(i);
 
                             // Shift+left_click opens role details screen (only for official roles)
-                            if (Screen.hasShiftDown() && !selectedRole.isCustom()) {
-                                RoleReminderScreen.this.savedScrollAmount = RoleGridWidget.this.getScrollAmount();
-                                Minecraft.getInstance().setScreen(new CharacterDetailsScreen(selectedRole.asRole(), RoleReminderScreen.this));
+                            if (Minecraft.getInstance().hasShiftDown() && !selectedRole.isCustom()) {
+                                RoleReminderScreen.this.savedScrollAmount = RoleGridWidget.this.scrollAmount();
+                                Minecraft.getInstance().gui.setScreen(new CharacterDetailsScreen(selectedRole.asRole(), RoleReminderScreen.this));
                                 return true;
                             }
 

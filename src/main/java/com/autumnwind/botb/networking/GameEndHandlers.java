@@ -9,6 +9,7 @@ import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.server.permissions.Permissions;
 
 /** Server-bound packet handlers: Ending the game and the final reveal. */
 final class GameEndHandlers {
@@ -17,7 +18,7 @@ final class GameEndHandlers {
 
     static void register() {
         ModPackets.registerGuarded(EndGameC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissions(2)) {
+            if (context.player().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 boolean goodWins = payload.goodWins();
 
                 // Get grimoire data from storyteller's payload (true roles, not fake drunk roles)

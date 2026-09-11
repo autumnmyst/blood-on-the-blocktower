@@ -6,7 +6,7 @@ import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Storyteller → server: hand out the Script and Grimoire items to every seated player.
@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record DistributeItemsC2SPayload(Map<UUID, Integer> seatNumbers) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<DistributeItemsC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "distribute_items"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "distribute_items"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, DistributeItemsC2SPayload> CODEC = StreamCodec.composite(
             PayloadCodecs.SEAT_MAP_CODEC, DistributeItemsC2SPayload::seatNumbers,

@@ -9,7 +9,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Server-to-Client payload for updating vote state during an active vote.
@@ -29,7 +29,7 @@ public record VoteStateUpdateS2CPayload(
         Set<UUID> bansheeDoubleActivePlayers // Banshees whose double vote is currently active
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<VoteStateUpdateS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "vote_state_update"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "vote_state_update"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, VoteStateUpdateS2CPayload> CODEC = StreamCodec.ofMember(
             VoteStateUpdateS2CPayload::write,

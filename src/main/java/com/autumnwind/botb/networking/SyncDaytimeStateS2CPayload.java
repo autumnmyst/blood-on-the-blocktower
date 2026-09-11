@@ -8,7 +8,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Server-to-Client payload for synchronizing daytime state.
@@ -38,7 +38,7 @@ public record SyncDaytimeStateS2CPayload(
         UUID voudonPlayerUuid
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncDaytimeStateS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_daytime_state"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_daytime_state"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncDaytimeStateS2CPayload> CODEC = StreamCodec.ofMember(
             SyncDaytimeStateS2CPayload::write,

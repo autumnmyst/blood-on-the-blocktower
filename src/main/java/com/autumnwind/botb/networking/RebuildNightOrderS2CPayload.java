@@ -4,11 +4,11 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record RebuildNightOrderS2CPayload() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<RebuildNightOrderS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "rebuild_night_order"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "rebuild_night_order"));
 
     public static final StreamCodec<ByteBuf, RebuildNightOrderS2CPayload> CODEC = StreamCodec.ofMember(
             (value, buf) -> {}, // No data to encode

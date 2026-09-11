@@ -34,6 +34,8 @@ import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.world.VoteIndicators;
 import com.autumnwind.botb.util.ServerCommands;
 import com.autumnwind.botb.world.TeamManager;
+import net.minecraft.server.permissions.Permissions;
+import com.autumnwind.botb.world.WorldTime;
 
 /** Handlers for the /botb commands that act on a running game: resets, end game, names, teleports. */
 final class GameCommands {
@@ -44,10 +46,10 @@ final class GameCommands {
         try {
             ServerPlayer player = source.getPlayerOrException();
             BlockPos pos = ServerConfig.SEAT_HOMES.get(seat);
-            ServerLevel world = player.serverLevel();
+            ServerLevel world = player.level();
 
             if (pos != null) {
-                player.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, player.getYRot(), player.getXRot());
+                player.teleportTo(world, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), player.getYRot(), player.getXRot(), true);
 
                 // Find the player assigned to this seat and play doorbell sound for them
                 for (ServerPlayer onlinePlayer : source.getServer().getPlayerList().getPlayers()) {
@@ -229,7 +231,7 @@ final class GameCommands {
             VotingManager.resetLeverStates(server);
 
             // Set in-game time to dawn
-            server.overworld().setDayTime(ServerConfig.TIME_DAWN);
+            WorldTime.setOverworldTime(server, ServerConfig.TIME_DAWN);
 
             // A reset during the night would otherwise leave everyone nameless until dawn
             showAllNameTags(server);
@@ -387,7 +389,7 @@ final class GameCommands {
             VotingManager.resetLeverStates(server);
 
             // Set in-game time to dawn
-            server.overworld().setDayTime(ServerConfig.TIME_DAWN);
+            WorldTime.setOverworldTime(server, ServerConfig.TIME_DAWN);
 
             // A reset during the night would otherwise leave everyone nameless until dawn
             showAllNameTags(server);
@@ -428,7 +430,7 @@ final class GameCommands {
 
             // 5. Rebuild night order HUD for operators (after day/night reset to 0)
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-                if (player.hasPermissions(2)) {
+                if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                     ServerPlayNetworking.send(player,
                         new RebuildNightOrderS2CPayload());
                 }
@@ -465,7 +467,7 @@ final class GameCommands {
             StateBroadcaster.syncCustomNames(server, player);
 
             source.sendSuccess(() -> (reset
-                    ? Component.translatable("message.blood-on-the-blocktower.command.name_reset", player.getGameProfile().getName())
+                    ? Component.translatable("message.blood-on-the-blocktower.command.name_reset", player.getGameProfile().name())
                     : Component.translatable("message.blood-on-the-blocktower.command.name_set", name.trim()))
                     .withStyle(ChatFormatting.GREEN), false);
             return 1;

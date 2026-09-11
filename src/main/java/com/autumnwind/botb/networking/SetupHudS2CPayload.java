@@ -7,7 +7,7 @@ import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * What the map-setup wizard's on-screen box shows: the step being set, its current value
@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 public record SetupHudS2CPayload(boolean active, Component title, String current, Component description,
                                  Component finishLabel) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SetupHudS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "setup_hud"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "setup_hud"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SetupHudS2CPayload> CODEC = StreamCodec.composite(
             ByteBufCodecs.BOOL, SetupHudS2CPayload::active,

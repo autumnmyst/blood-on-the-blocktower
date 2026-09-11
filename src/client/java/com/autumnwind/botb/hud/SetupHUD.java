@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -24,7 +24,7 @@ public class SetupHUD {
         state = payload.active() ? payload : null;
     }
 
-    public static void render(GuiGraphics context, Minecraft client) {
+    public static void render(GuiGraphicsExtractor context, Minecraft client) {
         SetupHudS2CPayload s = state;
         if (s == null) return;
 

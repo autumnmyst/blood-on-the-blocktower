@@ -10,6 +10,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.TeamColor;
 
 /** The scoreboard teams used for the end-of-game reveal. */
 public final class TeamManager {
@@ -39,12 +40,12 @@ public final class TeamManager {
             REVEAL_TEAM_TOWNSFOLK, REVEAL_TEAM_OUTSIDER, REVEAL_TEAM_MINION, REVEAL_TEAM_DEMON
     };
 
-    public static void ensureRevealTeam(Scoreboard sb, String name, ChatFormatting color) {
+    public static void ensureRevealTeam(Scoreboard sb, String name, TeamColor color) {
         PlayerTeam t = sb.getPlayerTeam(name);
         if (t == null) {
             t = sb.addPlayerTeam(name);
         }
-        t.setColor(color);
+        t.setColor(Optional.of(color));
     }
 
     public static String computeRevealTeamName(PendingRoleAssignment assignment) {
@@ -79,15 +80,15 @@ public final class TeamManager {
 
     public static void assignRevealTeams(MinecraftServer server, Map<UUID, PendingRoleAssignment> roles) {
         Scoreboard scoreboard = server.getScoreboard();
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_TOWNSFOLK, ChatFormatting.BLUE);
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_OUTSIDER,  ChatFormatting.AQUA);
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_MINION,    ChatFormatting.RED);
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_DEMON,     ChatFormatting.DARK_RED);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_TOWNSFOLK, TeamColor.BLUE);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_OUTSIDER,  TeamColor.AQUA);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_MINION,    TeamColor.RED);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_DEMON,     TeamColor.DARK_RED);
 
         for (Map.Entry<UUID, PendingRoleAssignment> entry : roles.entrySet()) {
             ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
             if (player == null) continue;
-            String playerName = player.getGameProfile().getName();
+            String playerName = player.getGameProfile().name();
             PlayerTeam target = scoreboard.getPlayerTeam(computeRevealTeamName(entry.getValue()));
             if (target == null) continue;
             if (scoreboard.getPlayersTeam(playerName) == target) continue;

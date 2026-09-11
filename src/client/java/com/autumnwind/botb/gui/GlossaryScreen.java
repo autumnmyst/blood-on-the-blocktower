@@ -3,7 +3,7 @@ package com.autumnwind.botb.gui;
 import com.autumnwind.botb.util.RoleType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,6 +13,7 @@ import net.minecraft.util.FormattedCharSequence;
 import org.lwjgl.glfw.GLFW;
 
 import com.autumnwind.botb.gui.widget.DocumentEntry;
+import net.minecraft.client.input.KeyEvent;
 
 /**
  * Full-screen glossary with game terminology and explanations.
@@ -36,32 +37,36 @@ public class GlossaryScreen extends Screen {
         int listHeight = this.height - listY - 40;
 
         this.glossaryWidget = new GlossaryListWidget(this.minecraft, this.width - 40, listHeight, listY);
-        this.glossaryWidget.setX(20);
+        this.glossaryWidget.updateSizeAndPosition(this.width - 40, listHeight, 20, listY);
         this.addRenderableWidget(this.glossaryWidget);
 
         // Back button
         int backButtonWidth = 60;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.blood-on-the-blocktower.back").withStyle(ChatFormatting.YELLOW),
-                button -> this.minecraft.setScreen(this.parent)
+                button -> this.minecraft.gui.setScreen(this.parent)
         ).bounds(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Draw title
-        context.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
+        context.centeredText(this.font, this.title, this.width / 2, 10, 0xFFFFFFFF);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_E) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -164,7 +169,7 @@ public class GlossaryScreen extends Screen {
 
         private void addWrappedText(String key, int width) {
             for (FormattedCharSequence line : font.split(Component.translatable(KEY_PREFIX + key), width)) {
-                this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
+                this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
             }
         }
 
@@ -172,7 +177,7 @@ public class GlossaryScreen extends Screen {
             MutableComponent text = Component.translatable(KEY_PREFIX + roleTypeKey).withColor(color)
                     .append(Component.translatable(KEY_PREFIX + descriptionKey).withStyle(ChatFormatting.WHITE));
             for (FormattedCharSequence line : font.split(text, width)) {
-                this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
+                this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
             }
         }
 
@@ -182,7 +187,7 @@ public class GlossaryScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 6;
         }
 

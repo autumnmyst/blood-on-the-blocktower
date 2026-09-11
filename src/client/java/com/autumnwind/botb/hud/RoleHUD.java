@@ -7,13 +7,15 @@ import com.autumnwind.botb.util.*;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import com.autumnwind.botb.event.KeyInputHandler;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.util.ARGB;
 
 /**
  * Renders the role HUD overlay showing player counts and role information.
@@ -30,7 +32,7 @@ public class RoleHUD {
      * @param drawContext The draw context
      * @param client The Minecraft client
      */
-    public static void render(GuiGraphics drawContext, Minecraft client) {
+    public static void render(GuiGraphicsExtractor drawContext, Minecraft client) {
         if (client.player == null) return;
 
         // Get player count and role info
@@ -57,19 +59,19 @@ public class RoleHUD {
     /**
      * Renders the full HUD with detailed player counts and role box.
      */
-    private static void renderFullHUD(GuiGraphics drawContext, Minecraft client,
+    private static void renderFullHUD(GuiGraphicsExtractor drawContext, Minecraft client,
                                        RoleCounts.RoleCountInfo counts, Role role, Boolean isGood,
                                        int playerCount, int travelerCount, int playerCountsHeight) {
         // 1. Render detailed player counts
         Component countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, true);
         if (countText != null) {
             int screenWidth = drawContext.guiWidth();
-            drawContext.drawCenteredString(client.font, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
+            drawContext.centeredText(client.font, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFFFF);
         }
 
         // 2. Render full role box OR night order instructions box
         // For operators with night info enabled and current visit, show instructions HUD instead
-        boolean isOperator = client.player.hasPermissions(2);
+        boolean isOperator = client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
         boolean isActuallyNight = ClientState.currentNight > ClientState.currentDay;
         boolean isOperatorWithVisits = isOperator &&
                 StorytellerState.sendTeleportInfo &&
@@ -93,7 +95,7 @@ public class RoleHUD {
         // Determine what to display
         if (showInstructionsHud) {
             // Storyteller instructions HUD - use visit state
-            ResourceLocation displayIcon = StorytellerState.currentVisitIcon;
+            Identifier displayIcon = StorytellerState.currentVisitIcon;
             String displayText = StorytellerState.currentVisitInstructions;
             boolean displayIsGoodVal = StorytellerState.currentVisitIsGood;
 
@@ -144,8 +146,8 @@ public class RoleHUD {
      * @param showExtraInfo If true, show extra info from NightOrderInfoGenerator (operators only)
      * @param override The alignment override (null for storyteller HUD)
      */
-    private static void renderRoleBox(GuiGraphics drawContext, Minecraft client,
-                                       ResourceLocation icon, String displayName, RoleType roleType,
+    private static void renderRoleBox(GuiGraphicsExtractor drawContext, Minecraft client,
+                                       Identifier icon, String displayName, RoleType roleType,
                                        boolean isDefaultGood, boolean displayIsGood, String displayText,
                                        boolean showExtraInfo, AlignmentOverride override) {
         // Text Preparation
@@ -227,14 +229,14 @@ public class RoleHUD {
 
         // Rendering
         int alpha = 128;
-        int background_color = displayIsGood ? FastColor.ARGB32.color(alpha, 135, 206, 235) : FastColor.ARGB32.color(alpha, 240, 128, 128);
+        int background_color = displayIsGood ? ARGB.color(alpha, 135, 206, 235) : ARGB.color(alpha, 240, 128, 128);
         drawContext.fill(x, y, x + box_width, y + box_height, background_color);
 
         int icon_x = x + x_padding, icon_y = y + y_padding;
-        drawContext.blit(icon, icon_x, icon_y, 0, 0, icon_size, icon_size, icon_size, icon_size);
-        drawContext.renderOutline(icon_x - 1, icon_y - 1, icon_size + 2, icon_size + 2, 0xFFFFFFFF);
+        drawContext.blit(RenderPipelines.GUI_TEXTURED, icon, icon_x, icon_y, 0, 0, icon_size, icon_size, icon_size, icon_size);
+        drawContext.outline(icon_x - 1, icon_y - 1, icon_size + 2, icon_size + 2, 0xFFFFFFFF);
 
-        int text_backdrop_color = FastColor.ARGB32.color(191, 0, 0, 0);
+        int text_backdrop_color = ARGB.color(191, 0, 0, 0);
         drawContext.fill(text_area_x1, text_area_y1, text_area_x2, text_area_y2, text_backdrop_color);
 
         int text_start_x = icon_x + icon_size + text_x_padding;
@@ -258,18 +260,18 @@ public class RoleHUD {
             // No alignment override - use role's type color
             name_color = roleType.getColor() | 0xFF000000;
         }
-        drawContext.drawString(client.font, roleNameText, text_start_x, current_y, name_color);
+        drawContext.text(client.font, roleNameText, text_start_x, current_y, name_color);
         current_y += font_height;
 
         if (hasRoleType) {
-            drawContext.drawString(client.font, roleTypeText, text_start_x, current_y, 0xFFAAAAAA);
+            drawContext.text(client.font, roleTypeText, text_start_x, current_y, 0xFFAAAAAA);
             current_y += font_height + 2;
         } else {
             current_y += 2; // small gap before description, matching the spaced-out look
         }
 
         for (FormattedCharSequence line : wrappedDesc) {
-            drawContext.drawString(client.font, line, text_start_x, current_y, 0xFFFFFFFF, false);
+            drawContext.text(client.font, line, text_start_x, current_y, 0xFFFFFFFF, false);
             current_y += font_height;
         }
 
@@ -277,7 +279,7 @@ public class RoleHUD {
         if (!wrappedExtraInfo.isEmpty()) {
             current_y += extraInfoGap;
             for (FormattedCharSequence line : wrappedExtraInfo) {
-                drawContext.drawString(client.font, line, text_start_x, current_y, 0xFFFFFFFF, false);
+                drawContext.text(client.font, line, text_start_x, current_y, 0xFFFFFFFF, false);
                 current_y += font_height;
             }
         }
@@ -286,7 +288,7 @@ public class RoleHUD {
     /**
      * Renders the minimal HUD with compact player counts and small role icon.
      */
-    private static void renderMinimalHUD(GuiGraphics drawContext, Minecraft client,
+    private static void renderMinimalHUD(GuiGraphicsExtractor drawContext, Minecraft client,
                                           RoleCounts.RoleCountInfo counts, Role role, int travelerCount, int playerCountsHeight) {
         // 1. Render minimal player counts
         // Note: travelerCount is already available, but we need playerCount for the utility
@@ -294,16 +296,16 @@ public class RoleHUD {
         Component countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, false);
         if (countText != null) {
             int screenWidth = drawContext.guiWidth();
-            drawContext.drawCenteredString(client.font, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
+            drawContext.centeredText(client.font, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFFFF);
         }
 
         // 2. Render small role icon - either night order visit role or player's role
         // For operators with night info enabled, show the current visit icon instead
-        boolean isOperatorInNightMode = client.player.hasPermissions(2) &&
+        boolean isOperatorInNightMode = client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) &&
                 StorytellerState.sendTeleportInfo &&
                 ClientState.isNightHudVisible;
 
-        ResourceLocation iconToRender = null;
+        Identifier iconToRender = null;
 
         if (isOperatorInNightMode && StorytellerState.currentVisitIcon != null) {
             // Storyteller visit icon (works for both official and custom roles)
@@ -322,7 +324,7 @@ public class RoleHUD {
         if (iconToRender != null) {
             int iconSize = 32;
             int x = 10, y = 10;
-            drawContext.blit(iconToRender, x, y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            drawContext.blit(RenderPipelines.GUI_TEXTURED, iconToRender, x, y, 0, 0, iconSize, iconSize, iconSize, iconSize);
         }
     }
 }

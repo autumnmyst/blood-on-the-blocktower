@@ -10,7 +10,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Server-to-Client payload for the final vote result.
@@ -31,7 +31,7 @@ public record VoteResultS2CPayload(
         int storytellerMFEVotes
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<VoteResultS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "vote_result"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "vote_result"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, VoteResultS2CPayload> CODEC = StreamCodec.ofMember(
             VoteResultS2CPayload::write,

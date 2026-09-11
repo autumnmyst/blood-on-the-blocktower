@@ -1,6 +1,6 @@
 package com.autumnwind.botb.gui.assignroles;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public class AssignRolesConstants {
     public static final int ROLE_ICON_SIZE = 32;
@@ -9,9 +9,9 @@ public class AssignRolesConstants {
     public static final int REMINDER_ICON_SIZE = 14;
     public static final int REMINDER_PADDING = 2;
     public static final int SEAT_NUMBER_RADIUS_OFFSET = 20;
-    public static final ResourceLocation SHROUD_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/barrier.png");
-    public static final ResourceLocation DUSK_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/dusk.png");
-    public static final ResourceLocation DAWN_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/dawn.png");
+    public static final Identifier SHROUD_ICON = Identifier.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/barrier.png");
+    public static final Identifier DUSK_ICON = Identifier.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/dusk.png");
+    public static final Identifier DAWN_ICON = Identifier.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/dawn.png");
 
     // Animation constants
     public static final int FADE_DURATION_MS = 200;

@@ -9,12 +9,14 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.client.input.KeyEvent;
 
 /** One role's guide: centered icon, name, team and ability, then a scrollable how-to-run box. */
 public class RoleGuideDetailsScreen extends Screen {
@@ -44,7 +46,7 @@ public class RoleGuideDetailsScreen extends Screen {
         int spacing = 5;
         int backButtonX = this.width / 2 - backButtonWidth / 2;
 
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), button -> this.minecraft.setScreen(this.parent))
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), button -> this.minecraft.gui.setScreen(this.parent))
                 .bounds(backButtonX, buttonY, backButtonWidth, 20)
                 .build());
         if (index > 0) {
@@ -62,12 +64,12 @@ public class RoleGuideDetailsScreen extends Screen {
         int listWidth = this.width - SIDE_MARGIN * 2;
         int listHeight = buttonY - listY - 8;
         GuideListWidget listWidget = new GuideListWidget(this.minecraft, listWidth, listHeight, listY);
-        listWidget.setX(SIDE_MARGIN);
+        listWidget.updateSizeAndPosition(listWidth, listHeight, SIDE_MARGIN, listY);
         this.addRenderableWidget(listWidget);
     }
 
     private void open(int newIndex) {
-        this.minecraft.setScreen(new RoleGuideDetailsScreen(roleList.get(newIndex), parent, roleList));
+        this.minecraft.gui.setScreen(new RoleGuideDetailsScreen(roleList.get(newIndex), parent, roleList));
     }
 
     /** Y just below the ability text; the header is drawn in render with the same measurements. */
@@ -75,7 +77,7 @@ public class RoleGuideDetailsScreen extends Screen {
         int y = TOP_MARGIN + ICON_SIZE + 5;
         y += this.font.lineHeight + 2;
         y += this.font.lineHeight + 10;
-        y += this.font.wordWrapHeight(abilityString(), this.width - SIDE_MARGIN * 2);
+        y += this.font.wordWrapHeight(Component.literal(abilityString()), this.width - SIDE_MARGIN * 2);
         return y;
     }
 
@@ -84,29 +86,33 @@ public class RoleGuideDetailsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         int currentY = TOP_MARGIN;
-        context.blit(role.getIcon(), (this.width - ICON_SIZE) / 2, currentY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        context.blit(RenderPipelines.GUI_TEXTURED, role.getIcon(), (this.width - ICON_SIZE) / 2, currentY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         currentY += ICON_SIZE + 5;
 
-        context.drawCenteredString(this.font, Component.literal(role.getDisplayName()).withStyle(ChatFormatting.BOLD), this.width / 2, currentY, 0xFFFFFF);
+        context.centeredText(this.font, Component.literal(role.getDisplayName()).withStyle(ChatFormatting.BOLD), this.width / 2, currentY, 0xFFFFFFFF);
         currentY += this.font.lineHeight + 2;
 
-        context.drawCenteredString(this.font, Component.literal(role.getType().getDisplayName()).withStyle(ChatFormatting.ITALIC), this.width / 2, currentY, role.getType().getColor());
+        context.centeredText(this.font, Component.literal(role.getType().getDisplayName()).withStyle(ChatFormatting.ITALIC), this.width / 2, currentY, role.getType().getColor());
         currentY += this.font.lineHeight + 10;
 
         for (FormattedCharSequence line : this.font.split(Component.literal(abilityString()), this.width - SIDE_MARGIN * 2)) {
-            context.drawString(this.font, line, (this.width - this.font.width(line)) / 2, currentY, 0xFFFFFF, true);
+            context.text(this.font, line, (this.width - this.font.width(line)) / 2, currentY, 0xFFFFFFFF, true);
             currentY += this.font.lineHeight;
         }
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_E || KeyInputHandler.openMyRoleDetailsKey.matches(keyCode, scanCode)) {
-            this.minecraft.setScreen(this.parent);
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
+        if (keyCode == GLFW.GLFW_KEY_E || KeyInputHandler.openMyRoleDetailsKey.matches(event)) {
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
         if (keyCode == GLFW.GLFW_KEY_RIGHT && index >= 0 && index < roleList.size() - 1) {
@@ -117,7 +123,7 @@ public class RoleGuideDetailsScreen extends Screen {
             open(index - 1);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     private class GuideListWidget extends ContainerObjectSelectionList<DocumentEntry> {
@@ -131,7 +137,7 @@ public class RoleGuideDetailsScreen extends Screen {
                 if (!first) this.addEntry(DocumentEntry.spacer());
                 first = false;
                 for (FormattedCharSequence line : font.split(Component.literal(paragraph), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
+                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
                 }
             }
         }
@@ -142,7 +148,7 @@ public class RoleGuideDetailsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 6;
         }
     }

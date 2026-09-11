@@ -5,7 +5,7 @@ import com.autumnwind.botb.networking.UpdateWhisperSettingsC2SPayload;
 import com.autumnwind.botb.states.ClientWhisperSettings;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -14,6 +14,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.client.input.InputWithModifiers;
 
 /**
  * Whisper rules editor (storyteller) and viewer (player). Same screen used in both
@@ -85,7 +86,7 @@ public class WhisperSettingsScreen extends Screen {
             this.rangeText = settings.rangeUnlimited() ? "" : trimDouble(settings.range());
             this.vcEnforced = settings.vcEnforced();
             // Re-init to refresh button labels.
-            if (this.minecraft != null) this.minecraft.setScreen(this);
+            if (this.minecraft != null) this.minecraft.gui.setScreen(this);
         }
     }
 
@@ -169,7 +170,7 @@ public class WhisperSettingsScreen extends Screen {
     }
 
     private void refresh() {
-        if (this.minecraft != null) this.minecraft.setScreen(this);
+        if (this.minecraft != null) this.minecraft.gui.setScreen(this);
     }
 
     private static MutableComponent onOff(boolean on) {
@@ -217,18 +218,18 @@ public class WhisperSettingsScreen extends Screen {
 
     @Override
     public void onClose() {
-        if (this.minecraft != null) this.minecraft.setScreen(parent);
+        if (this.minecraft != null) this.minecraft.gui.setScreen(parent);
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 12, 0xFFFFFF);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.centeredText(this.font, this.title, this.width / 2, 12, 0xFFFFFFFF);
         if (!editable) {
-            context.drawCenteredString(
+            context.centeredText(
                     this.font,
                     Component.translatable("gui.blood-on-the-blocktower.whisper_settings.set_by_storyteller").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
-                    this.width / 2, this.height - 50, 0xFFFFFF);
+                    this.width / 2, this.height - 50, 0xFFFFFFFF);
         }
     }
 
@@ -246,12 +247,12 @@ public class WhisperSettingsScreen extends Screen {
         }
 
         @Override
-        public void onPress() {}
+        public void onPress(InputWithModifiers input) {}
 
         @Override
-        protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
-            int color = (editable ? 0xFFFFFF : 0xAAAAAA);
-            context.drawString(
+        protected void extractContents(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+            int color = (editable ? 0xFFFFFFFF : 0xFFAAAAAA);
+            context.text(
                     WhisperSettingsScreen.this.font,
                     text,
                     this.getX(),

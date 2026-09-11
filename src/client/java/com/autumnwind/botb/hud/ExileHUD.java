@@ -5,13 +5,14 @@ import com.autumnwind.botb.util.PlayerListUtil;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.server.permissions.Permissions;
 
 /**
  * Displays exile information when a traveler is called for exile.
@@ -23,7 +24,7 @@ public class ExileHUD {
     /**
      * Renders the exile HUD if there's an active exile call or support vote in progress.
      */
-    public static void render(GuiGraphics context, Minecraft client) {
+    public static void render(GuiGraphicsExtractor context, Minecraft client) {
         // Show if there's an exile target
         UUID exileTargetUuid = ClientState.currentExileTarget;
         if (exileTargetUuid == null) {
@@ -120,7 +121,7 @@ public class ExileHUD {
                     line3Text = Component.translatable("hud.blood-on-the-blocktower.exile.you_supported")
                             .append(voteStatus.copy().withStyle(voteColor));
                 } else {
-                    boolean isOperator = client.player.hasPermissions(2);
+                    boolean isOperator = client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
                     if (isOperator) {
                         line3Text = Component.literal(""); // Empty for storyteller
                     } else {

@@ -9,7 +9,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for opening nominations (triggered by storyteller clicking NOMINATIONS static action).
@@ -27,7 +27,7 @@ public record OpenNominationsC2SPayload(
         List<UUID> mayNotNominatePlayers
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<OpenNominationsC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "open_nominations"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "open_nominations"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenNominationsC2SPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), OpenNominationsC2SPayload::bansheeHasAbilityPlayers,

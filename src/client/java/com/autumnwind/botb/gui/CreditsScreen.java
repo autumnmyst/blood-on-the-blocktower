@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -15,6 +15,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.client.input.KeyEvent;
 
 /**
  * Full-screen credits, reached from the Settings screen.
@@ -42,29 +43,33 @@ public class CreditsScreen extends Screen {
         int listHeight = this.height - listY - 40;
 
         this.creditsWidget = new CreditsListWidget(this.minecraft, this.width - 40, listHeight, listY);
-        this.creditsWidget.setX(20);
+        this.creditsWidget.updateSizeAndPosition(this.width - 40, listHeight, 20, listY);
         this.addRenderableWidget(this.creditsWidget);
 
         int backButtonWidth = 60;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.blood-on-the-blocktower.credits.back").withStyle(ChatFormatting.YELLOW),
-                button -> this.minecraft.setScreen(this.parent)
+                button -> this.minecraft.gui.setScreen(this.parent)
         ).bounds(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
         TitleArt.drawCentered(context, this.width / 2, TITLE_ART_Y, TITLE_ART_WIDTH);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_E) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     private class CreditsListWidget extends ContainerObjectSelectionList<CreditsListWidget.Entry> {
@@ -164,7 +169,7 @@ public class CreditsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 6;
         }
 
@@ -188,9 +193,11 @@ public class CreditsScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawString(font, text, x, y, 0xFFFFFF);
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
+                context.text(font, text, x, y, 0xFFFFFFFF);
             }
         }
 
@@ -202,9 +209,11 @@ public class CreditsScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawString(font, text, x, y, 0xFFFFFF);
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
+                context.text(font, text, x, y, 0xFFFFFFFF);
             }
         }
     }

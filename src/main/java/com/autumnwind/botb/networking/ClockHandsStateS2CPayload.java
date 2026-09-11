@@ -5,7 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -33,7 +33,7 @@ public record ClockHandsStateS2CPayload(
     public static final int MODE_EXILE = 3;
 
     public static final CustomPacketPayload.Type<ClockHandsStateS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "clock_hands_state"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "clock_hands_state"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ClockHandsStateS2CPayload> CODEC = StreamCodec.ofMember(
             ClockHandsStateS2CPayload::write,

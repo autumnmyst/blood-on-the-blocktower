@@ -26,6 +26,7 @@ import net.minecraft.world.scores.Scoreboard;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.util.ServerCommands;
 import com.autumnwind.botb.world.TeamManager;
+import net.minecraft.world.scores.TeamColor;
 
 /**
  * Player and block event hooks: join and disconnect bookkeeping, re-applying death
@@ -43,7 +44,7 @@ public final class PlayerEvents {
             if (ServerPlayNetworking.canSend(handler.getPlayer(), ModVersionS2CPayload.ID)) {
                 ServerPlayNetworking.send(handler.getPlayer(), new ModVersionS2CPayload(BloodOnTheBlocktower.version()));
             } else {
-                handler.getPlayer().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch").withStyle(ChatFormatting.RED)
+                handler.getPlayer().sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch").withStyle(ChatFormatting.RED)
                         .append(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch_server", BloodOnTheBlocktower.version()).withStyle(ChatFormatting.YELLOW))
                         .append(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch_features").withStyle(ChatFormatting.GRAY)), false);
             }
@@ -59,7 +60,7 @@ public final class PlayerEvents {
             PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
             if (playerTeam == null) {
                 playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-                playerTeam.setColor(ChatFormatting.WHITE);
+                playerTeam.setColor(Optional.of(TeamColor.WHITE));
             }
 
             UUID joinUuid = handler.getPlayer().getUUID();
@@ -73,7 +74,7 @@ public final class PlayerEvents {
                 if (travelerTeam != null) target = travelerTeam;
             }
 
-            String name = handler.getPlayer().getGameProfile().getName();
+            String name = handler.getPlayer().getGameProfile().name();
             if (scoreboard.getPlayersTeam(name) != target) {
                 scoreboard.addPlayerToTeam(name, target);
             }
@@ -106,7 +107,7 @@ public final class PlayerEvents {
             boolean isDead = ServerState.PLAYER_DEATH_STATUS.getOrDefault(playerUuid, false);
             if (isDead && !ServerState.gameEnded) {
                 String invisibilityCommand = "effect give @s invisibility infinite 0 true";
-                ServerCommands.runAs(newPlayer.getServer(), playerUuid.toString(), invisibilityCommand);
+                ServerCommands.runAs(newPlayer.level().getServer(), playerUuid.toString(), invisibilityCommand);
             }
         });
 

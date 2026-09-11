@@ -13,7 +13,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
@@ -23,7 +24,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class ScriptReferenceScreen extends Screen {
 
@@ -33,10 +36,10 @@ public class ScriptReferenceScreen extends Screen {
     private final Script script;
     private final Map<Page, Double> savedScrollAmounts = new EnumMap<>(Page.class);
 
-    private static final ResourceLocation DAWN_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dawn.png");
-    private static final ResourceLocation DUSK_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dusk.png");
-    private static final ResourceLocation MINION_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/minion_info.png");
-    private static final ResourceLocation DEMON_ICON = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
+    private static final Identifier DAWN_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dawn.png");
+    private static final Identifier DUSK_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dusk.png");
+    private static final Identifier MINION_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/minion_info.png");
+    private static final Identifier DEMON_ICON = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
 
     // Map to hold tooltips for static night order actions.
     private static final Map<NightOrder.StaticAction, Component> STATIC_ACTION_TOOLTIPS = Map.of(
@@ -120,19 +123,19 @@ public class ScriptReferenceScreen extends Screen {
     }
 
     private void openAlmanac() {
-        this.minecraft.setScreen(new CustomScriptDetailsScreen(this));
+        this.minecraft.gui.setScreen(new CustomScriptDetailsScreen(this));
     }
 
     private void openDjinnDetails() {
         // Open the Djinn character details screen
         ScriptRole djinnRole = new ScriptRole.Official(Role.DJINN);
-        this.minecraft.setScreen(new CharacterDetailsScreen(djinnRole, this));
+        this.minecraft.gui.setScreen(new CharacterDetailsScreen(djinnRole, this));
     }
 
     private void switchPage(Page newPage, boolean isInitial) {
         if (!isInitial && this.currentPage == newPage) return;
         if (this.listWidget != null) {
-            this.savedScrollAmounts.put(this.currentPage, this.listWidget.getScrollAmount());
+            this.savedScrollAmounts.put(this.currentPage, this.listWidget.scrollAmount());
             this.removeWidget(this.listWidget);
         }
         this.currentPage = newPage;
@@ -159,17 +162,17 @@ public class ScriptReferenceScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (hasAuthor()) {
             // Title moved up, author in between title and buttons
-            context.drawCenteredString(this.font, script.name(), this.width / 2, 4, 0xFFFFFF);
+            context.centeredText(this.font, script.name(), this.width / 2, 4, 0xFFFFFFFF);
             Component authorText = Component.translatable("gui.blood-on-the-blocktower.script_reference.by_author", script.author()).withStyle(ChatFormatting.GRAY);
-            context.drawCenteredString(this.font, authorText, this.width / 2, 15, 0xAAAAAA);
+            context.centeredText(this.font, authorText, this.width / 2, 15, 0xFFAAAAAA);
         } else {
             // Normal title position
-            context.drawCenteredString(this.font, script.name(), this.width / 2, 8, 0xFFFFFF);
+            context.centeredText(this.font, script.name(), this.width / 2, 8, 0xFFFFFFFF);
         }
     }
 
@@ -202,7 +205,7 @@ public class ScriptReferenceScreen extends Screen {
             };
         }
 
-        public ResourceLocation getIcon() {
+        public Identifier getIcon() {
             if (customRole != null) return UrlTextureLoader.getTexture(customRole);
             if (info.isRole()) return info.getRole().getIcon();
             return switch (info.getStaticAction()) {
@@ -436,7 +439,7 @@ public class ScriptReferenceScreen extends Screen {
         // Unified jinx representation for both official and custom roles
         private record UnifiedJinx(ScriptRole role1, ScriptRole role2, String description) {}
 
-        @Override protected int getScrollbarPosition() { return super.getScrollbarPosition() + 30; }
+        @Override protected int scrollBarX() { return super.scrollBarX() + 30; }
         @Override public int getRowWidth() { return 400; }
 
         public abstract class ScriptEntry extends ContainerObjectSelectionList.Entry<ScriptEntry> {}
@@ -459,9 +462,11 @@ public class ScriptReferenceScreen extends Screen {
                 this.text = header.copy().withStyle(ChatFormatting.UNDERLINE);
             }
             @Override
-            public void render(GuiGraphics c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
+            public void extractContent(GuiGraphicsExtractor c, int mX, int mY, boolean hv, float t) {
+                int y = getContentY();
+
                 int textY = y + this.entryHeight - font.lineHeight - 10;
-                c.drawCenteredString(font, text, ScriptListWidget.this.width / 2, textY, color);
+                c.centeredText(font, text, ScriptListWidget.this.width / 2, textY, color);
             }
             @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
             @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
@@ -478,7 +483,9 @@ public class ScriptReferenceScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
+            public void extractContent(GuiGraphicsExtractor c, int mX, int mY, boolean hv, float t) {
+                int y = getContentY();
+
                 this.entryY = y;
                 int itemWidth = 75;
                 int totalRowWidth = roles.size() * itemWidth;
@@ -491,13 +498,13 @@ public class ScriptReferenceScreen extends Screen {
                     int borderY = y + 5;
                     boolean isMouseOverIcon = mX >= borderX && mX < borderX + borderWidth && mY >= borderY && mY < borderY + borderHeight;
                     int borderColor = scriptRole.getTeam().getColor();
-                    c.renderOutline(borderX, borderY, borderWidth, borderHeight, borderColor);
-                    c.blit(scriptRole.getIcon(), borderX + 1, borderY + 1, 0, 0, 38, 38, 38, 38);
+                    c.outline(borderX, borderY, borderWidth, borderHeight, borderColor);
+                    c.blit(RenderPipelines.GUI_TEXTURED, scriptRole.getIcon(), borderX + 1, borderY + 1, 0, 0, 38, 38, 38, 38);
 
                     // Draw barrier overlay if role is crossed out
                     if (ClientState.crossedOutRoles.contains(scriptRole.getId())) {
-                        ResourceLocation barrierTexture = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
-                        c.blit(barrierTexture, borderX + 1, borderY + 1, 0, 0, 38, 38, 38, 38);
+                        Identifier barrierTexture = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
+                        c.blit(RenderPipelines.GUI_TEXTURED, barrierTexture, borderX + 1, borderY + 1, 0, 0, 38, 38, 38, 38);
                     }
 
                     String roleNameString = scriptRole.getDisplayName();
@@ -515,7 +522,7 @@ public class ScriptReferenceScreen extends Screen {
                     for (int k = 0; k < textLines.size(); k++) {
                         Component line = textLines.get(k);
                         int currentLineY = startTextY + (k * minecraft.font.lineHeight);
-                        c.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
+                        c.centeredText(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFFFF);
                     }
                     if (isMouseOverIcon) {
                         List<FormattedText> wrappedLines = minecraft.font.getSplitter()
@@ -523,23 +530,27 @@ public class ScriptReferenceScreen extends Screen {
                         List<Component> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        c.renderComponentTooltip(minecraft.font, tooltipTextLines, mX, mY);
+                        c.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mX, mY);
                     }
                 }
             }
 
-            @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     int itemWidth = 75;
                     int totalRowWidth = roles.size() * itemWidth;
                     int startX = ScriptListWidget.this.getRowLeft() + (ScriptListWidget.this.getRowWidth() - totalRowWidth) / 2;
                     for (int i = 0; i < this.roles.size(); i++) {
                         int cellX = startX + i * itemWidth;
-                        if (mouseX >= cellX && mouseX < cellX + itemWidth && mouseY >= this.entryY && mouseY < this.entryY + ScriptListWidget.this.itemHeight) {
+                        if (mouseX >= cellX && mouseX < cellX + itemWidth && mouseY >= this.entryY && mouseY < this.entryY + ScriptListWidget.this.defaultEntryHeight) {
                             ScriptRole selectedScriptRole = this.roles.get(i);
 
                             // Ctrl+Click toggles crossed out status
-                            if (Screen.hasControlDown()) {
+                            if (Minecraft.getInstance().hasControlDown()) {
                                 String roleId = selectedScriptRole.getId();
                                 if (ClientState.crossedOutRoles.contains(roleId)) {
                                     ClientState.crossedOutRoles.remove(roleId);
@@ -552,9 +563,9 @@ public class ScriptReferenceScreen extends Screen {
                             // Normal click opens character details
                             ScriptReferenceScreen.this.savedScrollAmounts.put(
                                     ScriptReferenceScreen.this.currentPage,
-                                    ScriptReferenceScreen.this.listWidget.getScrollAmount()
+                                    ScriptReferenceScreen.this.listWidget.scrollAmount()
                             );
-                            minecraft.setScreen(new CharacterDetailsScreen(selectedScriptRole, ScriptReferenceScreen.this, this.fullVisualList));
+                            minecraft.gui.setScreen(new CharacterDetailsScreen(selectedScriptRole, ScriptReferenceScreen.this, this.fullVisualList));
                             return true;
                         }
                     }
@@ -567,11 +578,14 @@ public class ScriptReferenceScreen extends Screen {
         }
 
         private class NightOrderHeaderEntry extends ScriptEntry {
-            @Override public void render(GuiGraphics c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
+            @Override public void extractContent(GuiGraphicsExtractor c, int mX, int mY, boolean hv, float t) {
+                int y = getContentY();
+                int h = getContentHeight();
+
                 int rowLeft = ScriptListWidget.this.getRowLeft();
                 int rowWidth = ScriptListWidget.this.getRowWidth();
-                c.drawCenteredString(font, Component.translatable("gui.blood-on-the-blocktower.script_reference.first_night"), rowLeft + rowWidth / 4, y + h/2 - 4, 0xFFFFFF);
-                c.drawCenteredString(font, Component.translatable("gui.blood-on-the-blocktower.script_reference.other_nights"), rowLeft + rowWidth * 3 / 4, y + h/2 - 4, 0xFFFFFF);
+                c.centeredText(font, Component.translatable("gui.blood-on-the-blocktower.script_reference.first_night"), rowLeft + rowWidth / 4, y + h/2 - 4, 0xFFFFFFFF);
+                c.centeredText(font, Component.translatable("gui.blood-on-the-blocktower.script_reference.other_nights"), rowLeft + rowWidth * 3 / 4, y + h/2 - 4, 0xFFFFFFFF);
             }
             @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
             @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
@@ -589,7 +603,10 @@ public class ScriptReferenceScreen extends Screen {
                 this.otherNightsRoles = onr;
             }
 
-            @Override public void render(GuiGraphics c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
+            @Override public void extractContent(GuiGraphicsExtractor c, int mX, int mY, boolean hv, float t) {
+                int y = getContentY();
+                int h = getContentHeight();
+
                 this.entryY = y;
                 int rowLeft = ScriptListWidget.this.getRowLeft();
                 int rowWidth = ScriptListWidget.this.getRowWidth();
@@ -597,7 +614,7 @@ public class ScriptReferenceScreen extends Screen {
                 if (otherNightsItem != null) drawItem(c, otherNightsItem, rowLeft + rowWidth * 3 / 4, y, h, mX, mY);
             }
 
-            private void drawItem(GuiGraphics c, NightActionItem item, int centerX, int y, int h, int mX, int mY) {
+            private void drawItem(GuiGraphicsExtractor c, NightActionItem item, int centerX, int y, int h, int mX, int mY) {
                 int iconSize = 24;
                 int iconX = centerX - 60;
                 int iconY = y + (h - iconSize) / 2;
@@ -607,20 +624,20 @@ public class ScriptReferenceScreen extends Screen {
 
                 boolean isMouseOver = mX >= iconX && mX < textX + textWidth && mY >= y && mY < y + h;
 
-                c.blit(item.getIcon(), iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                c.blit(RenderPipelines.GUI_TEXTURED, item.getIcon(), iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
                 if (item.isRole()) {
                     // Draw barrier overlay if role is crossed out
                     if (ClientState.crossedOutRoles.contains(item.getRoleId())) {
-                        ResourceLocation barrierTexture = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
-                        c.blit(barrierTexture, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                        Identifier barrierTexture = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
+                        c.blit(RenderPipelines.GUI_TEXTURED, barrierTexture, iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
                     }
 
                     int borderColor = item.getRoleType().getColor();
-                    c.renderOutline(iconX - 1, iconY - 1, iconSize + 2, iconSize + 2, borderColor);
+                    c.outline(iconX - 1, iconY - 1, iconSize + 2, iconSize + 2, borderColor);
                 }
 
-                c.drawString(font, item.getName(), textX, textY, 0xFFFFFF);
+                c.text(font, item.getName(), textX, textY, 0xFFFFFFFF);
 
                 if (item.isRole()) {
                     if (isMouseOver) {
@@ -629,7 +646,7 @@ public class ScriptReferenceScreen extends Screen {
                         List<Component> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        c.renderComponentTooltip(minecraft.font, tooltipTextLines, mX, mY);
+                        c.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mX, mY);
                     }
                 } else if (item.getStaticAction().isPresent()) {
                     // Add hover text for specific static actions
@@ -640,12 +657,16 @@ public class ScriptReferenceScreen extends Screen {
                         List<Component> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        c.renderComponentTooltip(minecraft.font, tooltipTextLines, mX, mY);
+                        c.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mX, mY);
                     }
                 }
             }
 
-            @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     int rowLeft = ScriptListWidget.this.getRowLeft();
                     int rowWidth = ScriptListWidget.this.getRowWidth();
@@ -655,12 +676,12 @@ public class ScriptReferenceScreen extends Screen {
                         int iconX = centerX - 60;
                         int textX = centerX - 25;
                         int textWidth = font.width(firstNightItem.getName());
-                        if (mouseX >= iconX && mouseX < textX + textWidth && mouseY >= this.entryY && mouseY < this.entryY + ScriptListWidget.this.itemHeight) {
+                        if (mouseX >= iconX && mouseX < textX + textWidth && mouseY >= this.entryY && mouseY < this.entryY + ScriptListWidget.this.defaultEntryHeight) {
                             ScriptReferenceScreen.this.savedScrollAmounts.put(
                                     ScriptReferenceScreen.this.currentPage,
-                                    ScriptReferenceScreen.this.listWidget.getScrollAmount()
+                                    ScriptReferenceScreen.this.listWidget.scrollAmount()
                             );
-                            minecraft.setScreen(new CharacterDetailsScreen(firstNightItem.getScriptRole(), ScriptReferenceScreen.this, this.firstNightRoles));
+                            minecraft.gui.setScreen(new CharacterDetailsScreen(firstNightItem.getScriptRole(), ScriptReferenceScreen.this, this.firstNightRoles));
                             return true;
                         }
                     }
@@ -669,12 +690,12 @@ public class ScriptReferenceScreen extends Screen {
                         int iconX = centerX - 60;
                         int textX = centerX - 25;
                         int textWidth = font.width(otherNightsItem.getName());
-                        if (mouseX >= iconX && mouseX < textX + textWidth && mouseY >= this.entryY && mouseY < this.entryY + ScriptListWidget.this.itemHeight) {
+                        if (mouseX >= iconX && mouseX < textX + textWidth && mouseY >= this.entryY && mouseY < this.entryY + ScriptListWidget.this.defaultEntryHeight) {
                             ScriptReferenceScreen.this.savedScrollAmounts.put(
                                     ScriptReferenceScreen.this.currentPage,
-                                    ScriptReferenceScreen.this.listWidget.getScrollAmount()
+                                    ScriptReferenceScreen.this.listWidget.scrollAmount()
                             );
-                            minecraft.setScreen(new CharacterDetailsScreen(otherNightsItem.getScriptRole(), ScriptReferenceScreen.this, this.otherNightsRoles));
+                            minecraft.gui.setScreen(new CharacterDetailsScreen(otherNightsItem.getScriptRole(), ScriptReferenceScreen.this, this.otherNightsRoles));
                             return true;
                         }
                     }
@@ -691,7 +712,10 @@ public class ScriptReferenceScreen extends Screen {
             private int entryY;
             public JinxEntry(UnifiedJinx jinx) { this.jinx = jinx; }
 
-            @Override public void render(GuiGraphics c, int i, int y, int x, int w, int h, int mX, int mY, boolean hv, float t) {
+            @Override public void extractContent(GuiGraphicsExtractor c, int mX, int mY, boolean hv, float t) {
+                int y = getContentY();
+                int h = getContentHeight();
+
                 this.entryY = y;
                 int iconSize = 48;
                 int contentWidth = iconSize * 2 + 10 + 200;
@@ -702,27 +726,27 @@ public class ScriptReferenceScreen extends Screen {
                 int role2X = startX + iconSize + 10;
                 int role2Y = role1Y;
 
-                c.blit(jinx.role1().getIcon(), role1X, role1Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
-                c.blit(jinx.role2().getIcon(), role2X, role2Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                c.blit(RenderPipelines.GUI_TEXTURED, jinx.role1().getIcon(), role1X, role1Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                c.blit(RenderPipelines.GUI_TEXTURED, jinx.role2().getIcon(), role2X, role2Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
                 // Draw barrier overlays if roles are crossed out
                 String role1Id = jinx.role1().getId();
                 String role2Id = jinx.role2().getId();
                 if (ClientState.crossedOutRoles.contains(role1Id)) {
-                    ResourceLocation barrierTexture = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
-                    c.blit(barrierTexture, role1X, role1Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                    Identifier barrierTexture = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
+                    c.blit(RenderPipelines.GUI_TEXTURED, barrierTexture, role1X, role1Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
                 }
                 if (ClientState.crossedOutRoles.contains(role2Id)) {
-                    ResourceLocation barrierTexture = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
-                    c.blit(barrierTexture, role2X, role2Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                    Identifier barrierTexture = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
+                    c.blit(RenderPipelines.GUI_TEXTURED, barrierTexture, role2X, role2Y, 0, 0, iconSize, iconSize, iconSize, iconSize);
                 }
 
-                c.renderOutline(role1X - 1, role1Y - 1, iconSize + 2, iconSize + 2, jinx.role1().getTeam().getColor());
-                c.renderOutline(role2X - 1, role2Y - 1, iconSize + 2, iconSize + 2, jinx.role2().getTeam().getColor());
+                c.outline(role1X - 1, role1Y - 1, iconSize + 2, iconSize + 2, jinx.role1().getTeam().getColor());
+                c.outline(role2X - 1, role2Y - 1, iconSize + 2, iconSize + 2, jinx.role2().getTeam().getColor());
 
                 int textX = startX + iconSize*2 + 20;
-                int textY = y + (h - font.wordWrapHeight(jinx.description(), 200)) / 2;
-                c.drawWordWrap(font, Component.literal(jinx.description()), textX, textY, 200, 0xFFFFFF);
+                int textY = y + (h - font.wordWrapHeight(Component.literal(jinx.description()), 200)) / 2;
+                c.textWithWordWrap(font, Component.literal(jinx.description()), textX, textY, 200, 0xFFFFFFFF);
 
                 boolean mouseOnRole1 = mX >= role1X && mX < role1X + iconSize && mY >= role1Y && mY < role1Y + iconSize;
                 boolean mouseOnRole2 = mX >= role2X && mX < role2X + iconSize && mY >= role2Y && mY < role2Y + iconSize;
@@ -737,14 +761,18 @@ public class ScriptReferenceScreen extends Screen {
                     List<Component> tooltipTextLines = wrappedLines.stream()
                             .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                             .collect(Collectors.toList());
-                    c.renderComponentTooltip(minecraft.font, tooltipTextLines, mX, mY);
+                    c.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mX, mY);
                 }
             }
 
-            @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     int iconSize = 48;
-                    int h = ScriptListWidget.this.itemHeight;
+                    int h = ScriptListWidget.this.defaultEntryHeight;
                     int contentWidth = iconSize * 2 + 10 + 200;
                     int startX = ScriptListWidget.this.getRowLeft() + (ScriptListWidget.this.getRowWidth() - contentWidth) / 2;
 
@@ -765,18 +793,18 @@ public class ScriptReferenceScreen extends Screen {
                     if (mouseX >= role1ClickX && mouseX < role1ClickX + paddedSize && mouseY >= role1ClickY && mouseY < role1ClickY + paddedSize) {
                         ScriptReferenceScreen.this.savedScrollAmounts.put(
                                 ScriptReferenceScreen.this.currentPage,
-                                ScriptReferenceScreen.this.listWidget.getScrollAmount()
+                                ScriptReferenceScreen.this.listWidget.scrollAmount()
                         );
-                        minecraft.setScreen(new CharacterDetailsScreen(jinx.role1(), ScriptReferenceScreen.this, jinxPair));
+                        minecraft.gui.setScreen(new CharacterDetailsScreen(jinx.role1(), ScriptReferenceScreen.this, jinxPair));
                         return true;
                     }
 
                     if (mouseX >= role2ClickX && mouseX < role2ClickX + paddedSize && mouseY >= role2ClickY && mouseY < role2ClickY + paddedSize) {
                         ScriptReferenceScreen.this.savedScrollAmounts.put(
                                 ScriptReferenceScreen.this.currentPage,
-                                ScriptReferenceScreen.this.listWidget.getScrollAmount()
+                                ScriptReferenceScreen.this.listWidget.scrollAmount()
                         );
-                        minecraft.setScreen(new CharacterDetailsScreen(jinx.role2(), ScriptReferenceScreen.this, jinxPair));
+                        minecraft.gui.setScreen(new CharacterDetailsScreen(jinx.role2(), ScriptReferenceScreen.this, jinxPair));
                         return true;
                     }
                 }
@@ -789,13 +817,17 @@ public class ScriptReferenceScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (KeyInputHandler.openScriptKey.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
+        if (KeyInputHandler.openScriptKey.matches(event) || keyCode == GLFW.GLFW_KEY_E) {
             this.onClose(); // Close the screen
             return true;
         }
 
         // If it was some other key, let the superclass handle it
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 }

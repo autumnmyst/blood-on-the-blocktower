@@ -8,8 +8,9 @@ import com.autumnwind.botb.util.RoleVisit;
 import com.autumnwind.botb.util.Script;
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 
 /**
  * Handles rendering of the Night Order HUD.
@@ -24,7 +25,7 @@ public class VisitRenderer {
     /**
      * Renders the Night Order HUD at the top of the screen.
      */
-    public static void render(GuiGraphics context, Minecraft client) {
+    public static void render(GuiGraphicsExtractor context, Minecraft client) {
         if (StorytellerState.activeNightOrder.isEmpty()) {
             NightOrderBuilder.rebuildActiveNightOrder();
         }
@@ -36,13 +37,13 @@ public class VisitRenderer {
 
         for (int i = 0; i < StorytellerState.activeNightOrder.size(); i++) {
             RoleVisit visit = StorytellerState.activeNightOrder.get(i);
-            ResourceLocation icon = visit.getIcon();
+            Identifier icon = visit.getIcon();
             int x = startX + i * (ICON_SIZE + ICON_SPACING);
 
-            context.blit(icon, x, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            context.blit(RenderPipelines.GUI_TEXTURED, icon, x, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
 
             if (i == StorytellerState.currentNightVisitIndex) {
-                context.renderOutline(x - 1, y - 1, ICON_SIZE + 2, ICON_SIZE + 2, 0xFFFFFFFF);
+                context.outline(x - 1, y - 1, ICON_SIZE + 2, ICON_SIZE + 2, 0xFFFFFFFF);
             }
 
             // Draw icon reminders under the visit
@@ -52,13 +53,13 @@ public class VisitRenderer {
                 int reminderX = x + (ICON_SIZE - REMINDER_ICON_SIZE) / 2;
 
                 for (Reminder reminder : iconReminders) {
-                    ResourceLocation reminderIcon = reminder.getIcon();
-                    context.blit(reminderIcon, reminderX, reminderY, 0, 0, REMINDER_ICON_SIZE, REMINDER_ICON_SIZE, REMINDER_ICON_SIZE, REMINDER_ICON_SIZE);
+                    Identifier reminderIcon = reminder.getIcon();
+                    context.blit(RenderPipelines.GUI_TEXTURED, reminderIcon, reminderX, reminderY, 0, 0, REMINDER_ICON_SIZE, REMINDER_ICON_SIZE, REMINDER_ICON_SIZE, REMINDER_ICON_SIZE);
 
                     // Draw alignment border (pass script for custom role lookup)
                     int borderColor = reminder.getAlignmentColor(script);
                     if (borderColor != RoleType.NONE.getColor()) {
-                        context.renderOutline(reminderX - 1, reminderY - 1, REMINDER_ICON_SIZE + 2, REMINDER_ICON_SIZE + 2, borderColor | 0xFF000000);
+                        context.outline(reminderX - 1, reminderY - 1, REMINDER_ICON_SIZE + 2, REMINDER_ICON_SIZE + 2, borderColor | 0xFF000000);
                     }
 
                     reminderY += REMINDER_ICON_SIZE + REMINDER_SPACING;

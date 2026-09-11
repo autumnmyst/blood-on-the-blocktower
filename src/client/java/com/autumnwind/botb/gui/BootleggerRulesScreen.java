@@ -6,12 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 /**
  * Small modal over the Script Builder for editing the Bootlegger's special rules.
@@ -90,33 +92,33 @@ public class BootleggerRulesScreen extends Screen {
      * The builder is drawn first, then everything of this screen is lifted in z above it.
      */
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        parent.render(context, -1, -1, delta);
-        context.pose().pushPose();
-        context.pose().translate(0, 0, 50);
-        super.render(context, mouseX, mouseY, delta);
-        context.pose().popPose();
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        parent.extractRenderState(context, -1, -1, delta);
+        context.pose().pushMatrix();
+        context.pose().translate(0, 0);
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.pose().popMatrix();
     }
 
     @Override
-    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void extractBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         context.fill(0, 0, this.width, this.height, 0x90000000);
 
         context.fill(panelX, panelY, panelX + PANEL_WIDTH, panelY + panelHeight, 0xF0101010);
-        context.renderOutline(panelX, panelY, PANEL_WIDTH, panelHeight, 0xFFFFAA00);
+        context.outline(panelX, panelY, PANEL_WIDTH, panelHeight, 0xFFFFAA00);
 
         int x = panelX + PAD;
         int y = panelY + PAD;
-        context.drawCenteredString(font,
-                this.title.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), this.width / 2, y, 0xFFFFFF);
+        context.centeredText(font,
+                this.title.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), this.width / 2, y, 0xFFFFFFFF);
         y += font.lineHeight + 6;
 
         int lineHeight = font.lineHeight + 1;
         hoveredRule = -1;
         if (rules.isEmpty()) {
-            context.drawString(font,
+            context.text(font,
                     Component.translatable("gui.blood-on-the-blocktower.bootlegger_rules.no_rules").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC),
-                    x, y, 0xFFFFFF);
+                    x, y, 0xFFFFFFFF);
             y += lineHeight;
         } else {
             for (int i = 0; i < rules.size(); i++) {
@@ -130,7 +132,7 @@ public class BootleggerRulesScreen extends Screen {
                     context.fill(x - 2, rowTop, x + textWidth + 2, rowBottom, 0x40FF5555);
                 }
                 for (FormattedCharSequence line : lines) {
-                    context.drawString(font, line, x, y, hovered ? 0xFF5555 : 0x55FFFF);
+                    context.text(font, line, x, y, hovered ? 0xFFFF5555 : 0xFF55FFFF);
                     y += lineHeight;
                 }
                 y += RULE_GAP;
@@ -139,22 +141,30 @@ public class BootleggerRulesScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+
         if (button == GLFW.GLFW_MOUSE_BUTTON_1 && hoveredRule >= 0 && hoveredRule < rules.size()) {
             rules.remove(hoveredRule);
             rebuildWidgets();
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) && input.isFocused()) {
             addRule();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     private void addRule() {
@@ -168,13 +178,13 @@ public class BootleggerRulesScreen extends Screen {
     }
 
     @Override
-    public void resize(Minecraft client, int width, int height) {
-        parent.resize(client, width, height);
-        super.resize(client, width, height);
+    public void resize(int width, int height) {
+        parent.resize(width, height);
+        super.resize(width, height);
     }
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        this.minecraft.gui.setScreen(parent);
     }
 }

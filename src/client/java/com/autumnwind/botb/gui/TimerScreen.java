@@ -4,13 +4,14 @@ import com.autumnwind.botb.event.KeyInputHandler;
 import com.autumnwind.botb.networking.TimerControlC2SPayload;
 import com.autumnwind.botb.timer.ClientTimerState;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.input.KeyEvent;
 
 /**
  * Screen for operators to control the storyteller timer
@@ -155,11 +156,11 @@ public class TimerScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Draw title
-        context.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
+        context.centeredText(this.font, this.title, this.width / 2, 20, 0xFFFFFFFF);
 
         // Draw current timer status if active
         if (ClientTimerState.isActive) {
@@ -169,18 +170,22 @@ public class TimerScreen extends Screen {
             Component statusText = Component.translatable(ClientTimerState.isPaused
                     ? "gui.blood-on-the-blocktower.timer.paused"
                     : "gui.blood-on-the-blocktower.timer.running");
-            context.drawCenteredString(this.font, Component.translatable("gui.blood-on-the-blocktower.timer.current", timeText, statusText), this.width / 2, this.height / 2 + 60, 0xFFFFFF);
+            context.centeredText(this.font, Component.translatable("gui.blood-on-the-blocktower.timer.current", timeText, statusText), this.width / 2, this.height / 2 + 60, 0xFFFFFFFF);
         }
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openTimerKey.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)) {
+        if ((KeyInputHandler.openTimerKey.matches(event) || keyCode == GLFW.GLFW_KEY_E)) {
             this.onClose();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override

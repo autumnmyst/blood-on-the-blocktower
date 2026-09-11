@@ -161,7 +161,7 @@ public class ExileSupportManager {
         // Send result to all players
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             // Send chat message
-            player.displayClientMessage(resultText, false);
+            player.sendSystemMessage(resultText, false);
 
             // Send title and subtitle
             player.connection.send(new ClientboundSetTitleTextPacket(titleText));

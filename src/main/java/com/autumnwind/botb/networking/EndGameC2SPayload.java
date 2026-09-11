@@ -9,7 +9,7 @@ import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * C2S payload to trigger game end with a winning team and grimoire data.
@@ -21,7 +21,7 @@ public record EndGameC2SPayload(
         Map<UUID, List<Reminder>> reminders,
         List<String> demonBluffs // String format: "" = empty, "ROLE_NAME" = official, "custom:id" = custom
 ) implements CustomPacketPayload {
-    public static final ResourceLocation END_GAME_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "end_game");
+    public static final Identifier END_GAME_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "end_game");
     public static final CustomPacketPayload.Type<EndGameC2SPayload> ID = new CustomPacketPayload.Type<>(END_GAME_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, EndGameC2SPayload> CODEC = new StreamCodec<>() {

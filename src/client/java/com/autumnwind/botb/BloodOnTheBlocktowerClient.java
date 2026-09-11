@@ -5,6 +5,7 @@ import com.autumnwind.botb.config.AssetPackTemplate;
 import com.autumnwind.botb.config.PlayerConfig;
 import com.autumnwind.botb.event.KeyInputHandler;
 import com.autumnwind.botb.gui.AssignRolesScreen;
+import com.autumnwind.botb.gui.GameEndHoldingScreen;
 import com.autumnwind.botb.gui.ScriptReferenceScreen;
 import com.autumnwind.botb.hud.AssignRolesQuickHUD;
 import com.autumnwind.botb.hud.GameEndAnimationHUD;
@@ -20,11 +21,10 @@ import com.autumnwind.botb.util.UrlTextureLoaderImpl;
 import com.autumnwind.botb.voicechat.VoiceChatSidebar;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.HitResult;
 import com.autumnwind.botb.config.CustomRoleLibrary;
@@ -36,12 +36,36 @@ import com.autumnwind.botb.hud.WhisperEffectManager;
 import com.autumnwind.botb.networking.RequestScriptC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.resources.Identifier;
+import com.autumnwind.botb.BloodOnTheBlocktower;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
+import net.fabricmc.fabric.api.resource.v1.reloader.SimpleReloadListener;
+import net.fabricmc.fabric.api.resource.v1.reloader.ResourceReloaderKeys;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 
 public class BloodOnTheBlocktowerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         PlayerConfig.load();
-        AssetPackTemplate.generate();
+
+        // Written after languages load so the readme carries translated role names
+        Identifier templateReloader = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "asset_pack_template");
+        ResourceLoader resources = ResourceLoader.get(PackType.CLIENT_RESOURCES);
+        resources.registerReloadListener(templateReloader, new SimpleReloadListener<Void>() {
+            @Override
+            protected Void prepare(PreparableReloadListener.SharedState state) {
+                return null;
+            }
+
+            @Override
+            protected void apply(Void prepared, PreparableReloadListener.SharedState state) {
+                AssetPackTemplate.generate();
+            }
+        });
+        resources.addListenerOrdering(ResourceReloaderKeys.Client.LANGUAGES, templateReloader);
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             // Restore the saved grimoire BEFORE asking the server for the script. Order
@@ -72,7 +96,7 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
         // Characters the Script Builder's random draw skips.
         RandomBanList.load();
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "hud"), (drawContext, tickDelta) -> {
             Minecraft client = Minecraft.getInstance();
             if (client.player == null) {
                 return;
@@ -87,7 +111,7 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
                 return; // Skip other HUD rendering when quick view is active
             }
 
-            if (ClientState.isNightHudVisible && client.player.hasPermissions(2)) {
+            if (ClientState.isNightHudVisible && client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 NightOrderHudManager.render(drawContext, client);
             }
 
@@ -111,7 +135,9 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
             }
 
             // Render game end animation HUD (on top of everything, even when HUD is disabled)
-            GameEndAnimationHUD.render(drawContext, client);
+            if (!(client.gui.screen() instanceof GameEndHoldingScreen)) {
+                GameEndAnimationHUD.render(drawContext, client);
+            }
 
             // Render role assignment animation (on top of everything)
             RoleAssignmentAnimation.render(drawContext, client);
@@ -145,12 +171,12 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
         // Register item use callback for Script and Grimoire items
         UseItemCallback.EVENT.register((player, world, hand) -> {
             if (!world.isClientSide()) {
-                return InteractionResultHolder.pass(ItemStack.EMPTY);
+                return InteractionResult.PASS;
             }
 
             var stack = player.getItemInHand(hand);
             if (stack.isEmpty()) {
-                return InteractionResultHolder.pass(ItemStack.EMPTY);
+                return InteractionResult.PASS;
             }
 
             Minecraft client = Minecraft.getInstance();
@@ -160,20 +186,20 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
                 // Check if a script is assigned
                 if (ClientState.currentScript == null) {
                     // Show overlay message that no script is assigned
-                    client.gui.setOverlayMessage(Component.translatable("message.blood-on-the-blocktower.client.no_script_assigned_overlay"), false);
-                    return InteractionResultHolder.success(stack);
+                    client.gui.hud.setOverlayMessage(Component.translatable("message.blood-on-the-blocktower.client.no_script_assigned_overlay"), false);
+                    return InteractionResult.SUCCESS;
                 }
-                client.tell(() -> client.setScreen(new ScriptReferenceScreen(Component.translatable("message.blood-on-the-blocktower.client.title_script_reference"))));
-                return InteractionResultHolder.success(stack);
+                client.schedule(() -> client.gui.setScreen(new ScriptReferenceScreen(Component.translatable("message.blood-on-the-blocktower.client.title_script_reference"))));
+                return InteractionResult.SUCCESS;
             }
 
             // Grimoire item opens Assign Roles screen
             if (stack.is(ModItems.GRIMOIRE)) {
-                client.tell(() -> client.setScreen(new AssignRolesScreen(Component.translatable("message.blood-on-the-blocktower.client.title_grimoire"))));
-                return InteractionResultHolder.success(stack);
+                client.schedule(() -> client.gui.setScreen(new AssignRolesScreen(Component.translatable("message.blood-on-the-blocktower.client.title_grimoire"))));
+                return InteractionResult.SUCCESS;
             }
 
-            return InteractionResultHolder.pass(stack);
+            return InteractionResult.PASS;
         });
     }
 }

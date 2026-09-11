@@ -8,7 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Server → clients: render a whisper visual/audio effect arcing from sender to target.
@@ -28,7 +28,7 @@ public record WhisperEffectS2CPayload(
         float pitch
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WhisperEffectS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "whisper_effect"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "whisper_effect"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, WhisperEffectS2CPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, WhisperEffectS2CPayload::senderUuid,

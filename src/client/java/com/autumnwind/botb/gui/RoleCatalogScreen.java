@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.EditBox;
@@ -23,6 +24,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
 import java.util.Locale;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class RoleCatalogScreen extends Screen {
 
@@ -99,9 +102,9 @@ public class RoleCatalogScreen extends Screen {
     private void onTogglePressed(Button button) {
         // Save current scroll position
         if (showingExtraRoles) {
-            savedExtraScrollAmount = this.roleListWidget.getScrollAmount();
+            savedExtraScrollAmount = this.roleListWidget.scrollAmount();
         } else {
-            savedMainScrollAmount = this.roleListWidget.getScrollAmount();
+            savedMainScrollAmount = this.roleListWidget.scrollAmount();
         }
 
         // Toggle view
@@ -135,20 +138,24 @@ public class RoleCatalogScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 8, 0xFFFFFF);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.centeredText(this.font, this.title, this.width / 2, 8, 0xFFFFFFFF);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openCatalogKey.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openCatalogKey.matches(event) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.searchField.isFocused()) {
             this.onClose();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     private class RoleCatalogListWidget extends ContainerObjectSelectionList<RoleCatalogListWidget.RoleCatalogEntry> {
@@ -171,7 +178,7 @@ public class RoleCatalogScreen extends Screen {
 
         // MODIFIED: Adjusted row width to match new item width.
         @Override public int getRowWidth() { return 75 * 5; }
-        @Override protected int getScrollbarPosition() { return super.getScrollbarPosition() + 30; }
+        @Override protected int scrollBarX() { return super.scrollBarX() + 30; }
 
         public class RoleCatalogEntry extends ContainerObjectSelectionList.Entry<RoleCatalogEntry> {
             private final List<Role> rolesInRow;
@@ -182,7 +189,10 @@ public class RoleCatalogScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
                 this.entryY = y;
                 // MODIFIED: Widened item width slightly to prevent text cutoff.
                 int itemWidth = 75;
@@ -201,9 +211,9 @@ public class RoleCatalogScreen extends Screen {
                     int borderColor = role.getType().getColor();
 
                     // MODIFIED: Drawing a smaller 40x40 border.
-                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.outline(borderX, y + 5, borderWidth, 40, borderColor);
                     // MODIFIED: Drawing a smaller 38x38 texture to fit inside.
-                    context.blit(role.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                    context.blit(RenderPipelines.GUI_TEXTURED, role.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
 
                     int textCenterX = borderX + (borderWidth / 2);
                     String roleNameString = role.getDisplayName();
@@ -223,7 +233,7 @@ public class RoleCatalogScreen extends Screen {
                     for (int j = 0; j < textLines.size(); j++) {
                         Component line = textLines.get(j);
                         int currentLineY = startY + (j * minecraft.font.lineHeight);
-                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
+                        context.centeredText(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFFFF);
                     }
 
                     if (isMouseOverRole) {
@@ -233,13 +243,17 @@ public class RoleCatalogScreen extends Screen {
                         List<Component> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
+                        context.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     // MODIFIED: Use the same updated itemWidth for click detection.
                     int itemWidth = 75;
@@ -248,14 +262,14 @@ public class RoleCatalogScreen extends Screen {
                     for (int i = 0; i < this.rolesInRow.size(); i++) {
                         int roleX = rowX + i * itemWidth;
                         int roleY = this.entryY;
-                        int roleHeight = RoleCatalogListWidget.this.itemHeight;
+                        int roleHeight = RoleCatalogListWidget.this.defaultEntryHeight;
 
                         if (mouseX >= roleX && mouseX < roleX + itemWidth && mouseY >= roleY && mouseY < roleY + roleHeight) {
                             // Save scroll position for current view
                             if (RoleCatalogScreen.this.showingExtraRoles) {
-                                RoleCatalogScreen.this.savedExtraScrollAmount = RoleCatalogScreen.this.roleListWidget.getScrollAmount();
+                                RoleCatalogScreen.this.savedExtraScrollAmount = RoleCatalogScreen.this.roleListWidget.scrollAmount();
                             } else {
-                                RoleCatalogScreen.this.savedMainScrollAmount = RoleCatalogScreen.this.roleListWidget.getScrollAmount();
+                                RoleCatalogScreen.this.savedMainScrollAmount = RoleCatalogScreen.this.roleListWidget.scrollAmount();
                             }
 
                             Role selectedRole = this.rolesInRow.get(i);
@@ -263,7 +277,7 @@ public class RoleCatalogScreen extends Screen {
                             List<Role> fullCatalogList = RoleCatalogScreen.this.filteredRoles;
 
                             // Call the new constructor with the full list
-                            minecraft.setScreen(new CharacterDetailsScreen(selectedRole, RoleCatalogScreen.this, fullCatalogList));
+                            minecraft.gui.setScreen(new CharacterDetailsScreen(selectedRole, RoleCatalogScreen.this, fullCatalogList));
 
                             return true;
                         }

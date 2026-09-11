@@ -14,7 +14,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.EditBox;
@@ -24,9 +25,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.chat.TextColor;
 import com.autumnwind.botb.hud.nightorderhud.TriggerManager;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class RoleSelectionScreen extends Screen {
     @Nullable // --- MODIFIED ---
@@ -42,7 +46,7 @@ public class RoleSelectionScreen extends Screen {
     @Nullable
     private final Integer bluffIndex;
 
-    ResourceLocation barrierTexture = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
+    Identifier barrierTexture = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
 
     /**
      * Constructor for assigning a role to a PLAYER.
@@ -174,9 +178,9 @@ public class RoleSelectionScreen extends Screen {
                         this.alignmentOverride = this.alignmentOverride.next();
                         // Save scroll position before reinitializing screen
                         if (this.roleListWidget != null) {
-                            this.savedScrollAmount = this.roleListWidget.getScrollAmount();
+                            this.savedScrollAmount = this.roleListWidget.scrollAmount();
                         }
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
             ).bounds(startX + searchWidth + spacing, topBarY, alignWidth, 20).build());
 
@@ -213,7 +217,7 @@ public class RoleSelectionScreen extends Screen {
         this.addRenderableWidget(this.roleListWidget);
 
         // --- Footer ---
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.setScreen(this.parentScreen))
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.gui.setScreen(this.parentScreen))
                 .bounds(this.width / 2 - 100, this.height - 28, 200, 20)
                 .build());
     }
@@ -308,7 +312,7 @@ public class RoleSelectionScreen extends Screen {
             if (!selectedScriptRole.isCustom()) {
                 Role selectedRole = ((ScriptRole.Official) selectedScriptRole).role();
                 boolean isStartOfGame = ClientState.currentDay == 0 && ClientState.currentNight == 0;
-                if (wasAssigned && oldRole != null && oldRole != selectedRole && !isStartOfGame && this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
+                if (wasAssigned && oldRole != null && oldRole != selectedRole && !isStartOfGame && this.minecraft.player != null && this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                     NightOrderHudManager.createRoleSwitchTrigger(targetPlayerUUID, selectedRole);
                 }
             }
@@ -339,7 +343,7 @@ public class RoleSelectionScreen extends Screen {
                 }
             }
 
-            if (this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
+            if (this.minecraft.player != null && this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 // Handle marking for night order
                 if (selectedScriptRole.isCustom()) {
                     // Custom roles are mark-based on other nights
@@ -372,7 +376,7 @@ public class RoleSelectionScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.minecraft.setScreen(this.parentScreen);
+        this.minecraft.gui.setScreen(this.parentScreen);
     }
 
     /**
@@ -384,7 +388,7 @@ public class RoleSelectionScreen extends Screen {
         }
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
-        this.minecraft.setScreen(this.parentScreen);
+        this.minecraft.gui.setScreen(this.parentScreen);
     }
 
     /**
@@ -393,7 +397,7 @@ public class RoleSelectionScreen extends Screen {
     private void unassignAndClose() {
         if (this.targetPlayerUUID == null) return; // Safety check
 
-        boolean isOperator = this.minecraft.player != null && this.minecraft.player.hasPermissions(2);
+        boolean isOperator = this.minecraft.player != null && this.minecraft.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
         StorytellerState.PENDING_ROLES.remove(this.targetPlayerUUID);
 
@@ -426,24 +430,28 @@ public class RoleSelectionScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.minecraft.setScreen(this.parentScreen);
+        this.minecraft.gui.setScreen(this.parentScreen);
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFF);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.centeredText(this.font, this.title, this.width / 2, 15, 0xFFFFFFFF);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openAssignGui.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openAssignGui.matches(event) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.searchField.isFocused()) {
-            this.minecraft.setScreen(this.parentScreen);
+            this.minecraft.gui.setScreen(this.parentScreen);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     // --- Inner Classes for the Scrollable List ---
@@ -465,7 +473,7 @@ public class RoleSelectionScreen extends Screen {
         }
 
         @Override public int getRowWidth() { return 75 * 5; } // 75px width * 5 columns
-        @Override protected int getScrollbarPosition() { return super.getScrollbarPosition() + 30; }
+        @Override protected int scrollBarX() { return super.scrollBarX() + 30; }
 
         public class RoleGridEntry extends ContainerObjectSelectionList.Entry<RoleGridEntry> {
             private final List<ScriptRole> rolesInRow;
@@ -476,7 +484,10 @@ public class RoleSelectionScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
                 this.entryY = y;
                 int itemWidth = 75; // Same as catalog
 
@@ -493,13 +504,13 @@ public class RoleSelectionScreen extends Screen {
                     int borderColor = getButtonColor(scriptRole);
 
                     // Draw Icon
-                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
-                    context.blit(scriptRole.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                    context.outline(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.blit(RenderPipelines.GUI_TEXTURED, scriptRole.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
 
                     // Draw barrier overlay if role is crossed out (but not in bluff mode)
                     if (RoleSelectionScreen.this.bluffIndex == null &&
                             ClientState.crossedOutRoles.contains(scriptRole.getId())) {
-                        context.blit(barrierTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(RenderPipelines.GUI_TEXTURED, barrierTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     }
 
                     int textCenterX = borderX + (borderWidth / 2);
@@ -519,7 +530,7 @@ public class RoleSelectionScreen extends Screen {
                     for (int j = 0; j < textLines.size(); j++) {
                         Component line = textLines.get(j);
                         int currentLineY = startY + (j * minecraft.font.lineHeight);
-                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
+                        context.centeredText(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFFFF);
                     }
 
                     // Show role description on hover
@@ -530,13 +541,17 @@ public class RoleSelectionScreen extends Screen {
                         List<Component> tooltipTextLines = wrappedLines.stream()
                                 .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
+                        context.setComponentTooltipForNextFrame(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button == GLFW.GLFW_MOUSE_BUTTON_1) {
                     int itemWidth = 75;
                     int rowX = RoleListWidget.this.getRowLeft();
@@ -544,13 +559,13 @@ public class RoleSelectionScreen extends Screen {
                     for (int i = 0; i < this.rolesInRow.size(); i++) {
                         int roleX = rowX + i * itemWidth;
                         int roleY = this.entryY;
-                        int roleHeight = RoleListWidget.this.itemHeight;
+                        int roleHeight = RoleListWidget.this.defaultEntryHeight;
 
                         if (mouseX >= roleX && mouseX < roleX + itemWidth && mouseY >= roleY && mouseY < roleY + roleHeight) {
                             ScriptRole selectedScriptRole = this.rolesInRow.get(i);
 
                             // Ctrl+left_click toggles crossed out status
-                            if (Screen.hasControlDown()) {
+                            if (Minecraft.getInstance().hasControlDown()) {
                                 String roleId = selectedScriptRole.getId();
                                 if (ClientState.crossedOutRoles.contains(roleId)) {
                                     ClientState.crossedOutRoles.remove(roleId);
@@ -561,9 +576,9 @@ public class RoleSelectionScreen extends Screen {
                             }
 
                             // Shift+left_click opens role details screen
-                            if (Screen.hasShiftDown()) {
-                                RoleSelectionScreen.this.savedScrollAmount = RoleListWidget.this.getScrollAmount();
-                                Minecraft.getInstance().setScreen(new CharacterDetailsScreen(selectedScriptRole, RoleSelectionScreen.this));
+                            if (Minecraft.getInstance().hasShiftDown()) {
+                                RoleSelectionScreen.this.savedScrollAmount = RoleListWidget.this.scrollAmount();
+                                Minecraft.getInstance().gui.setScreen(new CharacterDetailsScreen(selectedScriptRole, RoleSelectionScreen.this));
                                 return true;
                             }
 

@@ -6,11 +6,13 @@ import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.util.ARGB;
 
 /**
  * Manages the madness HUD overlay for both storyteller and player views.
@@ -20,7 +22,7 @@ public class MadnessHUD {
     private static final int ICON_SIZE = 20;
     private static final int ICON_PADDING = 4;
     private static final int START_X = 10;
-    private static final int TEXT_COLOR = 0xFFFFFF;
+    private static final int TEXT_COLOR = 0xFFFFFFFF;
     private static final int MAX_TEXT_WIDTH = 250;
     private static final int EXPANDED_LIST_BOTTOM_PADDING = 40;
 
@@ -111,10 +113,10 @@ public class MadnessHUD {
      * For storyteller: shows all players' madnesses
      * For players: shows their own madnesses
      */
-    public static void render(GuiGraphics context, Minecraft client) {
+    public static void render(GuiGraphicsExtractor context, Minecraft client) {
         if (client == null || client.player == null) return;
 
-        boolean isOperator = client.player.hasPermissions(2);
+        boolean isOperator = client.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
         if (isOperator) {
             renderStorytellerView(context, client);
@@ -126,7 +128,7 @@ public class MadnessHUD {
     /**
      * Renders the storyteller's view: all active madnesses.
      */
-    private static void renderStorytellerView(GuiGraphics context, Minecraft client) {
+    private static void renderStorytellerView(GuiGraphicsExtractor context, Minecraft client) {
         Map<UUID, List<Madness>> allMadnesses = detectMadnessesFromReminders();
         if (allMadnesses.isEmpty()) return;
 
@@ -166,7 +168,7 @@ public class MadnessHUD {
      * Renders a single madness row in storyteller view.
      * Returns the height of the rendered row.
      */
-    private static int renderStorytellerMadnessRow(GuiGraphics context, Minecraft client,
+    private static int renderStorytellerMadnessRow(GuiGraphicsExtractor context, Minecraft client,
                                                     Madness madness, UUID playerUuid, int x, int y, boolean isExpanded) {
         int currentX = x;
 
@@ -195,7 +197,7 @@ public class MadnessHUD {
             int boxWidth = iconRowWidth + padding + textWidth;
 
             // Draw backdrop
-            int bgColor = FastColor.ARGB32.color(191, 0, 0, 0);
+            int bgColor = ARGB.color(191, 0, 0, 0);
             context.fill(x, y - boxHeight, x + boxWidth, y, bgColor);
 
             // Draw 3 icons in a row
@@ -206,7 +208,7 @@ public class MadnessHUD {
             int textX = x + iconRowWidth + padding * 2;
             int textY = y - boxHeight + padding;
             for (Component line : wrappedLines) {
-                context.drawString(client.font, line, textX, textY, TEXT_COLOR);
+                context.text(client.font, line, textX, textY, TEXT_COLOR);
                 textY += client.font.lineHeight + 2;
             }
 
@@ -221,14 +223,14 @@ public class MadnessHUD {
     /**
      * Renders storyteller icons in expanded mode (3 icons in a row).
      */
-    private static void renderStorytellerIconsExpanded(GuiGraphics context, Minecraft client,
+    private static void renderStorytellerIconsExpanded(GuiGraphicsExtractor context, Minecraft client,
                                                         Madness madness, UUID playerUuid, int x, int y) {
         int currentX = x;
 
         // Icon 1: Madness type
         Role madnessRole = getMadnessRole(madness);
-        ResourceLocation madnessIcon = madnessRole.getIcon();
-        context.blit(madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        Identifier madnessIcon = madnessRole.getIcon();
+        context.blit(RenderPipelines.GUI_TEXTURED, madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         currentX += ICON_SIZE + ICON_PADDING;
 
         // Icon 2: Player head (supports distant players + disconnect fallback)
@@ -238,15 +240,15 @@ public class MadnessHUD {
         // Icon 3: Target
         switch (madness) {
             case Madness.PixieMadness pixie -> {
-                ResourceLocation roleIcon = pixie.townsfolkRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = pixie.townsfolkRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.HarpyMadness harpy -> {
                 PlayerListUtil.drawPlayerHead(context, client, harpy.targetPlayerUuid(), currentX, y, ICON_SIZE);
             }
             case Madness.CerenovusMadness cerenovus -> {
-                ResourceLocation roleIcon = cerenovus.madRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = cerenovus.madRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.MutantMadness mutant -> {
                 // No target icon for mutant
@@ -257,14 +259,14 @@ public class MadnessHUD {
     /**
      * Renders storyteller icons in compact mode (3 icons horizontally).
      */
-    private static void renderStorytellerIconsCompact(GuiGraphics context, Minecraft client,
+    private static void renderStorytellerIconsCompact(GuiGraphicsExtractor context, Minecraft client,
                                                        Madness madness, UUID playerUuid, int x, int y) {
         int currentX = x;
 
         // Icon 1: Madness type
         Role madnessRole = getMadnessRole(madness);
-        ResourceLocation madnessIcon = madnessRole.getIcon();
-        context.blit(madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        Identifier madnessIcon = madnessRole.getIcon();
+        context.blit(RenderPipelines.GUI_TEXTURED, madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         currentX += ICON_SIZE + ICON_PADDING;
 
         // Icon 2: Player head (supports distant players + disconnect fallback)
@@ -274,15 +276,15 @@ public class MadnessHUD {
         // Icon 3: Target
         switch (madness) {
             case Madness.PixieMadness pixie -> {
-                ResourceLocation roleIcon = pixie.townsfolkRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = pixie.townsfolkRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.HarpyMadness harpy -> {
                 PlayerListUtil.drawPlayerHead(context, client, harpy.targetPlayerUuid(), currentX, y, ICON_SIZE);
             }
             case Madness.CerenovusMadness cerenovus -> {
-                ResourceLocation roleIcon = cerenovus.madRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = cerenovus.madRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.MutantMadness mutant -> {
                 // No third icon for mutant
@@ -330,7 +332,7 @@ public class MadnessHUD {
     /**
      * Renders the player's view: their own madnesses.
      */
-    private static void renderPlayerView(GuiGraphics context, Minecraft client) {
+    private static void renderPlayerView(GuiGraphicsExtractor context, Minecraft client) {
         List<Madness> myMadnesses = ClientState.myMadnesses;
         if (myMadnesses == null || myMadnesses.isEmpty()) return;
 
@@ -349,7 +351,7 @@ public class MadnessHUD {
      * Renders a single madness row in player view.
      * Returns the height of the rendered row.
      */
-    private static int renderPlayerMadnessRow(GuiGraphics context, Minecraft client,
+    private static int renderPlayerMadnessRow(GuiGraphicsExtractor context, Minecraft client,
                                                Madness madness, int x, int y, boolean isExpanded) {
         if (isExpanded) {
             // Expanded view: 2 icons horizontally + text with backdrop
@@ -366,7 +368,7 @@ public class MadnessHUD {
             int boxWidth = iconRowWidth + padding + textWidth;
 
             // Draw backdrop
-            int bgColor = FastColor.ARGB32.color(191, 0, 0, 0);
+            int bgColor = ARGB.color(191, 0, 0, 0);
             context.fill(x, y - boxHeight, x + boxWidth, y, bgColor);
 
             // Draw 2 icons in a row
@@ -377,7 +379,7 @@ public class MadnessHUD {
             int textX = x + iconRowWidth + padding * 2;
             int textY = y - boxHeight + padding;
             for (Component line : wrappedLines) {
-                context.drawString(client.font, line, textX, textY, TEXT_COLOR);
+                context.text(client.font, line, textX, textY, TEXT_COLOR);
                 textY += client.font.lineHeight + 2;
             }
 
@@ -392,28 +394,28 @@ public class MadnessHUD {
     /**
      * Renders player icons in expanded mode (2 icons horizontally).
      */
-    private static void renderPlayerIconsExpanded(GuiGraphics context, Minecraft client,
+    private static void renderPlayerIconsExpanded(GuiGraphicsExtractor context, Minecraft client,
                                                    Madness madness, int x, int y) {
         int currentX = x;
 
         // Icon 1: Madness-causing role
         Role madnessRole = getMadnessRole(madness);
-        ResourceLocation madnessIcon = madnessRole.getIcon();
-        context.blit(madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        Identifier madnessIcon = madnessRole.getIcon();
+        context.blit(RenderPipelines.GUI_TEXTURED, madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         currentX += ICON_SIZE + ICON_PADDING;
 
         // Icon 2: Target
         switch (madness) {
             case Madness.PixieMadness pixie -> {
-                ResourceLocation roleIcon = pixie.townsfolkRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = pixie.townsfolkRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.HarpyMadness harpy -> {
                 PlayerListUtil.drawPlayerHead(context, client, harpy.targetPlayerUuid(), currentX, y, ICON_SIZE);
             }
             case Madness.CerenovusMadness cerenovus -> {
-                ResourceLocation roleIcon = cerenovus.madRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = cerenovus.madRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.MutantMadness mutant -> {
                 // Should not be sent to player
@@ -424,28 +426,28 @@ public class MadnessHUD {
     /**
      * Renders player icons in compact mode (2 icons horizontally).
      */
-    private static void renderPlayerIconsCompact(GuiGraphics context, Minecraft client,
+    private static void renderPlayerIconsCompact(GuiGraphicsExtractor context, Minecraft client,
                                                    Madness madness, int x, int y) {
         int currentX = x;
 
         // Icon 1: Madness-causing role
         Role madnessRole = getMadnessRole(madness);
-        ResourceLocation madnessIcon = madnessRole.getIcon();
-        context.blit(madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        Identifier madnessIcon = madnessRole.getIcon();
+        context.blit(RenderPipelines.GUI_TEXTURED, madnessIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         currentX += ICON_SIZE + ICON_PADDING;
 
         // Icon 2: Target
         switch (madness) {
             case Madness.PixieMadness pixie -> {
-                ResourceLocation roleIcon = pixie.townsfolkRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = pixie.townsfolkRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.HarpyMadness harpy -> {
                 PlayerListUtil.drawPlayerHead(context, client, harpy.targetPlayerUuid(), currentX, y, ICON_SIZE);
             }
             case Madness.CerenovusMadness cerenovus -> {
-                ResourceLocation roleIcon = cerenovus.madRole().getIcon();
-                context.blit(roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+                Identifier roleIcon = cerenovus.madRole().getIcon();
+                context.blit(RenderPipelines.GUI_TEXTURED, roleIcon, currentX, y, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
             }
             case Madness.MutantMadness mutant -> {
                 // Should not be sent to player

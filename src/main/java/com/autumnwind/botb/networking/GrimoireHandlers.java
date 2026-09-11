@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import com.autumnwind.botb.util.ServerCommands;
+import net.minecraft.server.permissions.Permissions;
 
 /** Server-bound packet handlers: Grimoire sync between storytellers, sending a grimoire to a player, and seat swaps. */
 final class GrimoireHandlers {
@@ -23,13 +24,13 @@ final class GrimoireHandlers {
 
     static void register() {
         ModPackets.registerGuarded(SyncGrimoireC2SPayload.ID, (payload, context) -> {
-            if (!context.player().hasPermissions(2)) {
+            if (!context.player().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 return; // Only operators can sync grimoire
             }
 
             // Count how many operators are online
             List<ServerPlayer> operators = context.server().getPlayerList().getPlayers().stream()
-                    .filter(p -> p.hasPermissions(2))
+                    .filter(p -> p.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                     .toList();
 
             // If only one operator (the sender), no need to broadcast
@@ -57,7 +58,7 @@ final class GrimoireHandlers {
 
         // Register send grimoire to specific player receiver
         ModPackets.registerGuarded(SendGrimoireToPlayerC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissions(2)) {
+            if (context.player().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 UUID targetUuid = payload.targetPlayer();
                 ServerPlayer targetPlayer = context.server().getPlayerList().getPlayer(targetUuid);
 
@@ -76,7 +77,7 @@ final class GrimoireHandlers {
         });
 
         ModPackets.registerGuarded(SwapPlayersC2SPayload.ID, (payload, context) -> {
-            if (!context.player().hasPermissions(2)) {
+            if (!context.player().permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 return; // Only operators can swap seats
             }
 
@@ -96,7 +97,7 @@ final class GrimoireHandlers {
             Integer seat2 = seats.get(player2);
 
             if (seat1 == null || seat2 == null) {
-                context.player().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.grimoire.cannot_swap_unseated").withStyle(ChatFormatting.RED), true);
+                context.player().sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.grimoire.cannot_swap_unseated").withStyle(ChatFormatting.RED), true);
                 return;
             }
 
@@ -104,7 +105,7 @@ final class GrimoireHandlers {
             if (DaytimeState.getCurrentNominee() != null ||
                 DaytimeState.getCurrentExileTarget() != null ||
                 DaytimeState.isExileSupportInProgress()) {
-                context.player().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.grimoire.cannot_swap_during_vote").withStyle(ChatFormatting.RED), true);
+                context.player().sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.grimoire.cannot_swap_during_vote").withStyle(ChatFormatting.RED), true);
                 return;
             }
 
@@ -162,7 +163,7 @@ final class GrimoireHandlers {
             ServerPlayer p2 = context.server().getPlayerList().getPlayer(player2);
 
             if (p1 != null && newPos1 != null) {
-                p1.teleportTo(world, newPos1.getX() + 0.5, newPos1.getY(), newPos1.getZ() + 0.5, p1.getYRot(), p1.getXRot());
+                p1.teleportTo(world, newPos1.getX() + 0.5, newPos1.getY(), newPos1.getZ() + 0.5, Set.of(), p1.getYRot(), p1.getXRot(), true);
 
                 // Update spawnpoint to new seat home
                 String spawnpointCommand = String.format("spawnpoint @s %d %d %d",
@@ -170,7 +171,7 @@ final class GrimoireHandlers {
                 ServerCommands.runAs(context.server(), p1.getStringUUID(), spawnpointCommand);
             }
             if (p2 != null && newPos2 != null) {
-                p2.teleportTo(world, newPos2.getX() + 0.5, newPos2.getY(), newPos2.getZ() + 0.5, p2.getYRot(), p2.getXRot());
+                p2.teleportTo(world, newPos2.getX() + 0.5, newPos2.getY(), newPos2.getZ() + 0.5, Set.of(), p2.getYRot(), p2.getXRot(), true);
 
                 // Update spawnpoint to new seat home
                 String spawnpointCommand = String.format("spawnpoint @s %d %d %d",

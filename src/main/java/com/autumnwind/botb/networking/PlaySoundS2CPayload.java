@@ -5,11 +5,11 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public record PlaySoundS2CPayload(String soundType) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PlaySoundS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "play_sound"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "play_sound"));
 
     public static final StreamCodec<ByteBuf, PlaySoundS2CPayload> CODEC = StreamCodec.composite(
             ByteBufCodecs.STRING_UTF8, PlaySoundS2CPayload::soundType,

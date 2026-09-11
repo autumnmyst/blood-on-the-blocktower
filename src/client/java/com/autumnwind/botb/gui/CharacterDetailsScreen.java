@@ -9,7 +9,8 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,6 +20,7 @@ import com.autumnwind.botb.util.ScriptRole;
 import com.autumnwind.botb.config.CustomRoleLibrary;
 import java.util.ArrayList;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
+import net.minecraft.client.input.KeyEvent;
 
 public class CharacterDetailsScreen extends Screen {
     private final ScriptRole scriptRole;
@@ -95,7 +97,7 @@ public class CharacterDetailsScreen extends Screen {
                 this.almanacLoading = false;
                 // Refresh the screen if we're still showing it
                 Minecraft.getInstance().execute(() -> {
-                    if (Minecraft.getInstance().screen == this) {
+                    if (Minecraft.getInstance().gui.screen() == this) {
                         this.rebuildWidgets();
                     }
                 });
@@ -150,7 +152,7 @@ public class CharacterDetailsScreen extends Screen {
             int nextButtonX = backButtonX + backButtonWidth + spacing;
 
             // "Back" button (goes back to catalog screen)
-            this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.setScreen(this.parent))
+            this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.gui.setScreen(this.parent))
                     .bounds(backButtonX, buttonY, backButtonWidth, buttonHeight)
                     .build());
 
@@ -158,7 +160,7 @@ public class CharacterDetailsScreen extends Screen {
             if (this.catalogIndex > 0) {
                 this.addRenderableWidget(Button.builder(Component.literal("<"), (button) -> {
                     ScriptRole prevRole = this.catalogList.get(this.catalogIndex - 1);
-                    this.minecraft.setScreen(new CharacterDetailsScreen(prevRole, this.parent, this.catalogList));
+                    this.minecraft.gui.setScreen(new CharacterDetailsScreen(prevRole, this.parent, this.catalogList));
                 }).bounds(prevButtonX, buttonY, arrowButtonWidth, buttonHeight).build());
             }
 
@@ -166,13 +168,13 @@ public class CharacterDetailsScreen extends Screen {
             if (this.catalogIndex < this.catalogList.size() - 1) {
                 this.addRenderableWidget(Button.builder(Component.literal(">"), (button) -> {
                     ScriptRole nextRole = this.catalogList.get(this.catalogIndex + 1);
-                    this.minecraft.setScreen(new CharacterDetailsScreen(nextRole, this.parent, this.catalogList));
+                    this.minecraft.gui.setScreen(new CharacterDetailsScreen(nextRole, this.parent, this.catalogList));
                 }).bounds(nextButtonX, buttonY, arrowButtonWidth, buttonHeight).build());
             }
 
         } else {
             // Otherwise, show the default full-width "Back" button
-            this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.setScreen(this.parent))
+            this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.gui.setScreen(this.parent))
                     .bounds(this.width / 2 - 100, buttonY, 200, buttonHeight)
                     .build());
         }
@@ -185,7 +187,7 @@ public class CharacterDetailsScreen extends Screen {
             int listHeight = this.height - listY - 35;
 
             this.listWidget = new DetailsListWidget(this.minecraft, listWidth, listHeight, listY);
-            this.listWidget.setX(listX);
+            this.listWidget.updateSizeAndPosition(listWidth, listHeight, listX, listY);
             this.addRenderableWidget(this.listWidget);
         }
     }
@@ -201,8 +203,8 @@ public class CharacterDetailsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Determine layout:
         // - Official roles always use half width with details on right
@@ -218,27 +220,27 @@ public class CharacterDetailsScreen extends Screen {
         // Icon
         int iconSize = 64;
         int iconX = shouldCenter ? (this.width - iconSize) / 2 : leftX;
-        context.blit(scriptRole.getIcon(), iconX, currentY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+        context.blit(RenderPipelines.GUI_TEXTURED, scriptRole.getIcon(), iconX, currentY, 0, 0, iconSize, iconSize, iconSize, iconSize);
         currentY += iconSize + 5;
 
         // Role Name and Type
         Component roleName = Component.literal(scriptRole.getDisplayName()).withStyle(ChatFormatting.BOLD);
         if (shouldCenter) {
-            context.drawCenteredString(this.font, roleName, this.width / 2, currentY, 0xFFFFFF);
+            context.centeredText(this.font, roleName, this.width / 2, currentY, 0xFFFFFFFF);
         } else {
-            context.drawString(this.font, roleName, leftX, currentY, 0xFFFFFF);
+            context.text(this.font, roleName, leftX, currentY, 0xFFFFFFFF);
         }
         currentY += this.font.lineHeight + 2;
 
         // Handle team display
         RoleType team = scriptRole.getTeam();
         String teamName = team != null ? team.getDisplayName() : RoleType.NONE.getDisplayName();
-        int teamColor = team != null ? team.getColor() : 0xAAAAAA;
+        int teamColor = team != null ? team.getColor() : 0xFFAAAAAA;
         Component roleType = Component.literal(teamName).withStyle(ChatFormatting.ITALIC);
         if (shouldCenter) {
-            context.drawCenteredString(this.font, roleType, this.width / 2, currentY, teamColor);
+            context.centeredText(this.font, roleType, this.width / 2, currentY, teamColor);
         } else {
-            context.drawString(this.font, roleType, leftX, currentY, teamColor);
+            context.text(this.font, roleType, leftX, currentY, teamColor);
         }
         currentY += this.font.lineHeight + 10;
 
@@ -247,11 +249,11 @@ public class CharacterDetailsScreen extends Screen {
         String abilityString = "\"" + scriptRole.getAbility() + "\"";
         if (shouldCenter) {
             // Center each line for custom roles without almanac data
-            currentY = drawCenteredWrappedText(context, Component.literal(abilityString), textWidth, currentY, 0xFFFFFF);
+            currentY = drawCenteredWrappedText(context, Component.literal(abilityString), textWidth, currentY, 0xFFFFFFFF);
         } else {
             Component abilityText = Component.literal(abilityString).withStyle(ChatFormatting.WHITE);
-            context.drawWordWrap(this.font, abilityText, leftX, currentY, textWidth, 0xFFFFFF);
-            currentY += this.font.wordWrapHeight(abilityString, textWidth);
+            context.textWithWordWrap(this.font, abilityText, leftX, currentY, textWidth, 0xFFFFFFFF);
+            currentY += this.font.wordWrapHeight(abilityText, textWidth);
         }
         currentY += 10;
 
@@ -267,10 +269,10 @@ public class CharacterDetailsScreen extends Screen {
 
             if (flavor != null && !flavor.isEmpty()) {
                 if (shouldCenter) {
-                    drawCenteredWrappedText(context, Component.literal(flavor).withStyle(ChatFormatting.ITALIC), textWidth, currentY, 0xCCCCCC);
+                    drawCenteredWrappedText(context, Component.literal(flavor).withStyle(ChatFormatting.ITALIC), textWidth, currentY, 0xFFCCCCCC);
                 } else {
                     Component flavorText = Component.literal(flavor).withStyle(ChatFormatting.ITALIC);
-                    context.drawWordWrap(this.font, flavorText, leftX, currentY, textWidth, 0xCCCCCC);
+                    context.textWithWordWrap(this.font, flavorText, leftX, currentY, textWidth, 0xFFCCCCCC);
                 }
             }
         } else if (scriptRole instanceof ScriptRole.Custom custom) {
@@ -286,17 +288,17 @@ public class CharacterDetailsScreen extends Screen {
             if (flavor != null && !flavor.isEmpty()) {
                 if (shouldCenter) {
                     // Center each line for custom roles without almanac details
-                    drawCenteredWrappedText(context, Component.literal(flavor).withStyle(ChatFormatting.ITALIC), textWidth, currentY, 0xCCCCCC);
+                    drawCenteredWrappedText(context, Component.literal(flavor).withStyle(ChatFormatting.ITALIC), textWidth, currentY, 0xFFCCCCCC);
                 } else {
                     // Left-align for custom roles with almanac details (like official roles)
                     Component flavorText = Component.literal(flavor).withStyle(ChatFormatting.ITALIC);
-                    context.drawWordWrap(this.font, flavorText, leftX, currentY, textWidth, 0xCCCCCC);
+                    context.textWithWordWrap(this.font, flavorText, leftX, currentY, textWidth, 0xFFCCCCCC);
                 }
             }
         } else if (details != null) {
             // Official role - get flavor from RoleDetails
             Component flavorText = Component.literal(details.flavorText()).withStyle(ChatFormatting.ITALIC);
-            context.drawWordWrap(this.font, flavorText, leftX, currentY, textWidth, 0xCCCCCC);
+            context.textWithWordWrap(this.font, flavorText, leftX, currentY, textWidth, 0xFFCCCCCC);
 
             // Artist credit (only for official roles)
             int halfWidth = this.width / 2;
@@ -304,7 +306,7 @@ public class CharacterDetailsScreen extends Screen {
             int artistX = halfWidth + 110;
             int artistMaxWidth = this.width - artistX - 10;
             int artistY = this.height - 30 + (20 - this.font.lineHeight * 2) / 2;
-            context.drawWordWrap(this.font, artistText, artistX, artistY, artistMaxWidth, 0x888888);
+            context.textWithWordWrap(this.font, artistText, artistX, artistY, artistMaxWidth, 0xFF888888);
         }
     }
 
@@ -312,27 +314,31 @@ public class CharacterDetailsScreen extends Screen {
      * Draws text wrapped to the specified width, with each line centered horizontally.
      * @return The Y position after the last line
      */
-    private int drawCenteredWrappedText(GuiGraphics context, Component text, int maxWidth, int startY, int color) {
+    private int drawCenteredWrappedText(GuiGraphicsExtractor context, Component text, int maxWidth, int startY, int color) {
         List<FormattedCharSequence> lines = this.font.split(text, maxWidth);
         int currentY = startY;
         for (FormattedCharSequence line : lines) {
             int lineWidth = this.font.width(line);
             int lineX = (this.width - lineWidth) / 2;
-            context.drawString(this.font, line, lineX, currentY, color, true);
+            context.text(this.font, line, lineX, currentY, color, true);
             currentY += this.font.lineHeight;
         }
         return currentY;
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (KeyInputHandler.openMyRoleDetailsKey.matches(keyCode, scanCode)) {
-            this.minecraft.setScreen(this.parent);
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
+        if (KeyInputHandler.openMyRoleDetailsKey.matches(event)) {
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
 
         if (keyCode == GLFW.GLFW_KEY_E) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
 
@@ -340,18 +346,18 @@ public class CharacterDetailsScreen extends Screen {
         if (this.catalogList != null && this.catalogIndex != -1) {
             if (keyCode == GLFW.GLFW_KEY_RIGHT && this.catalogIndex < this.catalogList.size() - 1) {
                 ScriptRole nextRole = this.catalogList.get(this.catalogIndex + 1);
-                this.minecraft.setScreen(new CharacterDetailsScreen(nextRole, this.parent, this.catalogList));
+                this.minecraft.gui.setScreen(new CharacterDetailsScreen(nextRole, this.parent, this.catalogList));
                 return true;
             }
 
             if (keyCode == GLFW.GLFW_KEY_LEFT && this.catalogIndex > 0) {
                 ScriptRole prevRole = this.catalogList.get(this.catalogIndex - 1);
-                this.minecraft.setScreen(new CharacterDetailsScreen(prevRole, this.parent, this.catalogList));
+                this.minecraft.gui.setScreen(new CharacterDetailsScreen(prevRole, this.parent, this.catalogList));
                 return true;
             }
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -362,7 +368,7 @@ public class CharacterDetailsScreen extends Screen {
     @Override
     public void onClose() {
         if (this.parent instanceof ReturnOnClose) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return;
         }
         super.onClose();
@@ -380,7 +386,7 @@ public class CharacterDetailsScreen extends Screen {
                 String prefix = specialRules.size() > 1 ? "- " : "";
                 for (String rule : specialRules) {
                     for (FormattedCharSequence line : font.split(Component.literal(prefix + rule), textWidth)) {
-                        this.addEntry(DocumentEntry.text(font, line, 0x55FFFF));
+                        this.addEntry(DocumentEntry.text(font, line, 0xFF55FFFF));
                     }
                 }
                 this.addEntry(DocumentEntry.spacer());
@@ -391,7 +397,7 @@ public class CharacterDetailsScreen extends Screen {
                 // Official role - show Summary and Examples from RoleDetails
                 this.addEntry(DocumentEntry.title(font, Component.translatable("gui.blood-on-the-blocktower.character_details.summary").withStyle(ChatFormatting.GOLD)));
                 for (FormattedCharSequence line : font.split(Component.literal(details.summary()), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
+                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
                 }
 
                 // Spacer
@@ -401,7 +407,7 @@ public class CharacterDetailsScreen extends Screen {
                 // Examples Section
                 this.addEntry(DocumentEntry.title(font, Component.translatable("gui.blood-on-the-blocktower.character_details.examples").withStyle(ChatFormatting.GOLD)));
                 for (FormattedCharSequence line : font.split(Component.literal(details.examples()), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
+                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
                 }
             } else if (almanacRoleData != null) {
                 // Custom role - show sections from almanac data
@@ -456,7 +462,7 @@ public class CharacterDetailsScreen extends Screen {
                 }
                 firstParagraph = false;
                 for (FormattedCharSequence line : font.split(Component.literal(paragraph), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
+                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
                 }
             }
         }
@@ -467,7 +473,7 @@ public class CharacterDetailsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 6;
         }
 

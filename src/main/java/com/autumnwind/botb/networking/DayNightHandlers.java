@@ -15,6 +15,9 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.Team;
 import com.autumnwind.botb.world.TeamManager;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.scores.TeamColor;
+import com.autumnwind.botb.world.WorldTime;
 
 /** Server-bound packet handlers: The dusk and dawn transitions. */
 final class DayNightHandlers {
@@ -24,7 +27,7 @@ final class DayNightHandlers {
     static void register() {
         ModPackets.registerGuarded(ExecuteDuskDawnC2SPayload.ID, (payload, context) -> {
             ServerPlayer player = context.player();
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                 String type = payload.transition();
                 String command = null;
                 String soundType = null;
@@ -41,7 +44,7 @@ final class DayNightHandlers {
                     if (storytellerMFE != null) {
                         ServerPlayer mfePlayer = context.server().getPlayerList().getPlayer(storytellerMFE);
                         String mfeName = mfePlayer != null ? mfePlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-                        player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.night.cannot_dusk_marked", mfeName).withStyle(ChatFormatting.RED), true);
+                        player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.night.cannot_dusk_marked", mfeName).withStyle(ChatFormatting.RED), true);
                         return;
                     }
 
@@ -49,7 +52,7 @@ final class DayNightHandlers {
                         // Get nominee player name for the message
                         ServerPlayer nomineePlayer = context.server().getPlayerList().getPlayer(currentNominee);
                         String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-                        player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.night.cannot_dusk_nominated", nomineeName).withStyle(ChatFormatting.RED), true);
+                        player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.night.cannot_dusk_nominated", nomineeName).withStyle(ChatFormatting.RED), true);
                         return;
                     }
 
@@ -58,7 +61,7 @@ final class DayNightHandlers {
                     if (currentExileTarget != null) {
                         ServerPlayer exilePlayer = context.server().getPlayerList().getPlayer(currentExileTarget);
                         String exileName = exilePlayer != null ? exilePlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-                        player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.night.cannot_dusk_exile", exileName).withStyle(ChatFormatting.RED), true);
+                        player.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.night.cannot_dusk_exile", exileName).withStyle(ChatFormatting.RED), true);
                         return;
                     }
 
@@ -104,21 +107,21 @@ final class DayNightHandlers {
                     StateBroadcaster.broadcastDayNightState(context.server());
 
                     // Set in-game time to dusk
-                    context.server().overworld().setDayTime(ServerConfig.TIME_DUSK);
+                    WorldTime.setOverworldTime(context.server(), ServerConfig.TIME_DUSK);
 
                     // Hide nametags for both player and traveler teams at dusk
                     Scoreboard scoreboard = context.server().getScoreboard();
                     PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
                     if (playerTeam == null) {
                         playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-                        playerTeam.setColor(ChatFormatting.WHITE);
+                        playerTeam.setColor(Optional.of(TeamColor.WHITE));
                     }
                     playerTeam.setNameTagVisibility(Team.Visibility.NEVER);
 
                     PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
                     if (travelerTeam == null) {
                         travelerTeam = scoreboard.addPlayerTeam(TeamManager.TRAVELER_TEAM);
-                        travelerTeam.setColor(ChatFormatting.LIGHT_PURPLE);
+                        travelerTeam.setColor(Optional.of(TeamColor.LIGHT_PURPLE));
                     }
                     travelerTeam.setNameTagVisibility(Team.Visibility.NEVER);
 
@@ -126,7 +129,7 @@ final class DayNightHandlers {
                     if (previousNight <= 1 && ServerState.currentNight > 1) {
                         // Send a special payload to trigger client-side night order rebuild
                         for (ServerPlayer onlinePlayer : context.server().getPlayerList().getPlayers()) {
-                            if (onlinePlayer.hasPermissions(2)) {
+                            if (onlinePlayer.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                                 // Trigger night order rebuild for storytellers
                                 ServerPlayNetworking.send(onlinePlayer, new RebuildNightOrderS2CPayload());
                             }
@@ -160,13 +163,13 @@ final class DayNightHandlers {
 
                     // Rebuild night order for storyteller (executionToday changed, Undertaker may need to be removed)
                     for (ServerPlayer onlinePlayer : context.server().getPlayerList().getPlayers()) {
-                        if (onlinePlayer.hasPermissions(2)) {
+                        if (onlinePlayer.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
                             ServerPlayNetworking.send(onlinePlayer, new RebuildNightOrderS2CPayload());
                         }
                     }
 
                     // Set in-game time to dawn
-                    context.server().overworld().setDayTime(ServerConfig.TIME_DAWN);
+                    WorldTime.setOverworldTime(context.server(), ServerConfig.TIME_DAWN);
 
                     // --- Banshee Vote Indicator Updates at Dawn ---
                     // Get the list of dead players
@@ -209,8 +212,8 @@ final class DayNightHandlers {
                         // Leave voice chat group before teleporting
                         ModPackets.leaveVoiceChatGroup(player);
 
-                        ServerLevel world = player.serverLevel();
-                        player.teleportTo(world, townSquare.getX() + 0.5, townSquare.getY(), townSquare.getZ() + 0.5, player.getYRot(), player.getXRot());
+                        ServerLevel world = player.level();
+                        player.teleportTo(world, townSquare.getX() + 0.5, townSquare.getY(), townSquare.getZ() + 0.5, Set.of(), player.getYRot(), player.getXRot(), true);
                     }
                 }
 
@@ -227,10 +230,10 @@ final class DayNightHandlers {
                     for (ServerPlayer onlinePlayer : context.server().getPlayerList().getPlayers()) {
                         ServerPlayNetworking.send(onlinePlayer, new PlaySoundS2CPayload(soundType));
                         if (messageToAll != null) {
-                            onlinePlayer.displayClientMessage(messageToAll, false);
+                            onlinePlayer.sendSystemMessage(messageToAll, false);
                         }
                         if (extraMessage != null) {
-                            onlinePlayer.displayClientMessage(extraMessage, false);
+                            onlinePlayer.sendSystemMessage(extraMessage, false);
                         }
                     }
                 }
@@ -239,7 +242,7 @@ final class DayNightHandlers {
                 // This prevents storytellers from trapping each other behind the dawn/dusk barrier
                 String syncType = ExecuteDuskDawnC2SPayload.DUSK.equals(type) ? SyncNightVisitS2CPayload.DUSK : SyncNightVisitS2CPayload.DAWN;
                 for (ServerPlayer operator : context.server().getPlayerList().getPlayers()) {
-                    if (operator.hasPermissions(2) && !operator.getUUID().equals(player.getUUID())) {
+                    if (operator.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) && !operator.getUUID().equals(player.getUUID())) {
                         ServerPlayNetworking.send(operator, new SyncNightVisitS2CPayload(syncType));
                     }
                 }

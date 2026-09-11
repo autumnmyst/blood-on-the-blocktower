@@ -9,7 +9,7 @@ import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * S2C payload to send the complete grimoire (all roles and reminders) to players.
@@ -30,7 +30,7 @@ public record SendGrimoireS2CPayload(
         List<String> demonBluffs,
         boolean isTargetedSend
 ) implements CustomPacketPayload {
-    public static final ResourceLocation SEND_GRIMOIRE_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_grimoire");
+    public static final Identifier SEND_GRIMOIRE_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_grimoire");
     public static final CustomPacketPayload.Type<SendGrimoireS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_GRIMOIRE_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SendGrimoireS2CPayload> CODEC = new StreamCodec<>() {

@@ -15,10 +15,10 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import java.util.HashMap;
@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 import com.autumnwind.botb.daytime.ElectionManager;
 import com.autumnwind.botb.world.VoteIndicators;
+import net.minecraft.server.permissions.Permissions;
 
 /**
  * Guided map setup with the "BotB Setup Stick". The storyteller MB1s blocks to fill in each
@@ -123,10 +124,10 @@ public final class SetupStick {
             return 0;
         }
         GameRules rules = source.getServer().getGameRules();
-        rules.getRule(GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(true, source.getServer());
-        rules.getRule(GameRules.RULE_DAYLIGHT).set(false, source.getServer());
-        rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, source.getServer());
-        rules.getRule(GameRules.RULE_KEEPINVENTORY).set(true, source.getServer());
+        rules.set(GameRules.IMMEDIATE_RESPAWN, true, source.getServer());
+        rules.set(GameRules.ADVANCE_TIME, false, source.getServer());
+        rules.set(GameRules.SPAWN_MOBS, false, source.getServer());
+        rules.set(GameRules.KEEP_INVENTORY, true, source.getServer());
         giveStick(player);
         reportGamerules(player);
         startSession(player);
@@ -193,7 +194,7 @@ public final class SetupStick {
         LAST_STICK_ATTACK_MS.put(player.getUUID(), now);
         if (world.isClientSide()) return InteractionResult.SUCCESS; // the server does the work
         if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
-        if (!serverPlayer.hasPermissions(2)) {
+        if (!serverPlayer.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             send(serverPlayer, Component.translatable("message.blood-on-the-blocktower.setup.operators_only").withStyle(ChatFormatting.RED));
             return InteractionResult.SUCCESS;
         }
@@ -215,7 +216,7 @@ public final class SetupStick {
         BlockPos target = session.step.standing ? pos.relative(side) : pos;
         apply(session, target);
         ServerConfig.save();
-        serverPlayer.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.setup.step_set", session.step.title(session.seat)).withStyle(ChatFormatting.GREEN)
+        serverPlayer.sendSystemMessage(Component.translatable("message.blood-on-the-blocktower.setup.step_set", session.step.title(session.seat)).withStyle(ChatFormatting.GREEN)
                 .append(Component.literal(target.toShortString()).withStyle(ChatFormatting.WHITE)), true);
         advance(serverPlayer, session);
         return InteractionResult.SUCCESS;
@@ -232,18 +233,18 @@ public final class SetupStick {
     }
 
     /** MB2 in the air while holding the stick: back a step (Shift: seats to homes, or homes to finish). */
-    public static InteractionResultHolder<ItemStack> onUseItem(Player player, Level world, InteractionHand hand) {
+    public static InteractionResult onUseItem(Player player, Level world, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!stack.is(ModItems.SETUP_STICK)) return InteractionResultHolder.pass(stack);
-        if (world.isClientSide()) return InteractionResultHolder.success(stack);
+        if (!stack.is(ModItems.SETUP_STICK)) return InteractionResult.PASS;
+        if (world.isClientSide()) return InteractionResult.SUCCESS;
         if (player instanceof ServerPlayer serverPlayer) {
             rightClick(serverPlayer);
         }
-        return InteractionResultHolder.success(stack);
+        return InteractionResult.SUCCESS;
     }
 
     private static void rightClick(ServerPlayer player) {
-        if (!player.hasPermissions(2)) {
+        if (!player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
             send(player, Component.translatable("message.blood-on-the-blocktower.setup.operators_only").withStyle(ChatFormatting.RED));
             return;
         }
@@ -431,13 +432,13 @@ public final class SetupStick {
     private static void finish(ServerPlayer player) {
         hideHud(player);
         takeStick(player);
-        VoteIndicators.paintVoteIndicatorStacks(player.getServer(), true);
-        ElectionManager.powerAllSeatPistons(player.getServer());
+        VoteIndicators.paintVoteIndicatorStacks(player.level().getServer(), true);
+        ElectionManager.powerAllSeatPistons(player.level().getServer());
         send(player, Component.translatable("message.blood-on-the-blocktower.setup.complete").withStyle(ChatFormatting.GREEN)
                 .append(Component.translatable("message.blood-on-the-blocktower.setup.run_for_settings", Component.literal("/botb setup help").withStyle(style -> style
                         .withColor(ChatFormatting.AQUA)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/botb setup help"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("message.blood-on-the-blocktower.setup.click_to_run")))))
+                        .withClickEvent(new ClickEvent.RunCommand("/botb setup help"))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.translatable("message.blood-on-the-blocktower.setup.click_to_run")))))
                         .withStyle(ChatFormatting.GRAY)));
     }
 
@@ -486,8 +487,8 @@ public final class SetupStick {
     private static MutableComponent command(String label, String suggest) {
         return Component.literal(label).withStyle(style -> style
                 .withColor(ChatFormatting.AQUA)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, suggest))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("message.blood-on-the-blocktower.setup.click_to_suggest"))));
+                .withClickEvent(new ClickEvent.SuggestCommand(suggest))
+                .withHoverEvent(new HoverEvent.ShowText(Component.translatable("message.blood-on-the-blocktower.setup.click_to_suggest"))));
     }
 
     private static Component posOrUnset(BlockPos pos) {
@@ -515,12 +516,12 @@ public final class SetupStick {
 
     /** Lists the gamerules World Setup manages, one per line, red when not at the expected value. */
     private static void reportGamerules(ServerPlayer player) {
-        GameRules rules = player.getServer().getGameRules();
+        GameRules rules = player.level().getServer().getGameRules();
         send(player, Component.translatable("message.blood-on-the-blocktower.setup.gamerules").withStyle(ChatFormatting.GOLD));
-        gamerule(player, "doImmediateRespawn", rules.getBoolean(GameRules.RULE_DO_IMMEDIATE_RESPAWN), true);
-        gamerule(player, "doDaylightCycle", rules.getBoolean(GameRules.RULE_DAYLIGHT), false);
-        gamerule(player, "doMobSpawning", rules.getBoolean(GameRules.RULE_DOMOBSPAWNING), false);
-        gamerule(player, "keepInventory", rules.getBoolean(GameRules.RULE_KEEPINVENTORY), true);
+        gamerule(player, "doImmediateRespawn", rules.get(GameRules.IMMEDIATE_RESPAWN), true);
+        gamerule(player, "doDaylightCycle", rules.get(GameRules.ADVANCE_TIME), false);
+        gamerule(player, "doMobSpawning", rules.get(GameRules.SPAWN_MOBS), false);
+        gamerule(player, "keepInventory", rules.get(GameRules.KEEP_INVENTORY), true);
     }
 
     private static void gamerule(ServerPlayer player, String name, boolean value, boolean expected) {
@@ -540,6 +541,6 @@ public final class SetupStick {
     }
 
     private static void send(ServerPlayer player, Component text) {
-        player.displayClientMessage(text, false);
+        player.sendSystemMessage(text, false);
     }
 }

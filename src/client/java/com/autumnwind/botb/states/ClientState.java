@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.permissions.Permissions;
 
 public class ClientState {
     public static Role myRole = null;  // For backwards compatibility - use myAssignment for full info
@@ -170,7 +171,7 @@ public class ClientState {
         boolean wasUnassigned = myAssignment == null && myRole == null;
         boolean isSetupPhase = currentNight == 0;
         Minecraft mc = Minecraft.getInstance();
-        boolean isOperator = mc.player != null && mc.player.hasPermissions(2);
+        boolean isOperator = mc.player != null && mc.player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
 
         if (wasUnassigned && isSetupPhase && !isOperator) {
             StorytellerState.PENDING_ROLES.clear();

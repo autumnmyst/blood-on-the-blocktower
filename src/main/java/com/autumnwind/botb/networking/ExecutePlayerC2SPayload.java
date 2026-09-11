@@ -8,7 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Client-to-Server payload for executing a player.
@@ -19,7 +19,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record ExecutePlayerC2SPayload(UUID player, boolean forced, boolean butcherAliveWithAbility, Optional<UUID> butcherUuid) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ExecutePlayerC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "execute_player"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "execute_player"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ExecutePlayerC2SPayload> CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC, ExecutePlayerC2SPayload::player,

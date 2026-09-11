@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
@@ -22,6 +22,7 @@ import com.autumnwind.botb.gui.assignroles.AssignRolesActions;
 import com.autumnwind.botb.hud.NightOrderHudManager;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
+import net.minecraft.client.input.KeyEvent;
 
 /**
  * Storyteller Tools screen - shows all storyteller functions with buttons and documentation.
@@ -100,7 +101,7 @@ public class StorytellerToolsScreen extends Screen {
             sendRolesButton = this.addRenderableWidget(Button.builder(
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.send_roles").withStyle(ChatFormatting.GREEN),
                     button -> {
-                        if (Screen.hasAltDown()) {
+                        if (Minecraft.getInstance().hasAltDown()) {
                             AssignRolesActions.sendScriptOnly();
                         } else {
                             AssignRolesScreen.sendRolesWithReminderChecks();
@@ -127,7 +128,7 @@ public class StorytellerToolsScreen extends Screen {
                 this.addRenderableWidget(Button.builder(alHadikhiaText, b -> {
                     StorytellerState.alHadikhiaHomebrew = !StorytellerState.alHadikhiaHomebrew;
                     NightOrderHudManager.rebuildActiveNightOrder();
-                    this.minecraft.setScreen(this);
+                    this.minecraft.gui.setScreen(this);
                 }).bounds(leftColumnX + 2 * (buttonWidth + buttonSpacing), currentY, smallSquareSize, smallSquareSize)
                 .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.al_hadikhia")))
                 .build());
@@ -139,7 +140,7 @@ public class StorytellerToolsScreen extends Screen {
             // button, which only exists during SETUP, this one is reachable at any point.
             this.addRenderableWidget(Button.builder(
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.script_builder"),
-                    button -> this.minecraft.setScreen(new ScriptBuilderScreen(this))
+                    button -> this.minecraft.gui.setScreen(new ScriptBuilderScreen(this))
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.script_builder")))
             .build());
@@ -150,7 +151,7 @@ public class StorytellerToolsScreen extends Screen {
                             : "gui.blood-on-the-blocktower.storyteller_tools.hide"));
             this.addRenderableWidget(Button.builder(unseatedText, b -> {
                 StorytellerState.showUnseated = !StorytellerState.showUnseated;
-                this.minecraft.setScreen(this);
+                this.minecraft.gui.setScreen(this);
             }).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.unseated")))
             .build());
@@ -164,7 +165,7 @@ public class StorytellerToolsScreen extends Screen {
                             : "gui.blood-on-the-blocktower.storyteller_tools.hide"));
             this.addRenderableWidget(Button.builder(selfText, b -> {
                 StorytellerState.showSelf = !StorytellerState.showSelf;
-                this.minecraft.setScreen(this);
+                this.minecraft.gui.setScreen(this);
             }).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.self")))
             .build());
@@ -175,7 +176,7 @@ public class StorytellerToolsScreen extends Screen {
                             : "gui.blood-on-the-blocktower.storyteller_tools.bell"));
             this.addRenderableWidget(Button.builder(visitSoundText, b -> {
                 StorytellerState.useDoorknock = !StorytellerState.useDoorknock;
-                this.minecraft.setScreen(this);
+                this.minecraft.gui.setScreen(this);
             }).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.visit_sound")))
             .build());
@@ -190,7 +191,7 @@ public class StorytellerToolsScreen extends Screen {
             // Row 4: Timer, Call Back
             this.addRenderableWidget(Button.builder(
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.timer").withStyle(ChatFormatting.YELLOW),
-                    button -> this.minecraft.setScreen(new TimerScreen())
+                    button -> this.minecraft.gui.setScreen(new TimerScreen())
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.open_timer")))
             .build());
@@ -371,7 +372,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.end_good").withStyle(ChatFormatting.BLUE),
                     button -> {
                         if (this.minecraft.player != null) {
-                            this.minecraft.player.connection.sendUnsignedCommand("botb endGame good");
+                            this.minecraft.player.connection.sendCommand("botb endGame good");
                         }
                     }
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
@@ -382,7 +383,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.end_evil").withStyle(ChatFormatting.DARK_RED),
                     button -> {
                         if (this.minecraft.player != null) {
-                            this.minecraft.player.connection.sendUnsignedCommand("botb endGame evil");
+                            this.minecraft.player.connection.sendCommand("botb endGame evil");
                         }
                     }
             ).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
@@ -396,7 +397,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.reset_game").withStyle(ChatFormatting.GREEN),
                     button -> {
                         if (this.minecraft.player != null) {
-                            this.minecraft.player.connection.sendUnsignedCommand("botb resetGame");
+                            this.minecraft.player.connection.sendCommand("botb resetGame");
                         }
                     }
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
@@ -408,7 +409,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.full_reset").withStyle(ChatFormatting.RED),
                     button -> {
                         if (this.minecraft.player != null) {
-                            this.minecraft.player.connection.sendUnsignedCommand("botb resetGameHard");
+                            this.minecraft.player.connection.sendCommand("botb resetGameHard");
                         }
                     }
             ).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
@@ -425,8 +426,8 @@ public class StorytellerToolsScreen extends Screen {
                         if (this.minecraft.player != null) {
                             // Server-side so the gamerules are set without vanilla's per-rule
                             // feedback; the setup start lists them instead
-                            this.minecraft.player.connection.sendUnsignedCommand("botb setup");
-                            this.minecraft.setScreen(null);
+                            this.minecraft.player.connection.sendCommand("botb setup");
+                            this.minecraft.gui.setScreen(null);
                         }
                     }
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
@@ -434,7 +435,7 @@ public class StorytellerToolsScreen extends Screen {
             .build());
             this.addRenderableWidget(Button.builder(
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.whisper_settings").withStyle(ChatFormatting.LIGHT_PURPLE),
-                    button -> this.minecraft.setScreen(new WhisperSettingsScreen(this, true))
+                    button -> this.minecraft.gui.setScreen(new WhisperSettingsScreen(this, true))
             ).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.whisper_settings")))
             .build());
@@ -457,7 +458,7 @@ public class StorytellerToolsScreen extends Screen {
             this.addRenderableWidget(Button.builder(triggerText, b -> {
                 StorytellerState.createRoleSwitchTriggersOnRoleChange =
                         !StorytellerState.createRoleSwitchTriggersOnRoleChange;
-                this.minecraft.setScreen(this);
+                this.minecraft.gui.setScreen(this);
             }).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.role_change")))
             .build());
@@ -467,11 +468,10 @@ public class StorytellerToolsScreen extends Screen {
                     button -> {
                         NightOrderHudManager.clearAllTriggeredVisits();
                         if (this.minecraft.player != null) {
-                            this.minecraft.player.displayClientMessage(
-                                    Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.triggers_cleared").withStyle(ChatFormatting.YELLOW),
-                                    false);
+                            this.minecraft.player.sendSystemMessage(
+                                    Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.triggers_cleared").withStyle(ChatFormatting.YELLOW));
                         }
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
             ).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.clear_triggers")))
@@ -489,7 +489,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.shuffle_roles").withStyle(ChatFormatting.AQUA),
                     button -> {
                         AssignRolesActions.shuffleRoles();
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.shuffle_roles")))
@@ -500,7 +500,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.shuffle_seats").withStyle(ChatFormatting.LIGHT_PURPLE),
                     button -> {
                         AssignRolesActions.shuffleSeats();
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
             ).bounds(leftColumnX + buttonWidth + buttonSpacing, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.shuffle_seats")))
@@ -514,7 +514,7 @@ public class StorytellerToolsScreen extends Screen {
                     Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.randomize").withStyle(ChatFormatting.GOLD),
                     button -> {
                         AssignRolesActions.randomizeRoles();
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
             ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight)
             .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.randomize")))
@@ -538,9 +538,9 @@ public class StorytellerToolsScreen extends Screen {
                 Component.literal("<").withStyle(ChatFormatting.WHITE),
                 button -> {
                     if (currentPage > 0) {
-                        savedScrollAmount = documentationWidget.getScrollAmount();
+                        savedScrollAmount = documentationWidget.scrollAmount();
                         currentPage--;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
                 }
         ).bounds(navStartX, navY, navButtonSize, buttonHeight).build());
@@ -552,9 +552,9 @@ public class StorytellerToolsScreen extends Screen {
                 Component.literal(">").withStyle(ChatFormatting.WHITE),
                 button -> {
                     if (currentPage < TOTAL_PAGES - 1) {
-                        savedScrollAmount = documentationWidget.getScrollAmount();
+                        savedScrollAmount = documentationWidget.scrollAmount();
                         currentPage++;
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
                 }
         ).bounds(navStartX + navButtonSize + 34, navY, navButtonSize, buttonHeight).build());
@@ -564,7 +564,7 @@ public class StorytellerToolsScreen extends Screen {
         int advancedButtonWidth = 70;
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.advanced").withStyle(ChatFormatting.LIGHT_PURPLE),
-                button -> this.minecraft.setScreen(new AdvancedGuideScreen(this))
+                button -> this.minecraft.gui.setScreen(new AdvancedGuideScreen(this))
         ).bounds(this.width - backButtonWidth - settingsButtonSize - advancedButtonWidth - 2 * buttonSpacingBottom - 10, this.height - 30, advancedButtonWidth, 20)
         .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.tooltip.advanced")))
         .build());
@@ -572,7 +572,7 @@ public class StorytellerToolsScreen extends Screen {
         // Settings button (gear icon)
         this.addRenderableWidget(Button.builder(
                 Component.literal("\u2699").withStyle(ChatFormatting.BOLD),
-                button -> this.minecraft.setScreen(new SettingsScreen(this))
+                button -> this.minecraft.gui.setScreen(new SettingsScreen(this))
         ).bounds(this.width - backButtonWidth - settingsButtonSize - buttonSpacingBottom - 10, this.height - 30, settingsButtonSize, 20)
         .tooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.settings")))
         .build());
@@ -580,7 +580,7 @@ public class StorytellerToolsScreen extends Screen {
         // Back button
         this.addRenderableWidget(Button.builder(
                 Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.back").withStyle(ChatFormatting.YELLOW),
-                button -> this.minecraft.setScreen(this.parent)
+                button -> this.minecraft.gui.setScreen(this.parent)
         ).bounds(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
 
         // ========================================
@@ -592,16 +592,16 @@ public class StorytellerToolsScreen extends Screen {
         int docHeight = this.height - docY - 40;
 
         this.documentationWidget = new DocumentationListWidget(this.minecraft, docWidth, docHeight, docY);
-        this.documentationWidget.setX(docX);
+        this.documentationWidget.updateSizeAndPosition(docWidth, docHeight, docX, docY);
         this.documentationWidget.setScrollAmount(this.savedScrollAmount);
         this.addRenderableWidget(this.documentationWidget);
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Send Roles doubles as Send Script while Alt is held, like the grimoire's button
         if (sendRolesButton != null) {
-            boolean scriptOnly = Screen.hasAltDown();
+            boolean scriptOnly = Minecraft.getInstance().hasAltDown();
             sendRolesButton.setMessage(scriptOnly
                     ? Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.send_script").withStyle(ChatFormatting.AQUA)
                     : Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.send_roles").withStyle(ChatFormatting.GREEN));
@@ -633,10 +633,10 @@ public class StorytellerToolsScreen extends Screen {
             }
         }
 
-        super.render(context, mouseX, mouseY, delta);
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         // Draw title
-        context.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
+        context.centeredText(this.font, this.title, this.width / 2, 10, 0xFFFFFFFF);
 
         // Draw page indicator text (between prev/next buttons)
         int navY = this.height - 30;
@@ -645,32 +645,36 @@ public class StorytellerToolsScreen extends Screen {
         Component pageText = Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.page_indicator", currentPage + 1, TOTAL_PAGES).withStyle(ChatFormatting.GRAY);
         int pageTextX = navStartX + navButtonSize + 2 + (30 - this.font.width(pageText)) / 2;
         int pageTextY = navY + (20 - this.font.lineHeight) / 2;
-        context.drawString(this.font, pageText, pageTextX, pageTextY, 0xFFFFFF);
+        context.text(this.font, pageText, pageTextX, pageTextY, 0xFFFFFFFF);
 
         // Draw category labels using tracked Y positions
         int leftColumnX = 20;
         if (category1Label != null) {
-            context.drawString(this.font, category1Label.copy().withStyle(ChatFormatting.GOLD), leftColumnX, category1Y, 0xFFFFFF);
+            context.text(this.font, category1Label.copy().withStyle(ChatFormatting.GOLD), leftColumnX, category1Y, 0xFFFFFFFF);
         }
         if (category2Label != null) {
-            context.drawString(this.font, category2Label.copy().withStyle(ChatFormatting.GOLD), leftColumnX, category2Y, 0xFFFFFF);
+            context.text(this.font, category2Label.copy().withStyle(ChatFormatting.GOLD), leftColumnX, category2Y, 0xFFFFFFFF);
         }
         if (category3Label != null) {
-            context.drawString(this.font, category3Label.copy().withStyle(ChatFormatting.GOLD), leftColumnX, category3Y, 0xFFFFFF);
+            context.text(this.font, category3Label.copy().withStyle(ChatFormatting.GOLD), leftColumnX, category3Y, 0xFFFFFFFF);
         }
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
         boolean exitKeyPressed = keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_E;
-        boolean openAssignGuiPressed = KeyInputHandler.openAssignGui != null && KeyInputHandler.openAssignGui.matches(keyCode, scanCode);
-        boolean openStorytellerToolsPressed = KeyInputHandler.openStorytellerToolsKey != null && KeyInputHandler.openStorytellerToolsKey.matches(keyCode, scanCode);
+        boolean openAssignGuiPressed = KeyInputHandler.openAssignGui != null && KeyInputHandler.openAssignGui.matches(event);
+        boolean openStorytellerToolsPressed = KeyInputHandler.openStorytellerToolsKey != null && KeyInputHandler.openStorytellerToolsKey.matches(event);
 
         if (exitKeyPressed || openAssignGuiPressed || openStorytellerToolsPressed) {
-            this.minecraft.setScreen(this.parent);
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -755,7 +759,7 @@ public class StorytellerToolsScreen extends Screen {
 
         private void addWrappedText(Component text, int width) {
             for (FormattedCharSequence line : font.split(text, width)) {
-                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
+                this.addEntry(DocumentEntry.text(font, line, 0xFFCCCCCC));
             }
         }
 
@@ -783,13 +787,13 @@ public class StorytellerToolsScreen extends Screen {
 
             text = text.copy().append(suffix.copy().withStyle(ChatFormatting.WHITE));
 
-            this.addEntry(DocumentEntry.text(font, text.getVisualOrderText(), 0xCCCCCC));
+            this.addEntry(DocumentEntry.text(font, text.getVisualOrderText(), 0xFFCCCCCC));
         }
 
         private void addHotkeyEntry(Component action, KeyMapping keyBinding) {
             Component keyName = keyBinding != null ? keyBinding.getTranslatedKeyMessage() : Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.not_bound");
             this.addEntry(DocumentEntry.text(font, Component.translatable("gui.blood-on-the-blocktower.storyteller_tools.hotkey_line", action).withStyle(ChatFormatting.WHITE)
-                    .append(Component.literal("[").append(keyName).append("]").withStyle(ChatFormatting.YELLOW)).getVisualOrderText(), 0xCCCCCC));
+                    .append(Component.literal("[").append(keyName).append("]").withStyle(ChatFormatting.YELLOW)).getVisualOrderText(), 0xFFCCCCCC));
         }
 
         @Override
@@ -798,7 +802,7 @@ public class StorytellerToolsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 6;
         }
 

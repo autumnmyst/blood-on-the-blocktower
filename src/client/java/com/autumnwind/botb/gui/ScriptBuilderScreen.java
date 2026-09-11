@@ -14,7 +14,6 @@ import com.autumnwind.botb.util.Script;
 import com.autumnwind.botb.util.ScriptJson;
 import com.autumnwind.botb.util.ScriptRole;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.platform.ClipboardManager;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -30,7 +29,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.EditBox;
@@ -44,6 +44,7 @@ import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import java.util.Locale;
+import net.minecraft.client.input.MouseButtonEvent;
 
 /**
  * Mix-and-match script builder for storytellers.
@@ -347,8 +348,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         // init() runs again every time we're re-shown (coming back from a character's details
         // page, or on a resize) and builds new list widgets, so the old ones' scroll positions
         // have to be carried over by hand or you land back at the top of the palette.
-        double scriptScroll = scriptList != null ? scriptList.getScrollAmount() : 0;
-        double paletteScroll = palette != null ? palette.getScrollAmount() : 0;
+        double scriptScroll = scriptList != null ? scriptList.scrollAmount() : 0;
+        double paletteScroll = palette != null ? palette.scrollAmount() : 0;
 
         this.nameField = new EditBox(this.font, padding, rowY, nameWidth, fieldHeight, Component.empty());
         this.nameField.setMaxLength(64);
@@ -370,7 +371,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
         // --- Lists ---
         this.scriptList = new ScriptListWidget(this.minecraft, scriptWidth, listHeight, listTop);
-        this.scriptList.setX(padding);
+        this.scriptList.updateSizeAndPosition(scriptWidth, listHeight, padding, listTop);
         this.addRenderableWidget(this.scriptList);
 
         this.palette = new PaletteWidget(this.minecraft, paletteWidth, listHeight, listTop, columns);
@@ -415,27 +416,27 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         int importWidth = Math.max(textWidth(importText), textWidth(exportLabel(roomy))) + 12;
         this.importRoomy = roomy;
         this.importButton = this.addRenderableWidget(Button.builder(importText, button -> {
-            if (hasShiftDown()) {
+            if (Minecraft.getInstance().hasShiftDown()) {
                 exportScript();
             } else {
                 importScript();
             }
         }).bounds(buttonX, buttonY, importWidth, buttonHeight).build());
-        this.importShowingExport = !hasShiftDown(); // force the first update in render()
+        this.importShowingExport = !Minecraft.getInstance().hasShiftDown(); // force the first update in render()
         buttonX += importWidth + spacing;
 
         // Label, colour and tooltip are swapped by shift in render(), and the press reads shift too.
         this.customsButton = this.addRenderableWidget(Button.builder(
                 Component.empty(),
                 button -> {
-                    if (hasShiftDown()) {
+                    if (Minecraft.getInstance().hasShiftDown()) {
                         clearCustomRoleLibrary();
                     } else {
                         importCustomRoles();
                     }
                 }
         ).bounds(buttonX, buttonY, customsWidth, buttonHeight).build());
-        this.customsShowingClear = !hasShiftDown(); // force the first update in render()
+        this.customsShowingClear = !Minecraft.getInstance().hasShiftDown(); // force the first update in render()
         buttonX += customsWidth + spacing;
 
         buttonX += addFooterButton(randomLabel.withStyle(ChatFormatting.AQUA), buttonX, buttonY, buttonHeight,
@@ -445,10 +446,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                         .append(Component.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.random_script_ban_all")
                                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC)),
                 button -> {
-                    if (hasControlDown()) {
+                    if (Minecraft.getInstance().hasControlDown()) {
                         toggleBanAll();
                     } else {
-                        randomScript(hasShiftDown());
+                        randomScript(Minecraft.getInstance().hasShiftDown());
                     }
                 }) + spacing;
 
@@ -536,7 +537,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
     private void refreshScriptList() {
         if (scriptList == null) return;
-        double scroll = scriptList.getScrollAmount();
+        double scroll = scriptList.scrollAmount();
         scriptList.populate(ordered());
         scriptList.setScrollAmount(scroll);
     }
@@ -554,7 +555,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         boolean queryChanged = !query.equals(lastQuery);
         lastQuery = query;
 
-        double scroll = palette.getScrollAmount();
+        double scroll = palette.scrollAmount();
         palette.populate(filtered);
         palette.setScrollAmount(queryChanged ? 0 : scroll);
     }
@@ -773,7 +774,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     }
 
     private Optional<Script> readClipboardScript() {
-        String clipboardText = new ClipboardManager().getClipboard(0, (error, string) -> {});
+        String clipboardText = Minecraft.getInstance().keyboardHandler.getClipboard();
         if (clipboardText == null || clipboardText.isEmpty()) {
             message(Component.translatable("gui.blood-on-the-blocktower.script_builder.clipboard_empty").withStyle(ChatFormatting.RED));
             return Optional.empty();
@@ -814,9 +815,9 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
         Component warning = Component.translatable("gui.blood-on-the-blocktower.script_builder.orphaned_warning",
                 String.join(", ", orphaned));
-        this.minecraft.setScreen(new ConfirmScreen(
+        this.minecraft.gui.setScreen(new ConfirmScreen(
                 confirmed -> {
-                    this.minecraft.setScreen(this);
+                    this.minecraft.gui.setScreen(this);
                     if (confirmed) apply(ordered);
                 },
                 Component.translatable("gui.blood-on-the-blocktower.script_builder.save_script_confirm").withStyle(ChatFormatting.YELLOW),
@@ -959,7 +960,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
     private void message(Component text) {
         if (this.minecraft != null && this.minecraft.player != null) {
-            this.minecraft.player.displayClientMessage(text, false);
+            this.minecraft.player.sendSystemMessage(text);
         }
     }
 
@@ -968,8 +969,12 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     // ================================================================
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        boolean handled = super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
+
+        boolean handled = super.mouseClicked(event, doubleClick);
         if (pendingAction != null) {
             Runnable action = pendingAction;
             pendingAction = null;
@@ -981,16 +986,16 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     @Override
     public void onClose() {
         if (discardConfirmed || !isDirty()) {
-            this.minecraft.setScreen(parent);
+            this.minecraft.gui.setScreen(parent);
             return;
         }
-        this.minecraft.setScreen(new ConfirmScreen(
+        this.minecraft.gui.setScreen(new ConfirmScreen(
                 confirmed -> {
                     if (confirmed) {
                         discardConfirmed = true;
-                        this.minecraft.setScreen(parent);
+                        this.minecraft.gui.setScreen(parent);
                     } else {
-                        this.minecraft.setScreen(this);
+                        this.minecraft.gui.setScreen(this);
                     }
                 },
                 Component.translatable("gui.blood-on-the-blocktower.script_builder.discard_changes").withStyle(ChatFormatting.YELLOW),
@@ -998,7 +1003,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         // Cleared before the children draw, and a hovered entry re-queues it during super.render().
         this.hoverTooltip = null;
 
@@ -1008,8 +1013,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             this.saveButton.active = isDirty();
         }
 
-        if (this.importButton != null && hasShiftDown() != this.importShowingExport) {
-            this.importShowingExport = hasShiftDown();
+        if (this.importButton != null && Minecraft.getInstance().hasShiftDown() != this.importShowingExport) {
+            this.importShowingExport = Minecraft.getInstance().hasShiftDown();
             if (this.importShowingExport) {
                 this.importButton.setMessage(exportLabel(importRoomy).withStyle(ChatFormatting.AQUA));
                 this.importButton.setTooltip(Tooltip.create(Component.translatable("gui.blood-on-the-blocktower.script_builder.tooltip.export_script")));
@@ -1026,8 +1031,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
 
         // Only rebuilt when shift actually changes, so the tooltip object isn't reallocated
         // every frame.
-        if (this.customsButton != null && hasShiftDown() != this.customsShowingClear) {
-            this.customsShowingClear = hasShiftDown();
+        if (this.customsButton != null && Minecraft.getInstance().hasShiftDown() != this.customsShowingClear) {
+            this.customsShowingClear = Minecraft.getInstance().hasShiftDown();
             if (this.customsShowingClear) {
                 this.customsButton.setMessage((customsRoomy ? CLEAR_CUSTOMS_LABEL : CLEAR_CUSTOMS_SHORT).copy()
                         .withStyle(ChatFormatting.RED));
@@ -1043,8 +1048,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
         }
 
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 6, 0xFFFFFF);
+        super.extractRenderState(context, mouseX, mouseY, delta);
+        context.centeredText(this.font, this.title, this.width / 2, 6, 0xFFFFFFFF);
 
         // Counts under the script list, so the composition is visible while editing. Each is
         // tinted with its team colour, and traveler gets two letters so it isn't confused with
@@ -1054,12 +1059,12 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             long n = working.stream().filter(role -> role.getTeam() == team).count();
             if (n == 0) continue;
             Component label = Component.literal(abbreviate(team) + n).withStyle(s -> s.withColor(team.getColor()));
-            context.drawString(this.font, label, countX, this.height - 44, 0xFFFFFF);
+            context.text(this.font, label, countX, this.height - 44, 0xFFFFFFFF);
             countX += this.font.width(label) + 6;
         }
 
         if (this.hoverTooltip != null) {
-            context.renderComponentTooltip(this.font, this.hoverTooltip, this.hoverTooltipX, this.hoverTooltipY);
+            context.setComponentTooltipForNextFrame(this.font, this.hoverTooltip, this.hoverTooltipX, this.hoverTooltipY);
         }
     }
 
@@ -1117,7 +1122,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         }
 
         @Override public int getRowWidth() { return this.width - 12; }
-        @Override protected int getScrollbarPosition() { return this.getX() + this.width - 6; }
+        @Override protected int scrollBarX() { return this.getX() + this.width - 6; }
 
         /**
          * Entries at the top and bottom of the list are drawn partially outside the pane, so
@@ -1142,15 +1147,16 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int y = getContentY();
+
                 int rowLeft = ScriptListWidget.this.getRowLeft();
                 int lineY = y + 2;
                 for (FormattedText line : font.getSplitter()
                         .splitLines(message, ScriptListWidget.this.getRowWidth() - 4, Style.EMPTY)) {
-                    context.drawString(font,
+                    context.text(font,
                             Component.literal(line.getString()).withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC),
-                            rowLeft + 2, lineY, 0xFFFFFF);
+                            rowLeft + 2, lineY, 0xFFFFFFFF);
                     lineY += font.lineHeight + 1;
                 }
             }
@@ -1164,11 +1170,13 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawString(font, label,
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int y = getContentY();
+                int entryHeight = getContentHeight();
+
+                context.text(font, label,
                         ScriptListWidget.this.getRowLeft() + 2,
-                        y + entryHeight - font.lineHeight - 2, 0xFFFFFF);
+                        y + entryHeight - font.lineHeight - 2, 0xFFFFFFFF);
             }
         }
 
@@ -1180,8 +1188,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int y = getContentY();
+                int entryHeight = getContentHeight();
+
                 int rowLeft = ScriptListWidget.this.getRowLeft();
                 int rowWidth = ScriptListWidget.this.getRowWidth();
                 int iconSize = 20;
@@ -1196,14 +1206,14 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                     context.fill(rowLeft, y, rowLeft + rowWidth, y + entryHeight, 0x30FFFFFF);
                 }
 
-                context.blit(role.getIcon(), iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
-                context.renderOutline(iconX - 1, iconY - 1, iconSize + 2, iconSize + 2, role.getTeam().getColor());
+                context.blit(RenderPipelines.GUI_TEXTURED, role.getIcon(), iconX, iconY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+                context.outline(iconX - 1, iconY - 1, iconSize + 2, iconSize + 2, role.getTeam().getColor());
 
                 int textX = iconX + iconSize + 6;
                 int textY = y + (entryHeight - font.lineHeight) / 2;
                 Component name = Component.literal(role.getDisplayName()).withStyle(s -> s.withColor(role.getTeam().getColor()));
-                context.drawString(font,
-                        trimToWidth(name, rowWidth - (textX - rowLeft) - 4), textX, textY, 0xFFFFFF);
+                context.text(font,
+                        trimToWidth(name, rowWidth - (textX - rowLeft) - 4), textX, textY, 0xFFFFFFFF);
 
                 if (isMouseOver) {
                     List<Component> hints = new ArrayList<>();
@@ -1222,12 +1232,14 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                int button = event.button();
+
                 if (button != GLFW.GLFW_MOUSE_BUTTON_1) return false;
-                if (Screen.hasControlDown() && AbilityText.isBootlegger(role)) {
-                    pendingAction = () -> minecraft.setScreen(new BootleggerRulesScreen(ScriptBuilderScreen.this, baseBootlegger));
-                } else if (Screen.hasShiftDown()) {
-                    pendingAction = () -> minecraft.setScreen(new CharacterDetailsScreen(role, ScriptBuilderScreen.this));
+                if (Minecraft.getInstance().hasControlDown() && AbilityText.isBootlegger(role)) {
+                    pendingAction = () -> minecraft.gui.setScreen(new BootleggerRulesScreen(ScriptBuilderScreen.this, baseBootlegger));
+                } else if (Minecraft.getInstance().hasShiftDown()) {
+                    pendingAction = () -> minecraft.gui.setScreen(new CharacterDetailsScreen(role, ScriptBuilderScreen.this));
                 } else {
                     pendingAction = () -> toggleRole(role);
                 }
@@ -1257,7 +1269,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         }
 
         @Override public int getRowWidth() { return columns * CELL_WIDTH; }
-        @Override protected int getScrollbarPosition() { return this.getX() + this.width - 6; }
+        @Override protected int scrollBarX() { return this.getX() + this.width - 6; }
 
         /** See {@link ScriptListWidget#withinViewport}. */
         boolean withinViewport(double mouseX, double mouseY) {
@@ -1274,8 +1286,10 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
                 this.entryY = y;
 
                 for (int i = 0; i < rolesInRow.size(); i++) {
@@ -1292,8 +1306,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                             && mouseY >= iconY && mouseY < iconY + ICON_SIZE
                             && PaletteWidget.this.withinViewport(mouseX, mouseY);
 
-                    context.renderOutline(borderX, iconY, ICON_SIZE, ICON_SIZE, role.getTeam().getColor());
-                    context.blit(role.getIcon(), borderX + 1, iconY + 1, 0, 0, 38, 38, 38, 38);
+                    context.outline(borderX, iconY, ICON_SIZE, ICON_SIZE, role.getTeam().getColor());
+                    context.blit(RenderPipelines.GUI_TEXTURED, role.getIcon(), borderX + 1, iconY + 1, 0, 0, 38, 38, 38, 38);
 
                     // Already-on-script entries stay visible but read as taken, and clicking one
                     // removes it, so the palette never disagrees with the list beside it.
@@ -1306,17 +1320,17 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                         // carry the same weight.
                         Component check = Component.literal("\u2713").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
                         int checkY = iconY + ICON_SIZE / 2 - 4;
-                        context.drawCenteredString(font, check, borderX + ICON_SIZE / 2, checkY, 0xFFFFFF);
-                        context.drawCenteredString(font, check, borderX + ICON_SIZE / 2 + 1, checkY, 0xFFFFFF);
+                        context.centeredText(font, check, borderX + ICON_SIZE / 2, checkY, 0xFFFFFFFF);
+                        context.centeredText(font, check, borderX + ICON_SIZE / 2 + 1, checkY, 0xFFFFFFFF);
                     }
 
                     // Excluded from the random draw. Plain ASCII rather than a cross glyph, for
                     // the same source-encoding reason as the check above.
                     if (banned) {
                         context.fill(borderX + 1, iconY + 1, borderX + ICON_SIZE - 1, iconY + ICON_SIZE - 1, 0xA0000000);
-                        context.drawCenteredString(font,
+                        context.centeredText(font,
                                 Component.literal("X").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
-                                borderX + ICON_SIZE / 2, iconY + ICON_SIZE / 2 - 4, 0xFFFFFF);
+                                borderX + ICON_SIZE / 2, iconY + ICON_SIZE / 2 - 4, 0xFFFFFFFF);
                     }
 
                     int textCenterX = borderX + ICON_SIZE / 2;
@@ -1329,8 +1343,8 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                             .map(line -> (Component) Component.literal(line.getString()).withStyle(nameColor))
                             .collect(Collectors.toList());
                     for (int j = 0; j < lines.size(); j++) {
-                        context.drawCenteredString(minecraft.font, lines.get(j),
-                                textCenterX, y + 50 + j * minecraft.font.lineHeight, 0xFFFFFF);
+                        context.centeredText(minecraft.font, lines.get(j),
+                                textCenterX, y + 50 + j * minecraft.font.lineHeight, 0xFFFFFFFF);
                     }
 
                     if (isMouseOver) {
@@ -1352,25 +1366,29 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                int button = event.button();
+
                 if (button != GLFW.GLFW_MOUSE_BUTTON_1) return false;
                 int rowX = PaletteWidget.this.getRowLeft();
 
                 for (int i = 0; i < rolesInRow.size(); i++) {
                     int cellX = rowX + i * CELL_WIDTH;
                     if (mouseX < cellX || mouseX >= cellX + CELL_WIDTH) continue;
-                    if (mouseY < entryY || mouseY >= entryY + PaletteWidget.this.itemHeight) continue;
+                    if (mouseY < entryY || mouseY >= entryY + PaletteWidget.this.defaultEntryHeight) continue;
 
                     ScriptRole role = rolesInRow.get(i);
                     // Ctrl+Shift is checked first because Ctrl alone now means ban, so forgetting a
                     // library character moved onto the compound gesture.
-                    if (Screen.hasControlDown() && Screen.hasShiftDown()) {
+                    if (Minecraft.getInstance().hasControlDown() && Minecraft.getInstance().hasShiftDown()) {
                         if (CustomRoleLibrary.contains(role.getId())) {
                             pendingAction = () -> forgetLibraryRole(role);
                         }
-                    } else if (Screen.hasShiftDown()) {
-                        pendingAction = () -> minecraft.setScreen(new CharacterDetailsScreen(role, ScriptBuilderScreen.this));
-                    } else if (Screen.hasControlDown()) {
+                    } else if (Minecraft.getInstance().hasShiftDown()) {
+                        pendingAction = () -> minecraft.gui.setScreen(new CharacterDetailsScreen(role, ScriptBuilderScreen.this));
+                    } else if (Minecraft.getInstance().hasControlDown()) {
                         if (isBannable(role)) {
                             pendingAction = () -> toggleBan(role);
                         }

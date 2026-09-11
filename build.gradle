@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version "${loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -41,21 +41,20 @@ loom {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Simple Voice Chat - API for public interfaces
 	implementation "de.maxhenkel.voicechat:voicechat-api:2.6.20"
 
 	// Simple Voice Chat - Full mod for access to internal classes (compileOnly so it's optional at runtime)
-	modCompileOnly "maven.modrinth:simple-voice-chat:fabric-1.21.1-2.6.23"
+	compileOnly "maven.modrinth:simple-voice-chat:fabric-2.6.23+26.2"
 
-	modRuntimeOnly "maven.modrinth:simple-voice-chat:fabric-1.21.1-2.6.23"
+	runtimeOnly "maven.modrinth:simple-voice-chat:fabric-2.6.23+26.2"
 
-	modRuntimeOnly "de.maxhenkel.voicechat:voicechat-api:2.6.20:fabric-stub"
+	runtimeOnly "de.maxhenkel.voicechat:voicechat-api:2.6.20:fabric-stub"
 }
 
 processResources {
@@ -67,7 +66,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = 25
 }
 
 java {
@@ -76,8 +75,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {

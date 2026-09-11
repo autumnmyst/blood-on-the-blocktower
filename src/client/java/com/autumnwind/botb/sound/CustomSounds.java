@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 /**
@@ -64,11 +64,11 @@ public final class CustomSounds {
      */
     private static SoundInstance instance(Minecraft client, List<String> candidates, SoundEvent fallback, float volume, boolean repeat) {
         for (String candidate : candidates) {
-            ResourceLocation name = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, candidate);
+            Identifier name = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, candidate);
             if (client.getSoundManager().getSoundEvent(name) != null) {
                 return new CustomSoundInstance(SoundEvent.createVariableRangeEvent(name), null, volume, repeat);
             }
-            ResourceLocation file = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sounds/" + candidate + ".ogg");
+            Identifier file = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sounds/" + candidate + ".ogg");
             if (client.getResourceManager().getResource(file).isPresent()) {
                 return new CustomSoundInstance(fallback, candidate, volume, repeat);
             }

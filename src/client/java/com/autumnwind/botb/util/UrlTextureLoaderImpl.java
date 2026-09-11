@@ -13,7 +13,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import com.autumnwind.botb.util.FetchLimits;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.util.Map;
@@ -32,7 +32,7 @@ import java.net.URI;
  */
 public class UrlTextureLoaderImpl {
 
-    private static final Map<String, ResourceLocation> loadedTextures = new ConcurrentHashMap<>();
+    private static final Map<String, Identifier> loadedTextures = new ConcurrentHashMap<>();
     private static final Map<String, int[]> textureDimensions = new ConcurrentHashMap<>(); // [width, height]
     private static final Set<String> pendingLoads = ConcurrentHashMap.newKeySet();
     private static final Set<String> failedLoads = ConcurrentHashMap.newKeySet();
@@ -66,7 +66,7 @@ public class UrlTextureLoaderImpl {
     /**
      * Get texture for a URL. Starts async load if not already loaded.
      */
-    public static ResourceLocation getTextureForUrl(String url) {
+    public static Identifier getTextureForUrl(String url) {
         if (url == null || url.isEmpty()) {
             return UrlTextureLoader.PLACEHOLDER;
         }
@@ -93,7 +93,7 @@ public class UrlTextureLoaderImpl {
     /**
      * Get texture for a custom role (uses neutral/default image).
      */
-    public static ResourceLocation getTextureForCustomRole(CustomRole customRole) {
+    public static Identifier getTextureForCustomRole(CustomRole customRole) {
         if (customRole == null || customRole.imageUrls().isEmpty()) {
             return UrlTextureLoader.PLACEHOLDER;
         }
@@ -105,7 +105,7 @@ public class UrlTextureLoaderImpl {
      * Looks up the custom role from the current script.
      * Also handles fabled characters with "fabled:" prefix.
      */
-    public static ResourceLocation getTextureForCustomRoleId(String customRoleId) {
+    public static Identifier getTextureForCustomRoleId(String customRoleId) {
         if (customRoleId == null || customRoleId.isEmpty()) {
             return UrlTextureLoader.PLACEHOLDER;
         }
@@ -217,12 +217,12 @@ public class UrlTextureLoaderImpl {
 
                 // Generate unique identifier
                 String hash = Integer.toHexString(url.hashCode() & 0x7FFFFFFF);
-                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "dynamic/custom_" + hash);
+                Identifier id = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "dynamic/custom_" + hash);
 
                 // Register on main thread
                 Minecraft.getInstance().execute(() -> {
                     try {
-                        DynamicTexture texture = new DynamicTexture(nativeImage);
+                        DynamicTexture texture = new DynamicTexture(() -> "botb custom role " + hash, nativeImage);
                         Minecraft.getInstance().getTextureManager().register(id, texture);
                         loadedTextures.put(url, id);
                         pendingLoads.remove(url);
@@ -329,7 +329,7 @@ public class UrlTextureLoaderImpl {
             // No content found, just copy as-is
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    nativeImage.setPixelRGBA(x, y, convertArgbToAbgr(image.getRGB(x, y)));
+                    nativeImage.setPixelABGR(x, y, convertArgbToAbgr(image.getRGB(x, y)));
                 }
             }
             return nativeImage;
@@ -363,9 +363,9 @@ public class UrlTextureLoaderImpl {
 
                 // If outside source bounds, use transparent
                 if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) {
-                    nativeImage.setPixelRGBA(x, y, 0); // Transparent
+                    nativeImage.setPixelABGR(x, y, 0); // Transparent
                 } else {
-                    nativeImage.setPixelRGBA(x, y, convertArgbToAbgr(image.getRGB(sampleX, sampleY)));
+                    nativeImage.setPixelABGR(x, y, convertArgbToAbgr(image.getRGB(sampleX, sampleY)));
                 }
             }
         }

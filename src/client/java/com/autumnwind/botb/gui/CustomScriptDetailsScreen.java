@@ -15,15 +15,17 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.client.input.KeyEvent;
 
 /**
  * Screen for displaying custom script details from the almanac.
@@ -53,7 +55,7 @@ public class CustomScriptDetailsScreen extends Screen {
                     this.isLoading = false;
                     // Refresh the current page if we're still on screen
                     Minecraft.getInstance().execute(() -> {
-                        if (Minecraft.getInstance().screen == this) {
+                        if (Minecraft.getInstance().gui.screen() == this) {
                             switchPage(currentPage, true);
                         }
                     });
@@ -83,13 +85,13 @@ public class CustomScriptDetailsScreen extends Screen {
 
         this.switchPage(this.currentPage, true);
 
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.setScreen(this.parent)).bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.gui.setScreen(this.parent)).bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
     }
 
     private void switchPage(Page newPage, boolean isInitial) {
         if (!isInitial && this.currentPage == newPage) return;
         if (this.listWidget != null) {
-            this.savedScrollAmounts.put(this.currentPage, this.listWidget.getScrollAmount());
+            this.savedScrollAmounts.put(this.currentPage, this.listWidget.scrollAmount());
             this.removeWidget(this.listWidget);
         }
         this.currentPage = newPage;
@@ -126,32 +128,36 @@ public class CustomScriptDetailsScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
+    public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (script != null) {
             if (hasAuthor()) {
-                context.drawCenteredString(this.font, script.name(), this.width / 2, 4, 0xFFFFFF);
+                context.centeredText(this.font, script.name(), this.width / 2, 4, 0xFFFFFFFF);
                 Component authorText = Component.translatable("gui.blood-on-the-blocktower.custom_script_details.by_author", script.author()).withStyle(ChatFormatting.GRAY);
-                context.drawCenteredString(this.font, authorText, this.width / 2, 15, 0xAAAAAA);
+                context.centeredText(this.font, authorText, this.width / 2, 15, 0xFFAAAAAA);
             } else {
-                context.drawCenteredString(this.font, script.name(), this.width / 2, 8, 0xFFFFFF);
+                context.centeredText(this.font, script.name(), this.width / 2, 8, 0xFFFFFFFF);
             }
         }
 
         // Show loading indicator if still fetching
         if (isLoading) {
-            context.drawCenteredString(this.font, Component.translatable("gui.blood-on-the-blocktower.custom_script_details.loading_almanac").withStyle(ChatFormatting.YELLOW), this.width / 2, this.height / 2, 0xFFFFFF);
+            context.centeredText(this.font, Component.translatable("gui.blood-on-the-blocktower.custom_script_details.loading_almanac").withStyle(ChatFormatting.YELLOW), this.width / 2, this.height / 2, 0xFFFFFFFF);
         }
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (KeyInputHandler.openScriptKey.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E) {
-            this.minecraft.setScreen(this.parent);
+    public boolean keyPressed(KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
+
+        if (KeyInputHandler.openScriptKey.matches(event) || keyCode == GLFW.GLFW_KEY_E) {
+            this.minecraft.gui.setScreen(this.parent);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     private class DetailsListWidget extends ContainerObjectSelectionList<DetailsListWidget.Entry> {
@@ -235,7 +241,7 @@ public class CustomScriptDetailsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarPosition() {
+        protected int scrollBarX() {
             return this.getX() + this.width - 10;
         }
 
@@ -248,8 +254,10 @@ public class CustomScriptDetailsScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawCenteredString(font, text, DetailsListWidget.this.width / 2, y, 0xFFFFFF);
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int y = getContentY();
+
+                context.centeredText(font, text, DetailsListWidget.this.width / 2, y, 0xFFFFFFFF);
             }
             @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
             @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
@@ -261,8 +269,11 @@ public class CustomScriptDetailsScreen extends Screen {
             public TextEntry(Component text) { this.text = text.getVisualOrderText(); }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawString(font, text, x + 10, y, 0xFFFFFF, false);
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
+                context.text(font, text, x + 10, y, 0xFFFFFFFF, false);
             }
             @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
             @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
@@ -271,7 +282,8 @@ public class CustomScriptDetailsScreen extends Screen {
         public class SpacerEntry extends com.autumnwind.botb.gui.CustomScriptDetailsScreen.DetailsListWidget.Entry {
             public SpacerEntry() {}
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {}
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+}
             @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
             @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
@@ -286,10 +298,13 @@ public class CustomScriptDetailsScreen extends Screen {
             }
 
             @Override
-            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                int x = getContentX();
+                int y = getContentY();
+
                 // Only render on the first logo entry (we use multiple entries for height)
                 if (entryIndex == 0 && script != null && script.hasLogo()) {
-                    ResourceLocation logoTexture = UrlTextureLoader.getTexture(script.logo());
+                    Identifier logoTexture = UrlTextureLoader.getTexture(script.logo());
 
                     // Get actual dimensions if available
                     int[] dims = UrlTextureLoaderImpl.getDimensions(script.logo());
@@ -331,7 +346,7 @@ public class CustomScriptDetailsScreen extends Screen {
                     int logoX = (DetailsListWidget.this.width - renderWidth) / 2;
                     // Draw the texture scaled to renderWidth x renderHeight
                     // The last two params are the texture size for UV mapping
-                    context.blit(logoTexture, logoX, y, renderWidth, renderHeight, 0, 0, textureWidth, textureHeight, textureWidth, textureHeight);
+                    context.blit(RenderPipelines.GUI_TEXTURED, logoTexture, logoX, y, 0, 0, renderWidth, renderHeight, textureWidth, textureHeight, textureWidth, textureHeight);
                 }
             }
 

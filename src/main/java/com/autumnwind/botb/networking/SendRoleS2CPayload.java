@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import com.autumnwind.botb.util.AlignmentOverride;
 
 /**
@@ -15,7 +15,7 @@ import com.autumnwind.botb.util.AlignmentOverride;
  * Supports both official roles and custom roles via PendingRoleAssignment.
  */
 public record SendRoleS2CPayload(PendingRoleAssignment assignment, int activePlayerCount, int travelerCount, boolean silent) implements CustomPacketPayload {
-    public static final ResourceLocation SEND_ROLE_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_role");
+    public static final Identifier SEND_ROLE_ID = Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_role");
     public static final CustomPacketPayload.Type<SendRoleS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_ROLE_ID);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SendRoleS2CPayload> CODEC = StreamCodec.composite(

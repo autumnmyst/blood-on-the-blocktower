@@ -9,7 +9,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -25,6 +25,7 @@ import net.minecraft.world.scores.Scoreboard;
 import java.util.*;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.world.TeamManager;
+import net.minecraft.world.scores.TeamColor;
 
 /**
  * Manages exile logic for travelers.
@@ -95,7 +96,7 @@ public class ExileManager {
         // Add traveler to botb_traveler team for purple glow color, then apply glowing effect
         if (travelerPlayer != null) {
             Scoreboard scoreboard = server.getScoreboard();
-            String playerName = travelerPlayer.getGameProfile().getName();
+            String playerName = travelerPlayer.getGameProfile().name();
 
             // Remove from botb_player team if on it
             PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
@@ -107,7 +108,7 @@ public class ExileManager {
             PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
             if (travelerTeam == null) {
                 travelerTeam = scoreboard.addPlayerTeam(TeamManager.TRAVELER_TEAM);
-                travelerTeam.setColor(ChatFormatting.LIGHT_PURPLE);
+                travelerTeam.setColor(Optional.of(TeamColor.LIGHT_PURPLE));
             }
             scoreboard.addPlayerToTeam(playerName, travelerTeam);
 
@@ -140,7 +141,7 @@ public class ExileManager {
 
         // Send title and chat message to all players
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
+            player.sendSystemMessage(titleText.copy().append(" ").append(subtitleText), false);
 
             // Exiles share the nomination sound.
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.NOMINATION));
@@ -195,8 +196,8 @@ public class ExileManager {
             // Use exile indicator blocks
             String blockName = isOn ? ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_ON
                                    : ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_OFF;
-            Block block = BuiltInRegistries.BLOCK.get(
-                    ResourceLocation.tryParse(blockName));
+            Block block = BuiltInRegistries.BLOCK.getValue(
+                    Identifier.tryParse(blockName));
             if (block != null) {
                 world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
             }
@@ -215,8 +216,8 @@ public class ExileManager {
 
         String blockName = isOn ? ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_ON
                                : ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_OFF;
-        Block block = BuiltInRegistries.BLOCK.get(
-                ResourceLocation.tryParse(blockName));
+        Block block = BuiltInRegistries.BLOCK.getValue(
+                Identifier.tryParse(blockName));
         if (block != null) {
             world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
         }
@@ -310,7 +311,7 @@ public class ExileManager {
 
                 // Remove from botb_traveler team and add back to botb_player team
                 Scoreboard scoreboard = server.getScoreboard();
-                String playerName = travelerPlayer.getGameProfile().getName();
+                String playerName = travelerPlayer.getGameProfile().name();
 
                 PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
                 if (travelerTeam != null && scoreboard.getPlayersTeam(playerName) == travelerTeam) {
@@ -320,7 +321,7 @@ public class ExileManager {
                 PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
                 if (playerTeam == null) {
                     playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
-                    playerTeam.setColor(ChatFormatting.WHITE);
+                    playerTeam.setColor(Optional.of(TeamColor.WHITE));
                 }
                 scoreboard.addPlayerToTeam(playerName, playerTeam);
             }

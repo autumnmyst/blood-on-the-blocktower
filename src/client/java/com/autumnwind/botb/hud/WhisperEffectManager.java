@@ -4,12 +4,12 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.config.WhisperSettings;
 import com.autumnwind.botb.networking.WhisperEffectS2CPayload;
 import com.autumnwind.botb.sound.WhisperSoundInstance;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.UUID;
  * and gets vanilla's existing particle pipeline for free.
  */
 public final class WhisperEffectManager {
-    private static final ResourceLocation WHISPER_SOUND_ID = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "whisper");
+    private static final Identifier WHISPER_SOUND_ID = Identifier.fromNamespaceAndPath("blood-on-the-blocktower", "whisper");
 
     /** Effect-level lifetime cap (10 s). Safety net so effects can't accumulate forever. */
     private static final int MAX_EFFECT_TICKS = 200;
@@ -53,7 +53,7 @@ public final class WhisperEffectManager {
     private WhisperEffectManager() {}
 
     public static void register() {
-        WorldRenderEvents.AFTER_ENTITIES.register(WhisperEffectManager::render);
+        LevelExtractionEvents.END_EXTRACTION.register(WhisperEffectManager::render);
     }
 
     /**
@@ -105,12 +105,12 @@ public final class WhisperEffectManager {
         client.getSoundManager().play(inst);
     }
 
-    private static void render(WorldRenderContext ctx) {
+    private static void render(LevelExtractionContext ctx) {
         if (ACTIVE.isEmpty()) return;
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) return;
 
-        float tickDelta = ctx.tickCounter().getGameTimeDeltaPartialTick(true);
+        float tickDelta = ctx.deltaTracker().getGameTimeDeltaPartialTick(true);
         long worldTick = client.level.getGameTime();
 
         Iterator<Effect> it = ACTIVE.iterator();

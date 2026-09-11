@@ -4,11 +4,12 @@ import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleType;
 import com.autumnwind.botb.util.ScriptRole;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 
 /**
  * Handles the role assignment animation when a player receives their role.
@@ -79,7 +80,7 @@ public class RoleAssignmentAnimation {
     /**
      * Gets the icon for the animating role (supports both official and custom roles).
      */
-    private static ResourceLocation getAnimatingIcon() {
+    private static Identifier getAnimatingIcon() {
         if (animatingAssignment != null) {
             ScriptRole sr = animatingAssignment.getScriptRole();
             if (sr != null) return sr.getIcon();
@@ -158,7 +159,7 @@ public class RoleAssignmentAnimation {
      * Renders the role assignment animation if active.
      * Should be called from the HUD render callback.
      */
-    public static void render(GuiGraphics drawContext, Minecraft client) {
+    public static void render(GuiGraphicsExtractor drawContext, Minecraft client) {
         if (!isAnimating || (animatingRole == null && animatingAssignment == null)) {
             return;
         }
@@ -186,7 +187,7 @@ public class RoleAssignmentAnimation {
     /**
      * Renders the animated icon moving from center to HUD position.
      */
-    private static void renderIconAnimation(GuiGraphics drawContext, long elapsed, int screenWidth, int screenHeight) {
+    private static void renderIconAnimation(GuiGraphicsExtractor drawContext, long elapsed, int screenWidth, int screenHeight) {
         int currentSize;
         int currentX;
         int currentY;
@@ -224,24 +225,16 @@ public class RoleAssignmentAnimation {
         }
 
         // Render the animated role icon
-        ResourceLocation icon = getAnimatingIcon();
+        Identifier icon = getAnimatingIcon();
         if (icon == null) return;
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
-
-        drawContext.blit(icon, currentX, currentY, 0, 0,
-                currentSize, currentSize, currentSize, currentSize);
-
-        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-        RenderSystem.disableBlend();
+        drawContext.blit(RenderPipelines.GUI_TEXTURED, icon, currentX, currentY, 0, 0, currentSize, currentSize, currentSize, currentSize, ARGB.white(alpha));
     }
 
     /**
      * Renders the role name as a big centered title.
      */
-    private static void renderTitle(GuiGraphics drawContext, Minecraft client, long elapsed, int screenWidth, int screenHeight) {
+    private static void renderTitle(GuiGraphicsExtractor drawContext, Minecraft client, long elapsed, int screenWidth, int screenHeight) {
         // Calculate title alpha - full during icon animation, fades out after
         float titleAlpha;
         if (elapsed < ANIMATION_DURATION_MS) {
@@ -286,7 +279,7 @@ public class RoleAssignmentAnimation {
         int titleY = (screenHeight / 2) + START_ICON_SIZE / 2;
 
         // Draw the title with scaling (like Minecraft titles)
-        drawContext.pose().pushPose();
+        drawContext.pose().pushMatrix();
 
         // Scale up for big title effect
         float scale = 3.0f;
@@ -294,17 +287,17 @@ public class RoleAssignmentAnimation {
         float scaledWidth = textWidth * scale;
         float titleX = (screenWidth - scaledWidth) / 2;
 
-        drawContext.pose().translate(titleX, titleY, 0);
-        drawContext.pose().scale(scale, scale, 1.0f);
+        drawContext.pose().translate(titleX, titleY);
+        drawContext.pose().scale(scale, scale);
 
         // Apply alpha to role color
         int alphaInt = (int) (titleAlpha * 255);
         int color = (roleColor & 0x00FFFFFF) | (alphaInt << 24);
 
         // Draw text with default shadow
-        drawContext.drawString(client.font, titleText, 0, 0, color);
+        drawContext.text(client.font, titleText, 0, 0, color);
 
-        drawContext.pose().popPose();
+        drawContext.pose().popMatrix();
     }
 
     /**

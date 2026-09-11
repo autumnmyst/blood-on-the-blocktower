@@ -10,7 +10,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Server-to-Client payload for updating lever states during nomination phase (before vote starts).
@@ -22,7 +22,7 @@ public record LeverStateUpdateS2CPayload(
         Set<UUID> bansheeDoubleActivePlayers
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<LeverStateUpdateS2CPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "lever_state_update"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "lever_state_update"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, LeverStateUpdateS2CPayload> CODEC = StreamCodec.ofMember(
             LeverStateUpdateS2CPayload::write,

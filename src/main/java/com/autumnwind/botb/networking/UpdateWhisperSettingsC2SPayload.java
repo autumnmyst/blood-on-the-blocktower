@@ -5,7 +5,7 @@ import com.autumnwind.botb.config.WhisperSettings;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Storyteller → server: replace the active whisper settings. Server validates the
@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public record UpdateWhisperSettingsC2SPayload(WhisperSettings settings) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<UpdateWhisperSettingsC2SPayload> ID =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "update_whisper_settings"));
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "update_whisper_settings"));
 
     public static final StreamCodec<ByteBuf, UpdateWhisperSettingsC2SPayload> CODEC = StreamCodec.composite(
             WhisperSettings.CODEC, UpdateWhisperSettingsC2SPayload::settings,

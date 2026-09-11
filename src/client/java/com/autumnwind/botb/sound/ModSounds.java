@@ -1,7 +1,7 @@
 package com.autumnwind.botb.sound;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 
 /**
@@ -32,6 +32,6 @@ public final class ModSounds {
 
     /** A sound by its sounds.json name, for payloads that carry the name (e.g. the doorbell choice). */
     public static SoundEvent of(String name) {
-        return SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, name));
+        return SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, name));
     }
 }

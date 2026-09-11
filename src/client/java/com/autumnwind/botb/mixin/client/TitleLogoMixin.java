@@ -1,7 +1,7 @@
 package com.autumnwind.botb.mixin.client;
 
 import com.autumnwind.botb.gui.TitleArt;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.LogoRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,6 +9,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ARGB;
 
 /**
  * Swaps the vanilla "Minecraft" wordmark on the title screen for the mod's own title art. The
@@ -36,15 +38,14 @@ public class TitleLogoMixin {
     private boolean keepLogoThroughFade;
 
     @Inject(
-            method = "renderLogo(Lnet/minecraft/client/gui/GuiGraphics;IFI)V",
+            method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IFI)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void drawBotbTitle(GuiGraphics context, int screenWidth, float alpha, int y, CallbackInfo ci) {
+    private void drawBotbTitle(GuiGraphicsExtractor context, int screenWidth, float alpha, int y, CallbackInfo ci) {
         // Vanilla tints the logo by the fade alpha, so the title fades in with the panorama.
-        context.setColor(1.0F, 1.0F, 1.0F, this.keepLogoThroughFade ? 1.0F : alpha);
-        TitleArt.drawCentered(context, screenWidth / 2, y + Y_OFFSET, DRAW_WIDTH);
-        context.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        int color = ARGB.white(this.keepLogoThroughFade ? 1.0F : alpha);
+        TitleArt.drawCentered(context, screenWidth / 2, y + Y_OFFSET, DRAW_WIDTH, color);
         ci.cancel();
     }
 }
