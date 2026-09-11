@@ -1726,7 +1726,7 @@ public class AssignRolesScreen extends Screen {
                 mouseY >= sendRolesButton.getY() && mouseY < sendRolesButton.getY() + sendRolesButton.getHeight()) {
                 List<Text> errorLines = new ArrayList<>();
                 errorLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.setup_issues").formatted(Formatting.RED));
-                for (String error : cachedValidation.errors()) {
+                for (Text error : cachedValidation.errors()) {
                     errorLines.add(Text.translatable("gui.blood-on-the-blocktower.assign_roles.setup_issue_line", error).formatted(Formatting.GRAY));
                 }
                 errorLines.add(Text.literal("")); // Empty line

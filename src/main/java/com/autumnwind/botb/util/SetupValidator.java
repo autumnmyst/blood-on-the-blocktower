@@ -1,5 +1,7 @@
 package com.autumnwind.botb.util;
 
+import net.minecraft.text.Text;
+
 import java.util.*;
 
 /**
@@ -15,12 +17,12 @@ public class SetupValidator {
     /**
      * Result of validating a setup.
      */
-    public record ValidationResult(boolean isValid, List<String> errors, SetupCounts expectedCounts, SetupCounts actualCounts) {
+    public record ValidationResult(boolean isValid, List<Text> errors, SetupCounts expectedCounts, SetupCounts actualCounts) {
         public static ValidationResult valid(SetupCounts expected, SetupCounts actual) {
             return new ValidationResult(true, Collections.emptyList(), expected, actual);
         }
 
-        public static ValidationResult invalid(List<String> errors, SetupCounts expected, SetupCounts actual) {
+        public static ValidationResult invalid(List<Text> errors, SetupCounts expected, SetupCounts actual) {
             return new ValidationResult(false, errors, expected, actual);
         }
     }
@@ -135,7 +137,7 @@ public class SetupValidator {
             Map<UUID, List<Reminder>> pendingReminders,
             Script script
     ) {
-        List<String> errors = new ArrayList<>();
+        List<Text> errors = new ArrayList<>();
 
         // Count seated players with assigned roles (official or custom)
         // Travelers are excluded from the count that determines role type requirements
@@ -153,14 +155,14 @@ public class SetupValidator {
         }
 
         if (playerCount < 5) {
-            errors.add("Need at least 5 players (have " + playerCount + ")");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.min_players", playerCount));
             return ValidationResult.invalid(errors, null, null);
         }
 
         // Get base counts
         RoleCounts.RoleCountInfo baseCounts = RoleCounts.getCounts(playerCount);
         if (baseCounts == null) {
-            errors.add("Invalid player count: " + playerCount);
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.invalid_player_count", playerCount));
             return ValidationResult.invalid(errors, null, null);
         }
 
@@ -365,7 +367,7 @@ public class SetupValidator {
             SetupCounts actual,
             Map<UUID, PendingRoleAssignment> pendingRoles,
             Map<UUID, Integer> pendingSeatNumbers,
-            List<String> errors
+            List<Text> errors
     ) {
         // Special case: Legion game
         if (expected.isLegionGame()) {
@@ -376,10 +378,10 @@ public class SetupValidator {
         // Special case: Atheist game (all players are good, no demons/minions)
         if (expected.noEvil()) {
             if (actual.demons() > 0) {
-                errors.add("Atheist game: No Demons allowed (have " + actual.demons() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.atheist_no_demons", actual.demons()));
             }
             if (actual.minions() > 0) {
-                errors.add("Atheist game: No Minions allowed (have " + actual.minions() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.atheist_no_minions", actual.minions()));
             }
             // All roles should be Townsfolk/Outsiders - no count check needed
             return;
@@ -390,37 +392,37 @@ public class SetupValidator {
         // Demon/Minion checks; branches only pick the error wording
         if (expected.isSummonerGame()) {
             if (actual.demons() != resolved.demons()) {
-                errors.add("Summoner game: Should have 0 Demons at start (have " + actual.demons() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.summoner_no_demons", actual.demons()));
             }
             if (actual.minions() != resolved.minions()) {
-                errors.add("Summoner game: Need " + resolved.minions() + " Minions (have " + actual.minions() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.summoner_minions", resolved.minions(), actual.minions()));
             }
         } else if (expected.isKazaliGame()) {
             if (actual.demons() != resolved.demons()) {
-                errors.add("Kazali game: Need 1 Demon (have " + actual.demons() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.kazali_one_demon", actual.demons()));
             }
             if (actual.minions() != resolved.minions()) {
-                errors.add("Kazali game: Should have 0 Minions at start (have " + actual.minions() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.kazali_no_minions", actual.minions()));
             }
         } else if (expected.allowsLilMonstaSetup() && actual.demons() == 0) {
             if (actual.minions() != resolved.minions()) {
-                errors.add("Lil' Monsta setup: Need " + resolved.minions() + " Minions (have " + actual.minions() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.lilmonsta_minions", resolved.minions(), actual.minions()));
             }
         } else {
             if (actual.demons() != resolved.demons()) {
-                errors.add("Need " + resolved.demons() + " Demon(s) (have " + actual.demons() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.demons", resolved.demons(), actual.demons()));
             }
             if (actual.minions() != resolved.minions()) {
-                errors.add("Need " + resolved.minions() + " Minion(s) (have " + actual.minions() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.minions", resolved.minions(), actual.minions()));
             }
         }
 
         // Outsider count validation (with range)
         if (actual.outsiders() < expected.minOutsiders() || actual.outsiders() > expected.maxOutsiders()) {
             if (expected.minOutsiders() == expected.maxOutsiders()) {
-                errors.add("Need " + expected.minOutsiders() + " Outsider(s) (have " + actual.outsiders() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.outsiders", expected.minOutsiders(), actual.outsiders()));
             } else {
-                errors.add("Need " + expected.minOutsiders() + "-" + expected.maxOutsiders() + " Outsider(s) (have " + actual.outsiders() + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.outsiders_range", expected.minOutsiders(), expected.maxOutsiders(), actual.outsiders()));
             }
         }
 
@@ -430,7 +432,7 @@ public class SetupValidator {
         if (expected.minOutsiders() == 0 && expected.maxOutsiders() > expected.outsiders()) {
             // Flexible - check total
             if (actualGoodRoles != resolved.goodRoles()) {
-                errors.add("Need " + resolved.goodRoles() + " good roles (have " + actualGoodRoles + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.good_roles", resolved.goodRoles(), actualGoodRoles));
             }
         } else {
             // Non-flexible - townsfolk count matters
@@ -440,7 +442,7 @@ public class SetupValidator {
             // Only check if outsiders are in valid range
             if (actual.outsiders() >= expected.minOutsiders() && actual.outsiders() <= expected.maxOutsiders()) {
                 if (actual.townsfolk() != expectedTownsfolk) {
-                    errors.add("Need " + expectedTownsfolk + " Townsfolk (have " + actual.townsfolk() + ")");
+                    errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.townsfolk", expectedTownsfolk, actual.townsfolk()));
                 }
             }
         }
@@ -454,7 +456,7 @@ public class SetupValidator {
     private static void validateLegionSetup(
             Map<UUID, PendingRoleAssignment> pendingRoles,
             Map<UUID, Integer> pendingSeatNumbers,
-            List<String> errors
+            List<Text> errors
     ) {
         int totalSeated = 0;
         int legionCount = 0;
@@ -487,17 +489,17 @@ public class SetupValidator {
 
         // Majority must be Legion
         if (legionCount <= totalSeated / 2) {
-            errors.add("Legion game: Majority must be Legion (" + legionCount + "/" + totalSeated + " is not majority)");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.legion_majority", legionCount, totalSeated));
         }
 
         // No minions allowed
         if (minionCount > 0) {
-            errors.add("Legion game: No Minions allowed (have " + minionCount + ")");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.legion_no_minions", minionCount));
         }
 
         // No other demons allowed (only Legion)
         if (otherDemonCount > 0) {
-            errors.add("Legion game: Only Legion demons allowed (have " + otherDemonCount + " other demon(s))");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.legion_only_legion", otherDemonCount));
         }
     }
 
@@ -507,7 +509,7 @@ public class SetupValidator {
     private static void validateRoleRequirements(
             Map<UUID, PendingRoleAssignment> pendingRoles,
             Map<UUID, Integer> pendingSeatNumbers,
-            List<String> errors
+            List<Text> errors
     ) {
         boolean hasHuntsman = false;
         boolean hasDamsel = false;
@@ -545,12 +547,12 @@ public class SetupValidator {
 
         // Huntsman requires Damsel
         if (hasHuntsman && !hasDamsel) {
-            errors.add("Huntsman requires Damsel to be in play");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.huntsman_damsel"));
         }
 
         // Choirboy requires King
         if (hasChoirboy && !hasKing) {
-            errors.add("Choirboy requires King to be in play");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.choirboy_king"));
         }
 
         // Each Marionette must be adjacent to a Demon (+1 or -1 seat, with wrap-around)
@@ -567,7 +569,7 @@ public class SetupValidator {
                     }
                 }
                 if (!isAdjacent) {
-                    errors.add("Marionette (seat " + marionetteSeat + ") must be seated next to a Demon");
+                    errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.marionette_adjacent", marionetteSeat));
                 }
             }
         }
@@ -581,11 +583,11 @@ public class SetupValidator {
             Map<UUID, PendingRoleAssignment> pendingRoles,
             Map<UUID, Integer> pendingSeatNumbers,
             Script script,
-            List<String> errors
+            List<Text> errors
     ) {
         int actualEvilTownsfolk = 0;
         int totalEvilPlayers = 0; // For Spirit of Ivory check
-        List<String> wrongAlignments = new ArrayList<>();
+        List<Text> wrongAlignments = new ArrayList<>();
 
         for (Map.Entry<UUID, PendingRoleAssignment> entry : pendingRoles.entrySet()) {
             if (!pendingSeatNumbers.containsKey(entry.getKey()) || pendingSeatNumbers.get(entry.getKey()) <= 0) {
@@ -613,7 +615,7 @@ public class SetupValidator {
 
             // In Atheist game, all players must be good
             if (expected.noEvil() && !isFinalGood) {
-                wrongAlignments.add(displayName + " is evil (Atheist game requires all good)");
+                wrongAlignments.add(Text.translatable("gui.blood-on-the-blocktower.validation.atheist_evil_player", displayName));
             }
 
             // Check for unnecessary alignment overrides (not required by any role)
@@ -623,14 +625,14 @@ public class SetupValidator {
             if (!expected.noEvil() && expected.evilTownsfolk() == 0 && !assignment.isCustomRole()) {
                 // No role requires changed alignments
                 if (isDefaultGood != isFinalGood && roleType == RoleType.TOWNSFOLK) {
-                    wrongAlignments.add(displayName + " has non-default alignment without a requiring role");
+                    wrongAlignments.add(Text.translatable("gui.blood-on-the-blocktower.validation.alignment_without_role", displayName));
                 }
             }
         }
 
         // Check Bounty Hunter requirement
         if (expected.evilTownsfolk() > 0 && actualEvilTownsfolk != expected.evilTownsfolk()) {
-            errors.add("Bounty Hunter requires exactly " + expected.evilTownsfolk() + " evil Townsfolk (have " + actualEvilTownsfolk + ")");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.bounty_hunter_evil_townsfolk", expected.evilTownsfolk(), actualEvilTownsfolk));
         }
 
         // Spirit of Ivory: "There can't be more than 1 extra evil player"
@@ -640,7 +642,7 @@ public class SetupValidator {
             int baseEvil = expected.minions() + expected.demons();
             int maxAllowedEvil = baseEvil + 1; // Spirit of Ivory allows 1 extra evil
             if (totalEvilPlayers > maxAllowedEvil) {
-                errors.add("Spirit of Ivory: Max " + maxAllowedEvil + " evil players allowed (have " + totalEvilPlayers + ")");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.spirit_of_ivory", maxAllowedEvil, totalEvilPlayers));
             }
         }
 
@@ -662,7 +664,7 @@ public class SetupValidator {
             Map<UUID, Integer> pendingSeatNumbers,
             Map<UUID, List<Reminder>> pendingReminders,
             Script script,
-            List<String> errors
+            List<Text> errors
     ) {
         if (pendingReminders == null) return;
 
@@ -707,27 +709,20 @@ public class SetupValidator {
                     hasFakeRoleReminder = true;
                     // The Lunatic may match the real demon
                     if (role != Role.LUNATIC && inPlayRoleIds.contains(reminderRoleId(reminder))) {
-                        errors.add(role.getDisplayName() + " (seat " + seat + ") fake role "
-                                + reminderDisplayName(reminder, script) + " is already in play");
+                        errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.fake_role_in_play",
+                                role.getDisplayName(), seat, reminderDisplayName(reminder, script)));
                     }
                     break;
                 }
             }
 
             if (!hasFakeRoleReminder) {
-                String roleName = switch (role) {
-                    case DRUNK -> "Drunk";
-                    case MARIONETTE -> "Marionette";
-                    case LUNATIC -> "Lunatic";
-                    default -> "";
-                };
-                String typeDesc = switch (role) {
-                    case DRUNK -> "a Townsfolk";
-                    case MARIONETTE -> "a Townsfolk or Outsider";
-                    case LUNATIC -> "a Demon";
-                    default -> "";
-                };
-                errors.add(roleName + " (seat " + seat + ") needs " + typeDesc + " reminder");
+                errors.add(switch (role) {
+                    case DRUNK -> Text.translatable("gui.blood-on-the-blocktower.validation.drunk_reminder", seat);
+                    case MARIONETTE -> Text.translatable("gui.blood-on-the-blocktower.validation.marionette_reminder", seat);
+                    case LUNATIC -> Text.translatable("gui.blood-on-the-blocktower.validation.lunatic_reminder", seat);
+                    default -> Text.empty();
+                });
             }
         }
     }
@@ -742,7 +737,7 @@ public class SetupValidator {
             Map<UUID, List<Reminder>> pendingReminders,
             Script script,
             Set<String> inPlayRoleIds,
-            List<String> errors
+            List<Text> errors
     ) {
         boolean hasDrunkAbility = false;
         boolean hasLunaticAbility = false;
@@ -760,15 +755,15 @@ public class SetupValidator {
             if (type == RoleType.DEMON) hasDemonReminder = true;
             // Only the Hermit's Drunk townsfolk is shown as a token; minion and demon abilities are told, so they may match
             if (type == RoleType.TOWNSFOLK && inPlayRoleIds.contains(reminderRoleId(reminder))) {
-                errors.add("Hermit (seat " + seat + ") fake role " + reminderDisplayName(reminder, script) + " is already in play");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.hermit_fake_in_play", seat, reminderDisplayName(reminder, script)));
             }
         }
 
         if (hasDrunkAbility && !hasTownsfolkReminder) {
-            errors.add("Hermit (seat " + seat + ") with Drunk ability needs a Townsfolk reminder");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.hermit_drunk_reminder", seat));
         }
         if (hasLunaticAbility && !hasDemonReminder) {
-            errors.add("Hermit (seat " + seat + ") with Lunatic ability needs a Demon reminder");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.hermit_lunatic_reminder", seat));
         }
     }
 
@@ -781,7 +776,7 @@ public class SetupValidator {
     private static void validateLordOfTyphonSeating(
             Map<UUID, PendingRoleAssignment> pendingRoles,
             Map<UUID, Integer> pendingSeatNumbers,
-            List<String> errors
+            List<Text> errors
     ) {
         Set<Integer> evilSeats = new HashSet<>();
         Set<Integer> lotSeats = new HashSet<>();
@@ -812,7 +807,7 @@ public class SetupValidator {
             if (evilSeats.contains(s) && !evilSeats.contains(next)) gaps++;
         }
         if (gaps > 1) {
-            errors.add("Lord of Typhon: evil characters must be seated in a single line");
+            errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.lord_of_typhon_line"));
         }
 
         // LoT cannot sit at either end of the line - both neighbors must be evil
@@ -820,7 +815,7 @@ public class SetupValidator {
             int left = lotSeat == 1 ? maxSeat : lotSeat - 1;
             int right = lotSeat == maxSeat ? 1 : lotSeat + 1;
             if (!evilSeats.contains(left) || !evilSeats.contains(right)) {
-                errors.add("Lord of Typhon (seat " + lotSeat + ") must have evil characters on both sides");
+                errors.add(Text.translatable("gui.blood-on-the-blocktower.validation.lord_of_typhon_sides", lotSeat));
             }
         }
     }
