@@ -132,6 +132,12 @@ public class RoleHelpers {
         return storytellerMinions;
     }
 
+    /** Whether a player has an "ST: [Minion]" reminder for this minion. */
+    public static boolean hasStorytellerMinionReminder(UUID uuid, Role minion) {
+        return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
+                .anyMatch(r -> r.isStorytellerMinionReminder() && r.role().get() == minion);
+    }
+
     /**
      * Gets standard "Drunk" and "Poisoned" reminders for a single player.
      * Excludes Minstrel's "Everyone Is Drunk" for the player who has it.

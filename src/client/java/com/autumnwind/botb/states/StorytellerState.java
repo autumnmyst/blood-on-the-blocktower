@@ -124,7 +124,7 @@ public class StorytellerState {
     /**
      * Checks if Organ Grinder mode should be active based on current roles and reminders.
      * Uses the general ability checking function, plus special handling for Plague Doctor's
-     * "Storyteller Ability" case (format: "ST: Organ Grinder" reminder).
+     * storyteller ability "ST: Organ Grinder"
      *
      * @param deadPlayers map of player UUIDs to their death status
      * @return true if Organ Grinder mode should be active
@@ -135,50 +135,15 @@ public class StorytellerState {
             return true;
         }
 
-        // Special case: Plague Doctor's "Storyteller Ability" with Organ Grinder chosen
-        // Storyteller-minion reminders use format "ST: [MinionName]" (e.g., "ST: Organ Grinder")
-        for (Map.Entry<UUID, PendingRoleAssignment> entry : PENDING_ROLES.entrySet()) {
-            UUID playerUuid = entry.getKey();
-            List<Reminder> playerReminders = REMINDERS.getOrDefault(playerUuid, Collections.emptyList());
+        // Special case: Plague Doctor with "ST: ORGAN GRINDER", only its own "Drunk" matters
+        for (UUID playerUuid : PENDING_ROLES.keySet()) {
+            if (!RoleHelpers.hasStorytellerMinionReminder(playerUuid, Role.ORGAN_GRINDER)) continue;
 
-            boolean hasStorytellerAbility = playerReminders.stream()
-                    .anyMatch(r -> r.text().equals("Storyteller Ability"));
-            boolean hasStorytellerOrganGrinder = playerReminders.stream()
-                    .anyMatch(r -> r.isStorytellerMinionReminder() &&
-                            r.role().isPresent() && r.role().get() == Role.ORGAN_GRINDER);
-
-            if (hasStorytellerAbility && hasStorytellerOrganGrinder) {
-                // Found Storyteller Ability + ST: Organ Grinder - apply standard ability checks
-
-                if (RoleHelpers.isDroisoned(playerUuid)) continue;
-
-                // Check "No Ability" (generic or Organ Grinder-specific)
-                boolean hasNoAbility = playerReminders.stream()
-                        .anyMatch(r -> r.text().equals("No Ability") &&
-                                (r.role().isEmpty() || r.role().get() == Role.ORGAN_GRINDER));
-                if (hasNoAbility) continue;
-
-                // Organ Grinder is a minion - check Preacher "No Ability"
-                boolean hasPreacherNoAbility = playerReminders.stream()
-                        .anyMatch(r -> r.text().equals("No Ability") &&
-                                r.role().isPresent() && r.role().get() == Role.PREACHER);
-                if (hasPreacherNoAbility) continue;
-
-                // Check death status
-                boolean isDead = deadPlayers.getOrDefault(playerUuid, false);
-                if (isDead) {
-                    // Check for "Has Ability" (generic, Bone Collector, or Vigormortis for minions)
-                    boolean hasAbilityReminder = playerReminders.stream()
-                            .anyMatch(r -> r.text().equals("Has Ability") &&
-                                    (r.role().isEmpty() || r.role().get() == Role.BONE_COLLECTOR ||
-                                            r.role().get() == Role.VIGORMORTIS));
-                    if (!hasAbilityReminder) continue;
-                }
-
-                return true;
-            }
+            boolean organGrinderDrunk = REMINDERS.getOrDefault(playerUuid, Collections.emptyList()).stream()
+                    .anyMatch(r -> r.text().equals("Drunk") &&
+                            (r.role().isEmpty() || r.role().get() == Role.ORGAN_GRINDER));
+            if (!organGrinderDrunk) return true;
         }
-
         return false;
     }
     public static final Map<UUID, PendingRoleAssignment> PENDING_ROLES = new HashMap<>();
