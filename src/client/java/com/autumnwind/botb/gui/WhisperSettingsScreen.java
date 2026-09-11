@@ -121,7 +121,7 @@ public class WhisperSettingsScreen extends Screen {
 
         // 3. Visual
         addRow(y, leftX, controlX, controlW, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.visual_effect"),
-                Text.literal(visual.displayName()).formatted(colorFor(visual)),
+                Text.translatable(visual.translationKey()).formatted(colorFor(visual)),
                 editable, b -> { visual = visual.cycle(); refresh(); });
         y += rowH;
 

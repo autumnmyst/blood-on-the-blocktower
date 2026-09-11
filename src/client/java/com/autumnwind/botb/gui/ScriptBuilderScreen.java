@@ -1064,7 +1064,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
     }
 
     private static String abbreviate(RoleType team) {
-        return team == RoleType.TRAVELER ? "Tr" : team.name().substring(0, 1);
+        return team.getShortName();
     }
 
     private void queueTooltip(List<Text> lines, int mouseX, int mouseY) {
@@ -1110,7 +1110,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
                     currentTeam = role.getTeam();
                     final RoleType team = currentTeam;
                     this.addEntry(new SectionEntry(
-                            Text.literal(team.name()).styled(s -> s.withColor(team.getColor()).withBold(true))));
+                            Text.literal(team.getDisplayName()).styled(s -> s.withColor(team.getColor()).withBold(true))));
                 }
                 this.addEntry(new RoleEntry(role));
             }

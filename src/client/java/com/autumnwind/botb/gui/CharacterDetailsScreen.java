@@ -231,7 +231,7 @@ public class CharacterDetailsScreen extends Screen {
 
         // Handle team display
         RoleType team = scriptRole.getTeam();
-        String teamName = team != null ? team.name() : "UNKNOWN";
+        String teamName = team != null ? team.getDisplayName() : RoleType.NONE.getDisplayName();
         int teamColor = team != null ? team.getColor() : 0xAAAAAA;
         Text roleType = Text.literal(teamName).formatted(Formatting.ITALIC);
         if (shouldCenter) {

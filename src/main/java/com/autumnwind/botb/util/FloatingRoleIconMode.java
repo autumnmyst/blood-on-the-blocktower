@@ -1,5 +1,7 @@
 package com.autumnwind.botb.util;
 
+import net.minecraft.util.Language;
+
 public enum FloatingRoleIconMode {
     OFF,
     ALWAYS,
@@ -14,11 +16,11 @@ public enum FloatingRoleIconMode {
     }
 
     public String displayName() {
-        return switch (this) {
-            case OFF -> "OFF";
-            case ALWAYS -> "ALWAYS";
-            case AFTER_END -> "GAME END";
-        };
+        return Language.getInstance().get(switch (this) {
+            case OFF -> "gui.blood-on-the-blocktower.settings.off";
+            case ALWAYS -> "gui.blood-on-the-blocktower.settings.role_icons.always";
+            case AFTER_END -> "gui.blood-on-the-blocktower.settings.role_icons.game_end";
+        });
     }
 
     public static FloatingRoleIconMode fromName(String name) {

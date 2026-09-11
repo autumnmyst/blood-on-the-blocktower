@@ -30,6 +30,11 @@ public enum RoleType {
         return Language.getInstance().get(nameKey);
     }
 
+    /** The one or two letter abbreviation from the lang file, as used for badges. */
+    public String getShortName() {
+        return Language.getInstance().get(nameKey + ".short");
+    }
+
     /** The plural type name from the lang file, as used for section headers. */
     public String getPluralName() {
         return Language.getInstance().get(nameKey + ".plural");

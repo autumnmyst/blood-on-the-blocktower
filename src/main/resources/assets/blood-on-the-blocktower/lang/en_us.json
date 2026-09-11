@@ -2386,5 +2386,15 @@
   "hud.blood-on-the-blocktower.game_end.defeat": "Defeat",
   "gui.blood-on-the-blocktower.alignment_override.default": "Default",
   "gui.blood-on-the-blocktower.alignment_override.good": "Good",
-  "gui.blood-on-the-blocktower.alignment_override.bad": "Bad"
+  "gui.blood-on-the-blocktower.alignment_override.bad": "Bad",
+  "gui.blood-on-the-blocktower.settings.role_icons.always": "ALWAYS",
+  "gui.blood-on-the-blocktower.settings.role_icons.game_end": "GAME END",
+  "roletype.blood-on-the-blocktower.townsfolk.short": "T",
+  "roletype.blood-on-the-blocktower.outsider.short": "O",
+  "roletype.blood-on-the-blocktower.minion.short": "M",
+  "roletype.blood-on-the-blocktower.demon.short": "D",
+  "roletype.blood-on-the-blocktower.traveler.short": "Tr",
+  "roletype.blood-on-the-blocktower.fabled.short": "F",
+  "roletype.blood-on-the-blocktower.loric.short": "L",
+  "roletype.blood-on-the-blocktower.none.short": "N"
 }

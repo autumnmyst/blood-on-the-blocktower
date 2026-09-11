@@ -29,10 +29,10 @@ public record WhisperSettings(
             return values()[(ordinal() + 1) % values().length];
         }
 
-        public String displayName() {
+        public String translationKey() {
             return switch (this) {
-                case OFF -> "OFF";
-                case RUNES -> "ON";
+                case OFF -> "gui.blood-on-the-blocktower.whisper_settings.off";
+                case RUNES -> "gui.blood-on-the-blocktower.whisper_settings.on";
             };
         }
     }
