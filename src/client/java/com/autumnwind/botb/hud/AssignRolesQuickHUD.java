@@ -355,7 +355,7 @@ public class AssignRolesQuickHUD {
                 int bluffStartY = screenHeight / 2 - ROLE_ICON_SIZE;
                 int bluffSpacing = ROLE_ICON_SIZE + 10;
 
-                context.drawTextWithShadow(client.textRenderer, Text.literal("Bluffs:"), bluffX, bluffStartY - 15, 0xFFFFFF);
+                context.drawTextWithShadow(client.textRenderer, Text.translatable("hud.blood-on-the-blocktower.quick_view.bluffs"), bluffX, bluffStartY - 15, 0xFFFFFF);
 
                 for (int i = 0; i < 3; i++) {
                     ScriptRole scriptRole = StorytellerState.DEMON_BLUFFS.get(i);

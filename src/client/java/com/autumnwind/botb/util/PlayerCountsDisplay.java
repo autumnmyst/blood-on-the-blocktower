@@ -64,7 +64,7 @@ public class PlayerCountsDisplay {
             countText = buildFullFormat(playerCount, counts);
             // Add traveler count in purple if there are travelers
             if (travelerCount > 0) {
-                countText.append(Text.literal(" Travelers: " + travelerCount).formatted(Formatting.LIGHT_PURPLE));
+                countText.append(Text.translatable("hud.blood-on-the-blocktower.player_counts.travelers", travelerCount).formatted(Formatting.LIGHT_PURPLE));
             }
         } else {
             countText = buildCompressedFormat(counts);
@@ -82,11 +82,11 @@ public class PlayerCountsDisplay {
      * Builds the full format: "Players: X | Townsfolk: Y Outsiders: Z Minions: W Demon: V"
      */
     private static MutableText buildFullFormat(int playerCount, RoleCounts.RoleCountInfo counts) {
-        return Text.literal("Players: " + playerCount + " | ")
-                .append(Text.literal("Townsfolk: " + counts.townsfolk() + " ").formatted(Formatting.BLUE))
-                .append(Text.literal("Outsiders: " + counts.outsiders() + " ").formatted(Formatting.DARK_AQUA))
-                .append(Text.literal("Minions: " + counts.minions() + " ").formatted(Formatting.RED))
-                .append(Text.literal("Demon: " + counts.demon()).formatted(Formatting.DARK_RED));
+        return Text.translatable("hud.blood-on-the-blocktower.player_counts.players", playerCount)
+                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.townsfolk", counts.townsfolk()).formatted(Formatting.BLUE))
+                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.outsiders", counts.outsiders()).formatted(Formatting.DARK_AQUA))
+                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.minions", counts.minions()).formatted(Formatting.RED))
+                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.demon", counts.demon()).formatted(Formatting.DARK_RED));
     }
 
     /**

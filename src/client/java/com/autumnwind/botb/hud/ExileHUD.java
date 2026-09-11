@@ -53,10 +53,10 @@ public class ExileHUD {
         MutableText titleText;
         if (ClientState.exileSupportInProgress) {
             if (isTarget) {
-                titleText = Text.literal("Exile support for: ").formatted(Formatting.LIGHT_PURPLE)
-                        .append(Text.literal("You").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Text.translatable("hud.blood-on-the-blocktower.exile.support_for").formatted(Formatting.LIGHT_PURPLE)
+                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
             } else {
-                titleText = Text.literal("Exile support for: ").formatted(Formatting.LIGHT_PURPLE)
+                titleText = Text.translatable("hud.blood-on-the-blocktower.exile.support_for").formatted(Formatting.LIGHT_PURPLE)
                         .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)).formatted(Formatting.BOLD));
             }
         } else {
@@ -66,12 +66,12 @@ public class ExileHUD {
 
             if (isTarget) {
                 titleText = Text.literal(callerName).styled(style -> style.withColor(callerColor))
-                        .append(Text.literal(" calls for exile of ").formatted(Formatting.WHITE))
-                        .append(Text.literal("You").formatted(Formatting.RED, Formatting.BOLD));
+                        .append(Text.translatable("hud.blood-on-the-blocktower.exile.calls_for_exile_of").formatted(Formatting.WHITE))
+                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
             } else {
                 // Target is always a traveler (purple)
                 titleText = Text.literal(callerName).styled(style -> style.withColor(callerColor))
-                        .append(Text.literal(" calls for exile of ").formatted(Formatting.WHITE))
+                        .append(Text.translatable("hud.blood-on-the-blocktower.exile.calls_for_exile_of").formatted(Formatting.WHITE))
                         .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)));
             }
         }
@@ -88,10 +88,10 @@ public class ExileHUD {
             } else {
                 fraction = fraction.formatted(Formatting.WHITE, Formatting.BOLD);
             }
-            requirementsText = Text.literal("Support: ").append(fraction);
+            requirementsText = Text.translatable("hud.blood-on-the-blocktower.exile.support").append(fraction);
         } else {
             // Show requirement before support vote
-            requirementsText = Text.literal("Support required: ")
+            requirementsText = Text.translatable("hud.blood-on-the-blocktower.exile.support_required")
                     .append(Text.literal(String.valueOf(supportsRequired)).formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD));
         }
 
@@ -105,41 +105,40 @@ public class ExileHUD {
 
             // Use exile-specific countdown
             if (ClientState.exileSupportLockInTime > 0) {
-                line3Text = Text.literal("Support locks in: ")
+                line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.locks_in")
                         .append(Text.literal(ClientState.exileSupportLockInTime + "s").formatted(Formatting.AQUA));
 
                 if (leverState != null) {
-                    String voteStatus = leverState ? "YES" : "NO";
+                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
                     Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
                     line3Text.append(Text.literal(" - "))
-                            .append(Text.literal(voteStatus).formatted(voteColor, Formatting.BOLD));
+                            .append(voteStatus.copy().formatted(voteColor, Formatting.BOLD));
                 }
             } else {
                 if (leverState != null) {
-                    String voteStatus = leverState ? "YES" : "NO";
+                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
                     Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
-                    line3Text = Text.literal("You supported: ")
-                            .append(Text.literal(voteStatus).formatted(voteColor));
+                    line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.you_supported")
+                            .append(voteStatus.copy().formatted(voteColor));
                 } else {
                     boolean isOperator = client.player.hasPermissionLevel(2);
                     if (isOperator) {
                         line3Text = Text.literal(""); // Empty for storyteller
                     } else {
-                        line3Text = Text.literal("Check your vote lever").formatted(Formatting.GRAY, Formatting.ITALIC);
+                        line3Text = Text.translatable("hud.blood-on-the-blocktower.common.check_lever").formatted(Formatting.GRAY, Formatting.ITALIC);
                     }
                 }
             }
         } else {
             // Before support vote: Show vote position
             if (isTarget) {
-                line3Text = Text.literal("You support last").formatted(Formatting.AQUA);
+                line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.you_support_last").formatted(Formatting.AQUA);
             } else {
                 int position = calculateSupportPosition(client.player.getUuid(), exileTargetUuid);
                 if (position == 0) {
                     line3Text = Text.empty();
                 } else {
-                    String positionText = getOrdinalString(position);
-                    line3Text = Text.literal("You support " + positionText).formatted(Formatting.AQUA);
+                    line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.you_support", getOrdinalText(position)).formatted(Formatting.AQUA);
                 }
             }
         }
@@ -193,16 +192,16 @@ public class ExileHUD {
     /**
      * Converts a number to its ordinal string representation (1st, 2nd, 3rd, etc.)
      */
-    private static String getOrdinalString(int number) {
+    private static Text getOrdinalText(int number) {
         if (number % 100 >= 11 && number % 100 <= 13) {
-            return number + "th";
+            return Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         }
 
         return switch (number % 10) {
-            case 1 -> number + "st";
-            case 2 -> number + "nd";
-            case 3 -> number + "rd";
-            default -> number + "th";
+            case 1 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_1", number);
+            case 2 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_2", number);
+            case 3 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_3", number);
+            default -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         };
     }
 

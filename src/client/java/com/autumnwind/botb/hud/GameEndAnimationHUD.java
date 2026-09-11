@@ -284,20 +284,14 @@ public class GameEndAnimationHUD {
             Text subtitleText;
             if (goodWins) {
                 // "The Good Team Wins" with "Good" in blue
-                subtitleText = Text.literal("The ")
-                        .styled(style -> style.withColor(white))
-                        .append(Text.literal("Good")
-                                .styled(style -> style.withColor(townsfolkBlue)))
-                        .append(Text.literal(" Team Wins")
-                                .styled(style -> style.withColor(white)));
+                subtitleText = Text.translatable("hud.blood-on-the-blocktower.game_end.team_wins",
+                                Text.translatable("hud.blood-on-the-blocktower.game_end.good").styled(style -> style.withColor(townsfolkBlue)))
+                        .styled(style -> style.withColor(white));
             } else {
                 // "The Evil Team Wins" with "Evil" in red
-                subtitleText = Text.literal("The ")
-                        .styled(style -> style.withColor(white))
-                        .append(Text.literal("Evil")
-                                .styled(style -> style.withColor(minionRed)))
-                        .append(Text.literal(" Team Wins")
-                                .styled(style -> style.withColor(white)));
+                subtitleText = Text.translatable("hud.blood-on-the-blocktower.game_end.team_wins",
+                                Text.translatable("hud.blood-on-the-blocktower.game_end.evil").styled(style -> style.withColor(minionRed)))
+                        .styled(style -> style.withColor(white));
             }
 
             // Apply alpha uniformly to all text via the color parameter

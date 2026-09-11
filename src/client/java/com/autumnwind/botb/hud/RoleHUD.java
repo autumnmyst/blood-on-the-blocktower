@@ -169,19 +169,19 @@ public class RoleHUD {
             if (isTraveler) {
                 // Travelers show alignment indicator based on override:
                 // FORCE_GOOD -> (GOOD), FORCE_BAD -> (EVIL), DEFAULT -> (---)
-                roleTypeText = Text.literal(roleType.name());
+                roleTypeText = Text.literal(roleType.getDisplayName());
                 if (override == AlignmentOverride.FORCE_GOOD) {
-                    roleTypeText.append(Text.literal(" (GOOD)").formatted(Formatting.BOLD, Formatting.BLUE));
+                    roleTypeText.append(Text.translatable("hud.blood-on-the-blocktower.role.good").formatted(Formatting.BOLD, Formatting.BLUE));
                 } else if (override == AlignmentOverride.FORCE_BAD) {
-                    roleTypeText.append(Text.literal(" (EVIL)").formatted(Formatting.BOLD, Formatting.RED));
+                    roleTypeText.append(Text.translatable("hud.blood-on-the-blocktower.role.evil").formatted(Formatting.BOLD, Formatting.RED));
                 } else {
                     // Default alignment - show neutral indicator
                     roleTypeText.append(Text.literal(" (---)").formatted(Formatting.ITALIC, Formatting.GRAY));
                 }
             } else {
-                roleTypeText = Text.literal(roleType.name());
+                roleTypeText = Text.literal(roleType.getDisplayName());
                 if (alignmentMismatched) {
-                    roleTypeText.append(Text.literal(displayIsGood ? " (GOOD)" : " (EVIL)").formatted(Formatting.BOLD));
+                    roleTypeText.append(Text.translatable(displayIsGood ? "hud.blood-on-the-blocktower.role.good" : "hud.blood-on-the-blocktower.role.evil").formatted(Formatting.BOLD));
                 }
             }
             roleTypeText.formatted(Formatting.ITALIC);
@@ -193,12 +193,10 @@ public class RoleHUD {
                     .getBoundKeyLocalizedText().getString();
             String hideKeyName = KeyInputHandler.toggleShowRole
                     .getBoundKeyLocalizedText().getString();
-            descText.append(Text.literal("\n\n[").formatted(Formatting.GRAY, Formatting.ITALIC))
-                    .append(Text.literal(keyName).formatted(Formatting.YELLOW, Formatting.ITALIC))
-                    .append(Text.literal("] details").formatted(Formatting.GRAY, Formatting.ITALIC))
-                    .append(Text.literal(" / [").formatted(Formatting.GRAY, Formatting.ITALIC))
-                    .append(Text.literal(hideKeyName).formatted(Formatting.YELLOW, Formatting.ITALIC))
-                    .append(Text.literal("] hide").formatted(Formatting.GRAY, Formatting.ITALIC));
+            descText.append(Text.literal("\n\n").append(Text.translatable("hud.blood-on-the-blocktower.role.hint_keys",
+                            Text.literal(keyName).formatted(Formatting.YELLOW),
+                            Text.literal(hideKeyName).formatted(Formatting.YELLOW))
+                    .formatted(Formatting.GRAY, Formatting.ITALIC)));
         }
         List<OrderedText> wrappedDesc = client.textRenderer.wrapLines(descText, 200);
 

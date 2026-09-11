@@ -94,7 +94,7 @@ public class RoleGuideDetailsScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(role.getDisplayName()).formatted(Formatting.BOLD), this.width / 2, currentY, 0xFFFFFF);
         currentY += this.textRenderer.fontHeight + 2;
 
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(role.getType().name()).formatted(Formatting.ITALIC), this.width / 2, currentY, role.getType().getColor());
+        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(role.getType().getDisplayName()).formatted(Formatting.ITALIC), this.width / 2, currentY, role.getType().getColor());
         currentY += this.textRenderer.fontHeight + 10;
 
         for (OrderedText line : this.textRenderer.wrapLines(Text.literal(abilityString()), this.width - SIDE_MARGIN * 2)) {

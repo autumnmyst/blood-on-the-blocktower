@@ -448,13 +448,10 @@ public class ScriptReferenceScreen extends Screen {
                 this.color = type.getColor();
 
                 Text header;
-                if (type == RoleType.TOWNSFOLK) {
-                    header = Text.translatable("gui.blood-on-the-blocktower.script_reference.header_townsfolk");
-                } else if (type == RoleType.NONE) {
+                if (type == RoleType.NONE) {
                     header = Text.translatable("gui.blood-on-the-blocktower.script_reference.no_jinxes");
-                }
-                else {
-                    header = Text.literal(type.name().substring(0, 1) + type.name().substring(1).toLowerCase(Locale.ROOT) + "s");
+                } else {
+                    header = Text.literal(type.getPluralName());
                 }
                 this.text = header.copy().formatted(Formatting.UNDERLINE);
             }

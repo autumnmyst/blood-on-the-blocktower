@@ -92,18 +92,18 @@ public class VoteHUD {
         if (ClientState.voteInProgress) {
             // Show "Now voting for: " in yellow
             if (isNominee) {
-                titleText = Text.literal("Now voting for: ").formatted(Formatting.YELLOW)
-                        .append(Text.literal("You").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.now_voting_for").formatted(Formatting.YELLOW)
+                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
             } else {
-                titleText = Text.literal("Now voting for: ").formatted(Formatting.YELLOW)
+                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.now_voting_for").formatted(Formatting.YELLOW)
                         .append(Text.literal(nomineeName).formatted(Formatting.GOLD, Formatting.BOLD));
             }
         } else {
             if (isNominee) {
-                titleText = Text.literal("Nominated: ").formatted(Formatting.YELLOW)
-                        .append(Text.literal("You").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.nominated").formatted(Formatting.YELLOW)
+                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
             } else {
-                titleText = Text.literal("Nominated: ").formatted(Formatting.YELLOW)
+                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.nominated").formatted(Formatting.YELLOW)
                         .append(Text.literal(nomineeName).formatted(Formatting.GOLD, Formatting.BOLD));
             }
         }
@@ -113,7 +113,7 @@ public class VoteHUD {
             // Organ Grinder mode: hide all vote info with purple "?", but show the
             // static "≥ ceil(alive/2)" baseline threshold, which is public info and
             // doesn't leak how many votes any prior OG nominee received.
-            requirementsText = Text.literal("Votes: ").formatted(Formatting.WHITE)
+            requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.votes").formatted(Formatting.WHITE)
                     .append(Text.literal("?").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD))
                     .append(Text.literal(" (≥" + votesRequired + ")").formatted(Formatting.GRAY));
         } else if (ClientState.voteInProgress) {
@@ -140,9 +140,9 @@ public class VoteHUD {
                     execFraction = execFraction.formatted(Formatting.WHITE, Formatting.BOLD);
                 }
 
-                requirementsText = Text.literal("Tie: ")
+                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.tie")
                         .append(tieFraction)
-                        .append(Text.literal(" | Execute: ").formatted(Formatting.WHITE))
+                        .append(Text.translatable("hud.blood-on-the-blocktower.vote.execute").formatted(Formatting.WHITE))
                         .append(execFraction);
             } else {
                 // Without MFE: show votes required as fraction
@@ -155,18 +155,18 @@ public class VoteHUD {
                     requiredFraction = requiredFraction.formatted(Formatting.WHITE, Formatting.BOLD);
                 }
 
-                requirementsText = Text.literal("Votes required: ")
+                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.votes_required")
                         .append(requiredFraction);
             }
         } else {
             // Before vote: Show requirements without current count
             if (hasMFE) {
-                requirementsText = Text.literal("Tie: ")
+                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.tie")
                         .append(Text.literal(String.valueOf(votesForTie)).formatted(Formatting.YELLOW))
-                        .append(Text.literal(" | Execute: ").formatted(Formatting.WHITE))
+                        .append(Text.translatable("hud.blood-on-the-blocktower.vote.execute").formatted(Formatting.WHITE))
                         .append(Text.literal(String.valueOf(votesForTie + 1)).formatted(Formatting.RED));
             } else {
-                requirementsText = Text.literal("Votes required: ")
+                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.votes_required")
                         .append(Text.literal(String.valueOf(votesRequired)).formatted(Formatting.YELLOW));
             }
         }
@@ -181,10 +181,10 @@ public class VoteHUD {
             line3Text = Text.empty();
         } else if (hasLostGhostVote) {
             // Player has lost their ghost vote
-            line3Text = Text.literal("you cannot vote").formatted(Formatting.DARK_RED, Formatting.ITALIC);
+            line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.cannot_vote").formatted(Formatting.DARK_RED, Formatting.ITALIC);
         } else if (isVoudonBlocked) {
             // Player is Voudon-blocked (alive non-Voudon in Voudon mode)
-            line3Text = Text.literal("you cannot vote").formatted(Formatting.DARK_RED, Formatting.ITALIC);
+            line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.cannot_vote").formatted(Formatting.DARK_RED, Formatting.ITALIC);
         } else if (ClientState.voteInProgress) {
             // During vote: Show countdown or locked status
             UUID playerUuid = client.player.getUuid();
@@ -192,37 +192,35 @@ public class VoteHUD {
 
             if (ClientState.myVoteLockInTime > 0) {
                 // Show countdown - YES/NO is bold while unlocked
-                line3Text = Text.literal("Vote locks in: ")
+                line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.locks_in")
                         .append(Text.literal(ClientState.myVoteLockInTime + "s").formatted(Formatting.AQUA));
 
                 if (leverState != null) {
-                    String voteStatus = leverState ? "YES" : "NO";
+                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
                     Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
                     line3Text.append(Text.literal(" - "))
-                            .append(Text.literal(voteStatus).formatted(voteColor, Formatting.BOLD));
+                            .append(voteStatus.copy().formatted(voteColor, Formatting.BOLD));
                 }
             } else {
                 // Vote is locked - YES/NO is not bold once locked
                 if (leverState != null) {
-                    String voteStatus = leverState ? "YES" : "NO";
+                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
                     Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
-                    line3Text = Text.literal("You voted: ")
-                            .append(Text.literal(voteStatus).formatted(voteColor));
+                    line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.you_voted")
+                            .append(voteStatus.copy().formatted(voteColor));
                 } else {
                     // Storytellers don't have levers and don't vote - show nothing
                     if (isOperator) {
                         line3Text = Text.literal(""); // Empty for storyteller
                     } else {
-                        line3Text = Text.literal("Check your vote lever").formatted(Formatting.GRAY, Formatting.ITALIC);
+                        line3Text = Text.translatable("hud.blood-on-the-blocktower.common.check_lever").formatted(Formatting.GRAY, Formatting.ITALIC);
                     }
                 }
             }
         } else {
             // Before vote: Show vote position
-            String positionText;
             if (isNominee) {
-                positionText = "Last";
-                line3Text = Text.literal("You vote " + positionText).formatted(Formatting.AQUA);
+                line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.you_vote_last").formatted(Formatting.AQUA);
             } else {
                 // Calculate vote position based on seat numbers
                 int position = calculateVotePosition(client.player.getUuid(), nomineeUuid);
@@ -230,8 +228,7 @@ public class VoteHUD {
                     // Player is unseated (e.g., storyteller) - don't show vote position
                     line3Text = Text.empty();
                 } else {
-                    positionText = getOrdinalString(position);
-                    line3Text = Text.literal("You vote " + positionText).formatted(Formatting.AQUA);
+                    line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.you_vote", getOrdinalText(position)).formatted(Formatting.AQUA);
                 }
             }
         }
@@ -299,16 +296,16 @@ public class VoteHUD {
     /**
      * Converts a number to its ordinal string representation (1st, 2nd, 3rd, etc.)
      */
-    private static String getOrdinalString(int number) {
+    private static Text getOrdinalText(int number) {
         if (number % 100 >= 11 && number % 100 <= 13) {
-            return number + "th";
+            return Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         }
 
         return switch (number % 10) {
-            case 1 -> number + "st";
-            case 2 -> number + "nd";
-            case 3 -> number + "rd";
-            default -> number + "th";
+            case 1 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_1", number);
+            case 2 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_2", number);
+            case 3 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_3", number);
+            default -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         };
     }
 }
