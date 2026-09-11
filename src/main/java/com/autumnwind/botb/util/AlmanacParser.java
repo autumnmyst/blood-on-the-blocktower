@@ -1,6 +1,7 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
+import net.minecraft.text.Text;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -31,7 +32,7 @@ public class AlmanacParser {
     private static final Map<String, CompletableFuture<AlmanacData>> pendingFetches = new ConcurrentHashMap<>();
 
     // Track the last error for user feedback
-    private static volatile String lastError = null;
+    private static volatile Text lastError = null;
 
     // Patterns for extracting content
     private static final Pattern PAGE_PATTERN = Pattern.compile(
@@ -90,31 +91,31 @@ public class AlmanacParser {
                 lastError = null;
                 String html = fetchHtml(almanacUrl);
                 if (html == null || html.isEmpty()) {
-                    lastError = "Almanac returned empty content";
+                    lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.empty");
                     BloodOnTheBlocktower.LOGGER.warn("Almanac returned empty content from {}", almanacUrl);
                     return AlmanacData.empty();
                 }
                 AlmanacData data = parseHtml(html);
                 if (!data.hasScriptData() && (data.roleData() == null || data.roleData().isEmpty())) {
-                    lastError = "Could not parse almanac content - unexpected format";
+                    lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.unexpected_format");
                     BloodOnTheBlocktower.LOGGER.warn("Failed to parse any content from almanac at {}", almanacUrl);
                 }
                 cache.put(almanacUrl, data);
                 return data;
             } catch (UnknownHostException e) {
-                lastError = "Could not reach almanac server - check internet connection";
+                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.unreachable");
                 BloodOnTheBlocktower.LOGGER.warn("Failed to fetch almanac from {} - unknown host: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } catch (SocketTimeoutException e) {
-                lastError = "Almanac request timed out";
+                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.timeout");
                 BloodOnTheBlocktower.LOGGER.warn("Timeout fetching almanac from {}: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } catch (IOException e) {
-                lastError = "Network error loading almanac: " + e.getMessage();
+                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.network", e.getMessage());
                 BloodOnTheBlocktower.LOGGER.warn("IO error fetching almanac from {}: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } catch (Exception e) {
-                lastError = "Error loading almanac: " + e.getMessage();
+                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.generic", e.getMessage());
                 BloodOnTheBlocktower.LOGGER.warn("Failed to fetch almanac from {}: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } finally {
@@ -191,7 +192,7 @@ public class AlmanacParser {
     /**
      * Get the last error message, if any.
      */
-    public static String getLastError() {
+    public static Text getLastError() {
         return lastError;
     }
 

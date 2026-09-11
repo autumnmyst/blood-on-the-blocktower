@@ -168,10 +168,10 @@ public class CustomScriptDetailsScreen extends Screen {
             }
 
             // Check for errors
-            String lastError = AlmanacParser.getLastError();
+            Text lastError = AlmanacParser.getLastError();
             if (lastError != null && (almanacData == null || !almanacData.hasScriptData())) {
                 this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.load_failed").formatted(Formatting.RED)));
-                this.addEntry(new TextEntry(Text.literal(lastError).formatted(Formatting.GRAY)));
+                this.addEntry(new TextEntry(lastError.copy().formatted(Formatting.GRAY)));
                 return;
             }
 

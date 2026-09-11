@@ -1,5 +1,7 @@
 package com.autumnwind.botb.util;
 
+import net.minecraft.text.Text;
+
 import java.util.UUID;
 
 /**
@@ -31,7 +33,7 @@ public sealed interface Madness permits Madness.PixieMadness, Madness.HarpyMadne
         }
 
         public String getPlayerText() {
-            return "If you are mad that you are the " + townsfolkRole.getDisplayName() + ", you gain their ability when they die.";
+            return Text.translatable("hud.blood-on-the-blocktower.madness.player.pixie", townsfolkRole.getDisplayName()).getString();
         }
     }
 
@@ -46,7 +48,7 @@ public sealed interface Madness permits Madness.PixieMadness, Madness.HarpyMadne
         }
 
         public String getPlayerText(String targetPlayerName) {
-            return "You must be mad that " + targetPlayerName + " is evil, or one or both of you might die.";
+            return Text.translatable("hud.blood-on-the-blocktower.madness.player.harpy", targetPlayerName).getString();
         }
     }
 
@@ -61,7 +63,7 @@ public sealed interface Madness permits Madness.PixieMadness, Madness.HarpyMadne
         }
 
         public String getPlayerText() {
-            return "You must be mad that you are the " + madRole.getDisplayName() + ", or you might be executed.";
+            return Text.translatable("hud.blood-on-the-blocktower.madness.player.cerenovus", madRole.getDisplayName()).getString();
         }
     }
 

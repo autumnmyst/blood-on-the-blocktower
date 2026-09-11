@@ -2367,5 +2367,18 @@
   "gui.blood-on-the-blocktower.validation.fake_role_in_play": "%s (seat %s) fake role %s is already in play",
   "gui.blood-on-the-blocktower.validation.drunk_reminder": "Drunk (seat %s) needs a Townsfolk reminder",
   "gui.blood-on-the-blocktower.validation.marionette_reminder": "Marionette (seat %s) needs a Townsfolk or Outsider reminder",
-  "gui.blood-on-the-blocktower.validation.lunatic_reminder": "Lunatic (seat %s) needs a Demon reminder"
+  "gui.blood-on-the-blocktower.validation.lunatic_reminder": "Lunatic (seat %s) needs a Demon reminder",
+  "hud.blood-on-the-blocktower.madness.player.pixie": "If you are mad that you are the %s, you gain their ability when they die.",
+  "hud.blood-on-the-blocktower.madness.player.harpy": "You must be mad that %s is evil, or one or both of you might die.",
+  "hud.blood-on-the-blocktower.madness.player.cerenovus": "You must be mad that you are the %s, or you might be executed.",
+  "hud.blood-on-the-blocktower.madness.storyteller.pixie": "If %s is mad they are the %s when that character dies, they gain that ability",
+  "hud.blood-on-the-blocktower.madness.storyteller.harpy": "%s must be mad %s is evil, or one or both might die",
+  "hud.blood-on-the-blocktower.madness.storyteller.cerenovus": "%s must be mad they are the %s or might be executed",
+  "hud.blood-on-the-blocktower.madness.storyteller.mutant": "If %s (Mutant) is mad they are an outsider, they might be executed",
+  "gui.blood-on-the-blocktower.almanac.error.empty": "Almanac returned empty content",
+  "gui.blood-on-the-blocktower.almanac.error.unexpected_format": "Could not parse almanac content - unexpected format",
+  "gui.blood-on-the-blocktower.almanac.error.unreachable": "Could not reach almanac server - check internet connection",
+  "gui.blood-on-the-blocktower.almanac.error.timeout": "Almanac request timed out",
+  "gui.blood-on-the-blocktower.almanac.error.network": "Network error loading almanac: %s",
+  "gui.blood-on-the-blocktower.almanac.error.generic": "Error loading almanac: %s"
 }

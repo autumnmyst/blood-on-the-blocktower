@@ -295,13 +295,13 @@ public class MadnessHUD {
      */
     private static String getMadnessTextForStoryteller(Madness madness, MinecraftClient client, String playerName) {
         return switch (madness) {
-            case Madness.PixieMadness pixie -> "If" + playerName + " is mad they are the " + pixie.townsfolkRole().getDisplayName() + " when that character dies, they gain that ability";
+            case Madness.PixieMadness pixie -> Text.translatable("hud.blood-on-the-blocktower.madness.storyteller.pixie", playerName, pixie.townsfolkRole().getDisplayName()).getString();
             case Madness.HarpyMadness harpy -> {
                 String targetName = getPlayerName(client, harpy.targetPlayerUuid());
-                yield playerName + " must be mad " + targetName + " is evil, or one or both might die";
+                yield Text.translatable("hud.blood-on-the-blocktower.madness.storyteller.harpy", playerName, targetName).getString();
             }
-            case Madness.CerenovusMadness cerenovus -> playerName + " must be mad they are the " + cerenovus.madRole().getDisplayName() + " or might be executed";
-            case Madness.MutantMadness mutant -> "If " + playerName + " (Mutant) is mad they are an outsider, they might be executed";
+            case Madness.CerenovusMadness cerenovus -> Text.translatable("hud.blood-on-the-blocktower.madness.storyteller.cerenovus", playerName, cerenovus.madRole().getDisplayName()).getString();
+            case Madness.MutantMadness mutant -> Text.translatable("hud.blood-on-the-blocktower.madness.storyteller.mutant", playerName).getString();
         };
     }
 
