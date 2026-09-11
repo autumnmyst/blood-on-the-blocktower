@@ -463,9 +463,10 @@ public class RoleHelpers {
         return count;
     }
 
-    /** A real Xaan: assigned, or an associated copy that isn't a fake identity. */
+    /** A real Xaan: assigned, associated (not a fake identity), or "ST: XAAN". */
     public static boolean isRealXaanHolder(UUID uuid) {
-        return holdsRole(uuid, Role.XAAN) && !isFakeRoleHolder(uuid, Role.XAAN);
+        return (holdsRole(uuid, Role.XAAN) || hasStorytellerMinionReminder(uuid, Role.XAAN))
+                && !isFakeRoleHolder(uuid, Role.XAAN);
     }
 
     /** A "Night N" reminder on a real Xaan holder, catalog or hand-typed. */
@@ -476,8 +477,7 @@ public class RoleHelpers {
 
     /**
      * The night the Xaan poisons: the "Night N" reminder on the Xaan (recorded at game start or
-     * placed by the storyteller), or the live outsider count before the game starts (or if the
-     * reminder was removed). 0 = never.
+     * placed by the storyteller). 0 = never, so removing the reminder cancels the poisoning.
      */
     public static int getXaanNight() {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
@@ -489,7 +489,7 @@ public class RoleHelpers {
                 }
             }
         }
-        return countAssignedOutsiders();
+        return 0;
     }
 
     /**
@@ -519,8 +519,8 @@ public class RoleHelpers {
 
     /**
      * Checks if the Xaan is poisoning townsfolk right now: it is night X or the day after it
-     * (until dusk) and a living Xaan with outward effect exists, or the storyteller has placed
-     * the Xaan's "X" reminder on someone as a manual override.
+     * (until dusk) and a living Xaan with outward effect or an "ST: XAAN" exists, or the
+     * storyteller has placed the Xaan's "X" reminder on someone as a manual override.
      */
     public static boolean isXaanPoisonActive() {
         if (evaluatingXaan) return false;
@@ -529,6 +529,9 @@ public class RoleHelpers {
         try {
             int night = getXaanNight();
             if (night == 0 || Math.max(ClientState.currentNight, 1) != night) return false;
+            boolean storytellerHasXaan = StorytellerState.PENDING_ROLES.keySet().stream()
+                    .anyMatch(uuid -> hasStorytellerMinionReminder(uuid, Role.XAAN) && isRealXaanHolder(uuid));
+            if (storytellerHasXaan) return true;
             return getRoleAbilityHolders(Role.XAAN).stream()
                     .anyMatch(uuid -> !ClientState.playerDeathStatus.getOrDefault(uuid, false));
         } finally {
