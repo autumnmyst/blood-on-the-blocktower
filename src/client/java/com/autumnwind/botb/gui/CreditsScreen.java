@@ -1,7 +1,5 @@
 package com.autumnwind.botb.gui;
 
-import com.autumnwind.botb.BloodOnTheBlocktower;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
@@ -13,7 +11,6 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Collections;
@@ -30,8 +27,6 @@ public class CreditsScreen extends Screen {
     /** Title artwork across the top, standing in for a written heading. */
     private static final int TITLE_ART_Y = 6;
     private static final int TITLE_ART_WIDTH = 200;
-    private static final Identifier YOGSCAST_LOGO =
-            Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/thirdpartylogos/the_yogscast_logo.png");
 
     private final Screen parent;
     private CreditsListWidget creditsWidget;
@@ -99,7 +94,6 @@ public class CreditsScreen extends Screen {
                     This mod is an UNOFFICIAL and UNAFFILIATED fan project.""");
             spacer();
 
-            image(YOGSCAST_LOGO, 1500, 436, 28);
             section("The Yogscast");
             body("Almost all of the role icons in this mod are by the fantastic folks at The Yogscast! They were a huge inspiration for this mod, and their role icons really bring the whole aesthetic together.");
             spacer();
@@ -156,15 +150,6 @@ public class CreditsScreen extends Screen {
             wrap(Text.literal("  " + url).formatted(Formatting.AQUA));
         }
 
-        /** A centered image; blank rows after it reserve the rest of its height. */
-        private void image(Identifier texture, int textureWidth, int textureHeight, int drawHeight) {
-            int drawWidth = Math.round((float) drawHeight * textureWidth / textureHeight);
-            this.addEntry(new ImageEntry(texture, drawWidth, drawHeight, textureWidth, textureHeight));
-            for (int reserved = itemHeight; reserved < drawHeight; reserved += itemHeight) {
-                spacer();
-            }
-        }
-
         private void spacer() {
             this.addEntry(new TextEntry(Text.empty()));
         }
@@ -210,34 +195,6 @@ public class CreditsScreen extends Screen {
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
                                int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 context.drawTextWithShadow(textRenderer, text, x, y, 0xFFFFFF);
-            }
-        }
-
-        public class ImageEntry extends Entry {
-            private final Identifier texture;
-            private final int drawWidth;
-            private final int drawHeight;
-            private final int textureWidth;
-            private final int textureHeight;
-
-            public ImageEntry(Identifier texture, int drawWidth, int drawHeight, int textureWidth, int textureHeight) {
-                this.texture = texture;
-                this.drawWidth = drawWidth;
-                this.drawHeight = drawHeight;
-                this.textureWidth = textureWidth;
-                this.textureHeight = textureHeight;
-            }
-
-            @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight,
-                               int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                // Linear sampling, reapplied each draw because a resource reload rebuilds the
-                // texture object with the default nearest filter.
-                MinecraftClient.getInstance().getTextureManager().getTexture(texture).setFilter(true, false);
-                RenderSystem.enableBlend();
-                context.drawTexture(texture, x + (entryWidth - drawWidth) / 2, y, drawWidth, drawHeight,
-                        0, 0, textureWidth, textureHeight, textureWidth, textureHeight);
-                RenderSystem.disableBlend();
             }
         }
 
