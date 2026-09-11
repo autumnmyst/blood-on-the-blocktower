@@ -7,6 +7,7 @@ import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,6 +23,7 @@ public final class CustomSounds {
     public static final String ROLE_RECEIVE_DIR = "custom/role_receive/";
     public static final String VOTE_MUSIC_DIR = "custom/vote_music/";
     public static final String GAME_END_DIR = "custom/game_end/";
+    public static final String MADNESS_RECEIVE = "custom/madness_receive";
 
     /** Role id, then role type, then alignment. */
     public static List<String> roleReceiveCandidates(PendingRoleAssignment assignment) {
@@ -29,6 +31,14 @@ public final class CustomSounds {
                 ROLE_RECEIVE_DIR + assignment.getRoleId(),
                 ROLE_RECEIVE_DIR + assignment.getRoleType().name().toLowerCase(Locale.ROOT),
                 ROLE_RECEIVE_DIR + (assignment.isFinalGood() ? "good" : "evil"));
+    }
+
+    /** A madness-specific file first, then the same chain as a role receive. */
+    public static List<String> madnessReceiveCandidates(PendingRoleAssignment assignment) {
+        List<String> candidates = new ArrayList<>();
+        candidates.add(MADNESS_RECEIVE);
+        if (assignment != null) candidates.addAll(roleReceiveCandidates(assignment));
+        return candidates;
     }
 
     public static List<String> voteMusicCandidates(boolean organGrinder) {

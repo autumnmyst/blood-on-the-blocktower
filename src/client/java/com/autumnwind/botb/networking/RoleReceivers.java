@@ -9,7 +9,6 @@ import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
-import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -169,9 +168,8 @@ final class RoleReceivers {
                     // Play role receive sound - Role Receive category
                     float madnessVolume = ClientState.BASE_VOLUME_ROLE_RECEIVE * ClientState.volumeRoleReceive;
                     if (context.client().player != null && context.client().world != null && madnessVolume > 0) {
-                        List<String> candidates = ClientState.myAssignment != null
-                                ? CustomSounds.roleReceiveCandidates(ClientState.myAssignment) : List.of();
-                        CustomSounds.playOneShot(context.client(), candidates, ModSounds.ROLE_RECEIVE, madnessVolume);
+                        CustomSounds.playOneShot(context.client(), CustomSounds.madnessReceiveCandidates(ClientState.myAssignment),
+                                ModSounds.ROLE_RECEIVE, madnessVolume);
                     }
                 }
             });
