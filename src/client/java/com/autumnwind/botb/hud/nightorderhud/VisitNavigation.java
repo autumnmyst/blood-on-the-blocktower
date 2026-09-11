@@ -135,9 +135,10 @@ public class VisitNavigation {
         // Always show visit info when changing to a new visit
         showCurrentVisitInfo();
 
-        // Auto-teleport only if Auto TP is enabled AND the visit allows it
-        currentVisit = StorytellerState.activeNightOrder.get(StorytellerState.currentNightVisitIndex);
-        if (StorytellerState.autoTeleportEnabled && currentVisit.seatTeleport()) {
+        // Auto-teleport only if Auto TP is enabled, the visit allows it, and the players changed
+        RoleVisit nextVisit = StorytellerState.activeNightOrder.get(StorytellerState.currentNightVisitIndex);
+        boolean samePlayers = new HashSet<>(currentVisit.players()).equals(new HashSet<>(nextVisit.players()));
+        if (StorytellerState.autoTeleportEnabled && nextVisit.seatTeleport() && !samePlayers) {
             performTeleport();
         }
     }
