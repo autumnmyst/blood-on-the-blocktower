@@ -221,7 +221,7 @@ public class RoleSelectionScreen extends Screen {
         String lowerCaseText = searchText.toLowerCase(Locale.ROOT);
         this.filteredRoles = this.sourceRoles.stream()
                 .filter(sr -> sr.getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText) ||
-                        sr.getTeam().name().toLowerCase(Locale.ROOT).contains(lowerCaseText))
+                        sr.getTeam().getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText))
                 .collect(Collectors.toList());
         this.roleListWidget.populateRoles(this.filteredRoles);
         this.roleListWidget.setScrollAmount(0);

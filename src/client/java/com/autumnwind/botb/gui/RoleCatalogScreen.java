@@ -124,7 +124,7 @@ public class RoleCatalogScreen extends Screen {
 
         this.filteredRoles = sourceRoles.stream()
                 .filter(role -> role.getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText) ||
-                        role.getType().name().toLowerCase(Locale.ROOT).contains(lowerCaseText))
+                        role.getType().getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText))
                 .collect(Collectors.toList());
         this.roleListWidget.populateRoles(this.filteredRoles);
 

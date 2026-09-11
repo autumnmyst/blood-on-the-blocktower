@@ -546,7 +546,7 @@ public class ScriptBuilderScreen extends Screen implements ReturnOnClose {
         String query = searchField == null ? "" : searchField.getText().toLowerCase(Locale.ROOT);
         List<ScriptRole> filtered = paletteSource.stream()
                 .filter(role -> role.getDisplayName().toLowerCase(Locale.ROOT).contains(query)
-                        || role.getTeam().name().toLowerCase(Locale.ROOT).contains(query))
+                        || role.getTeam().getDisplayName().toLowerCase(Locale.ROOT).contains(query))
                 .collect(Collectors.toList());
 
         // Adding or removing a character shouldn't yank the palette back to the top. Only a

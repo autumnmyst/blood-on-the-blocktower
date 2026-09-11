@@ -63,7 +63,7 @@ public class RoleGuidesScreen extends Screen {
         String lowerCaseText = searchText.toLowerCase(Locale.ROOT);
         this.filteredRoles = RoleGuides.roles().stream()
                 .filter(role -> role.getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText) ||
-                        role.getType().name().toLowerCase(Locale.ROOT).contains(lowerCaseText))
+                        role.getType().getDisplayName().toLowerCase(Locale.ROOT).contains(lowerCaseText))
                 .collect(Collectors.toList());
         this.roleListWidget.populateRoles(this.filteredRoles);
         if (!searchText.isEmpty()) {
