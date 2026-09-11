@@ -44,7 +44,8 @@ final class GrimoireHandlers {
                     payload.reminders(),
                     payload.script(),
                     payload.markedPlayers(),
-                    payload.demonBluffs()
+                    payload.demonBluffs(),
+                    payload.setupOutsiderCount()
             );
 
             for (ServerPlayerEntity operator : operators) {

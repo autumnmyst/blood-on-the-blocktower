@@ -94,6 +94,7 @@ public class GrimoirePersistence {
             root.add("markedPlayers", markedPlayers);
 
             root.addProperty("showBluffs", StorytellerState.showBluffs);
+            root.addProperty("setupOutsiderCount", StorytellerState.setupOutsiderCount);
             // nextSeatNumber isn't serialized: it's a cached cursor over the seat-numbers
             // map, always max(seats) + 1 under the contiguous-seat invariant, so load()
             // rebuilds it. ClientReceive does the same after a grimoire sync.
@@ -177,6 +178,9 @@ public class GrimoirePersistence {
 
             if (root.has("showBluffs")) {
                 StorytellerState.showBluffs = root.get("showBluffs").getAsBoolean();
+            }
+            if (root.has("setupOutsiderCount")) {
+                StorytellerState.setupOutsiderCount = root.get("setupOutsiderCount").getAsInt();
             }
 
             // Rebuild nextSeatNumber from the loaded seat map. It's max(seats) + 1 by

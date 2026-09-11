@@ -22,7 +22,8 @@ public record SyncGrimoireC2SPayload(
         Map<UUID, List<Reminder>> reminders,
         Optional<Script> script,
         Set<UUID> markedPlayers,
-        List<String> demonBluffs // String format: "" = empty, "ROLE_NAME" = official, "custom:id" = custom
+        List<String> demonBluffs, // String format: "" = empty, "ROLE_NAME" = official, "custom:id" = custom
+        int setupOutsiderCount
 ) implements CustomPayload {
     public static final CustomPayload.Id<SyncGrimoireC2SPayload> ID =
             new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "sync_grimoire_c2s"));
@@ -48,7 +49,9 @@ public record SyncGrimoireC2SPayload(
             // Read demon bluffs (supports both official and custom roles)
             List<String> demonBluffs = PayloadCodecs.decodeBluffs(buf);
 
-            return new SyncGrimoireC2SPayload(roles, seatNumbers, reminders, script, markedPlayers, demonBluffs);
+            int setupOutsiderCount = buf.readVarInt();
+
+            return new SyncGrimoireC2SPayload(roles, seatNumbers, reminders, script, markedPlayers, demonBluffs, setupOutsiderCount);
         }
 
         @Override
@@ -69,6 +72,8 @@ public record SyncGrimoireC2SPayload(
 
             // Write demon bluffs (supports both official and custom roles)
             PayloadCodecs.encodeBluffs(buf, payload.demonBluffs);
+
+            buf.writeVarInt(payload.setupOutsiderCount);
         }
     };
 

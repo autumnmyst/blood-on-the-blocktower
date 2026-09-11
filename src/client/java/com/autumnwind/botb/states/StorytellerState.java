@@ -193,6 +193,9 @@ public class StorytellerState {
     public static final List<ScriptRole> DEMON_BLUFFS = new ArrayList<>(Arrays.asList(null, null, null));
     public static boolean showBluffs = true;
 
+    // Outsider count at game start, the Xaan's "X" (0 = not started)
+    public static int setupOutsiderCount = 0;
+
     // Al-Hadikhia Homebrew: adds first visit asking all players if they want to live or die
     public static boolean alHadikhiaHomebrew = false;
 
@@ -330,6 +333,7 @@ public class StorytellerState {
         DEMON_BLUFFS.set(1, null);
         DEMON_BLUFFS.set(2, null);
         showBluffs = true;
+        setupOutsiderCount = 0;
     }
 
     /**
@@ -353,6 +357,8 @@ public class StorytellerState {
             return; // Only operators can sync
         }
 
+        RoleHelpers.recordXaanNight();
+
         // Convert ScriptRole bluffs to string format for network
         List<String> demonBluffsForNetwork = bluffsToStrings(DEMON_BLUFFS);
 
@@ -363,7 +369,8 @@ public class StorytellerState {
                 copyReminders(),
                 Optional.ofNullable(ClientState.currentScript),
                 new HashSet<>(markedPlayers),
-                demonBluffsForNetwork
+                demonBluffsForNetwork,
+                setupOutsiderCount
         );
 
         // Send to server - server will decide whether to broadcast to other operators

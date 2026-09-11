@@ -476,8 +476,8 @@ public class RoleHelpers {
     }
 
     /**
-     * The night the Xaan poisons: the "Night N" reminder on the Xaan (recorded at game start or
-     * placed by the storyteller). 0 = never, so removing the reminder cancels the poisoning.
+     * The night the Xaan poisons: the "Night N" reminder on the Xaan (recorded when they became
+     * a Xaan or placed by the storyteller). 0 = never, so removing the reminder cancels the poisoning.
      */
     public static int getXaanNight() {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
@@ -493,28 +493,21 @@ public class RoleHelpers {
     }
 
     /**
-     * Records the Xaan's night at game start as a "Night N" reminder on the Xaan player, from the
-     * outsider count at that moment. Reminders persist and sync, so the value survives a relog.
-     * A "Night N" reminder already in place is kept as a storyteller override.
+     * Gives every real Xaan holder without a "Night N" reminder one from the setup outsider
+     * count. Runs at game start and on every grimoire sync. Returns true if a reminder was added.
      */
-    public static void recordXaanNight() {
-        UUID xaan = null;
+    public static boolean recordXaanNight() {
+        int count = StorytellerState.setupOutsiderCount;
+        if (count == 0) return false;
+        boolean added = false;
         for (UUID uuid : StorytellerState.PENDING_ROLES.keySet()) {
-            if (holdsRole(uuid, Role.XAAN)) {
-                xaan = uuid;
-                if (StorytellerState.PENDING_ROLES.get(uuid).role() == Role.XAAN) break;
-            }
+            if (!isRealXaanHolder(uuid)) continue;
+            List<Reminder> reminders = StorytellerState.REMINDERS.computeIfAbsent(uuid, k -> new ArrayList<>());
+            if (reminders.stream().anyMatch(r -> isXaanNightReminder(uuid, r))) continue;
+            reminders.add(new Reminder("Night " + count, Optional.of(Role.XAAN)));
+            added = true;
         }
-        if (xaan == null) return;
-        boolean alreadyRecorded = StorytellerState.REMINDERS.entrySet().stream()
-                .anyMatch(e -> e.getValue().stream().anyMatch(r -> isXaanNightReminder(e.getKey(), r)));
-        if (alreadyRecorded) return;
-        int count = countAssignedOutsiders();
-        if (count > 0) {
-            StorytellerState.REMINDERS.computeIfAbsent(xaan, k -> new ArrayList<>())
-                    .add(new Reminder("Night " + count, Optional.of(Role.XAAN)));
-            StorytellerState.syncGrimoire();
-        }
+        return added;
     }
 
     /**

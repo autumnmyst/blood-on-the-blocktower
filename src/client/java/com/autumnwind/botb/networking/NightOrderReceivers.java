@@ -21,11 +21,12 @@ final class NightOrderReceivers {
             ClientState.currentDay = payload.day();
             ClientState.executionToday = payload.executionToday();
 
-            // Game start: record the Xaan's night from the outsider count in the real grimoire
+            // Game start: snapshot the outsider count for the Xaan
             if (gameStarting) {
                 context.client().execute(() -> {
                     if (context.client().player != null && context.client().player.hasPermissionLevel(2)) {
-                        RoleHelpers.recordXaanNight();
+                        StorytellerState.setupOutsiderCount = RoleHelpers.countAssignedOutsiders();
+                        StorytellerState.syncGrimoire();
                     }
                 });
             }

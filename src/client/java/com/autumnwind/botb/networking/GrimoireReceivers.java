@@ -125,6 +125,8 @@ final class GrimoireReceivers {
                 StorytellerState.DEMON_BLUFFS.addAll(
                         StorytellerState.stringsToBluffs(payload.demonBluffs()));
 
+                StorytellerState.setupOutsiderCount = payload.setupOutsiderCount();
+
                 // Update nextSeatNumber based on current seat assignments
                 int maxSeat = 0;
                 for (int seat : StorytellerState.PENDING_SEAT_NUMBERS.values()) {
