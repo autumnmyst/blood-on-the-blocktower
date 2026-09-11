@@ -168,10 +168,10 @@ public class RoleReminderScreen extends Screen {
                     }
                 }
 
-                // Check if this is a first-night-only role (FN-only or FN-triggered)
+                // Check if this is an FN-only or FN-triggered or godfather (they have a unique N1 visit)
                 boolean isFNOnly = NightOrderHudManager.hasFirstNightsAbility(role) &&
                         (!NightOrderHudManager.hasOtherNightsAbility(role) ||
-                                NightOrderHudManager.isTriggeredRole(role));
+                                NightOrderHudManager.isTriggeredRole(role) || role == Role.GODFATHER);
 
                 if (isFNOnly) {
                     // Special case: Pixie's own FN visit always triggers immediately (even as associated role)

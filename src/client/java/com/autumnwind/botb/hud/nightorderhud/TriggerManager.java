@@ -530,11 +530,13 @@ public class TriggerManager {
         // (same logic as cannibal/philosopher - if it has triggered ON abilities, we add FN instructions)
         boolean hasOtherNightVisit = hasOtherNightsAbility(playerRole);
         boolean isTriggered = isTriggeredRole(playerRole);
+        boolean isGodfather = playerRole == Role.GODFATHER;
 
         // Only add trigger if:
         // 1. Has FN ability but NO other nights ability, OR
         // 2. Has FN ability AND other nights is triggered only (like Grandmother)
-        if (!hasOtherNightVisit || isTriggered) {
+        // 3. The FN ability is the Godfathers (only role with non-triggered but different other nights)
+        if (!hasOtherNightVisit || isTriggered || isGodfather) {
             createFirstNightTriggeredVisitForPlayer(playerUUID, playerRole);
         }
     }

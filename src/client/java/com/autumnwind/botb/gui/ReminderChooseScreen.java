@@ -592,10 +592,8 @@ public class ReminderChooseScreen extends Screen {
                 }
             }
 
-            // Check if this is a first-night-only role (FN-only or FN-triggered)
-            boolean isFNOnly = NightOrderHudManager.hasFirstNightsAbility(associatedRole) &&
-                (!NightOrderHudManager.hasOtherNightsAbility(associatedRole) ||
-                 NightOrderHudManager.isTriggeredRole(associatedRole));
+            // Check if this FN-only or FN-triggered or is the godfather
+            boolean isFNOnly = shouldFirstNightTrigger(associatedRole);
 
             if (isFNOnly) {
                 // Special case: Pixie's own FN visit always triggers immediately (even as associated role)
@@ -665,9 +663,7 @@ public class ReminderChooseScreen extends Screen {
                             // Skip Pixie itself - it already triggered when it was added
                             if (associatedRole == Role.PIXIE) continue;
 
-                            boolean isFNOnly = NightOrderHudManager.hasFirstNightsAbility(associatedRole) &&
-                                (!NightOrderHudManager.hasOtherNightsAbility(associatedRole) ||
-                                 NightOrderHudManager.isTriggeredRole(associatedRole));
+                            boolean isFNOnly = shouldFirstNightTrigger(associatedRole);
 
                             // Skip only setup or true Night 1 (natural FN processing handles those).
                             // currentNight stays at 1 through Day 1, so a plain `>1` check would
@@ -691,11 +687,12 @@ public class ReminderChooseScreen extends Screen {
     }
 
     /**
-     * Checks if a role has an ability that triggers on "First Night".
+     * Checks if a has a unique (godfather) "First Night" ability or trigger.
      */
-    private boolean hasFirstNightsAbility(Role role) {
-        return NightOrder.getFirstNightOrder().stream()
-                .anyMatch(info -> info.isRole() && info.getRole() == role);
+    private boolean shouldFirstNightTrigger(Role associatedRole) {
+        return NightOrderHudManager.hasFirstNightsAbility(associatedRole) &&
+            (!NightOrderHudManager.hasOtherNightsAbility(associatedRole) ||
+                NightOrderHudManager.isTriggeredRole(associatedRole) || associatedRole == Role.GODFATHER);
     }
 
     /**

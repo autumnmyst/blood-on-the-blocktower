@@ -739,7 +739,7 @@ public class NightOrderBuilder {
             }
 
             // Special case: Skip associated Godfather if no Outsider died today
-            if (infoRole == Role.GODFATHER) {
+            if (infoRole == Role.GODFATHER && !isFirstNight) {
                 boolean outsiderDiedToday = false;
                 for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
                     boolean hasGodfatherDiedToday = entry.getValue().stream()
