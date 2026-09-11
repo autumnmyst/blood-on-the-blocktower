@@ -257,7 +257,7 @@ public class GameEndAnimationHUD {
 
         // Render title if it's time
         if (showTitle) {
-            Text titleText = Text.literal(playerWon ? "Victory" : "Defeat")
+            Text titleText = Text.translatable(playerWon ? "hud.blood-on-the-blocktower.game_end.victory" : "hud.blood-on-the-blocktower.game_end.defeat")
                     .styled(style -> style.withBold(true));
             int titleColor = ColorHelper.Argb.getArgb((int) (alpha * 255), playerWon ? 0 : 255, playerWon ? 255 : 0, 0);
 

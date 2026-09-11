@@ -2381,5 +2381,10 @@
   "gui.blood-on-the-blocktower.almanac.error.timeout": "Almanac request timed out",
   "gui.blood-on-the-blocktower.almanac.error.network": "Network error loading almanac: %s",
   "gui.blood-on-the-blocktower.almanac.error.generic": "Error loading almanac: %s",
-  "gui.blood-on-the-blocktower.common.unknown_player": "Unknown"
+  "gui.blood-on-the-blocktower.common.unknown_player": "Unknown",
+  "hud.blood-on-the-blocktower.game_end.victory": "Victory",
+  "hud.blood-on-the-blocktower.game_end.defeat": "Defeat",
+  "gui.blood-on-the-blocktower.alignment_override.default": "Default",
+  "gui.blood-on-the-blocktower.alignment_override.good": "Good",
+  "gui.blood-on-the-blocktower.alignment_override.bad": "Bad"
 }
