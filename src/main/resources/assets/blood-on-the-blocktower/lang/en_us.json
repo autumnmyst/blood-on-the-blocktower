@@ -1638,7 +1638,7 @@
   "gui.blood-on-the-blocktower.settings.hints": "Hints: %s",
   "gui.blood-on-the-blocktower.settings.tooltip.hints": "Show helpful hints and tips",
   "gui.blood-on-the-blocktower.settings.role_icons": "Role Icons: %s",
-  "gui.blood-on-the-blocktower.settings.tooltip.role_icons": "Floating role icons above player heads: OFF / ALWAYS / GAME END (after game end only, cleared on reset)",
+  "gui.blood-on-the-blocktower.settings.tooltip.role_icons": "Floating role icons above player heads: OFF / ALWAYS / GAME END",
   "gui.blood-on-the-blocktower.settings.whisper_rules": "Whisper Rules",
   "gui.blood-on-the-blocktower.settings.tooltip.whisper_rules": "View the whisper rules set by the storyteller",
   "gui.blood-on-the-blocktower.settings.glossary": "Glossary",
