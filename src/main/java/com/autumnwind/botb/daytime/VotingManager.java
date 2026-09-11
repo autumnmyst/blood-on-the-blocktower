@@ -300,7 +300,7 @@ public class VotingManager {
 
         // Get nominee name
         ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
-        String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : "Unknown";
+        String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Send result payload and display titles
         VoteResultS2CPayload resultPayload = new VoteResultS2CPayload(

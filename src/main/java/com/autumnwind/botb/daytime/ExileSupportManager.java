@@ -127,7 +127,7 @@ public class ExileSupportManager {
         // Get target name
         UUID target = DaytimeState.getCurrentExileTarget();
         ServerPlayerEntity targetPlayer = server.getPlayerManager().getPlayer(target);
-        String targetName = targetPlayer != null ? targetPlayer.getName().getString() : "Unknown";
+        String targetName = targetPlayer != null ? targetPlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Build result message
         Text resultText;

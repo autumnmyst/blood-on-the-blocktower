@@ -38,7 +38,7 @@ public class VoteHUD {
             nomineeName = nominee.getName().getString();
         } else {
             PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, nomineeUuid);
-            nomineeName = info != null ? info.name() : "Unknown";
+            nomineeName = info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
         }
 
         // Check if the current player is the nominee

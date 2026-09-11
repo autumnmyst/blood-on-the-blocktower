@@ -177,7 +177,7 @@ public class MadnessHUD {
             playerName = player.getName().getString();
         } else {
             PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, playerUuid);
-            playerName = info != null ? info.name() : "Unknown";
+            playerName = info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
         }
 
         if (isExpanded) {
@@ -312,7 +312,7 @@ public class MadnessHUD {
         AbstractClientPlayerEntity player = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(playerUuid);
         if (player != null) return player.getName().getString();
         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayerOrCached(client, playerUuid);
-        return info != null ? info.name() : "Unknown";
+        return info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
     }
 
     /**

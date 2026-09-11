@@ -96,7 +96,7 @@ public class RoleAssignmentAnimation {
             return animatingAssignment.getDisplayName();
         }
         if (animatingRole != null) return animatingRole.getDisplayName();
-        return "Unknown";
+        return Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
     }
 
     /**

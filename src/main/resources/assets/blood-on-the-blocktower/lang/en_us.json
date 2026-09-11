@@ -2380,5 +2380,6 @@
   "gui.blood-on-the-blocktower.almanac.error.unreachable": "Could not reach almanac server - check internet connection",
   "gui.blood-on-the-blocktower.almanac.error.timeout": "Almanac request timed out",
   "gui.blood-on-the-blocktower.almanac.error.network": "Network error loading almanac: %s",
-  "gui.blood-on-the-blocktower.almanac.error.generic": "Error loading almanac: %s"
+  "gui.blood-on-the-blocktower.almanac.error.generic": "Error loading almanac: %s",
+  "gui.blood-on-the-blocktower.common.unknown_player": "Unknown"
 }

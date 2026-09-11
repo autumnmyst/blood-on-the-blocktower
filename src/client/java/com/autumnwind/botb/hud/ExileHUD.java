@@ -36,7 +36,7 @@ public class ExileHUD {
 
         // Get caller player (supports distant players)
         UUID callerUuid = ClientState.currentExileCaller;
-        String callerName = callerUuid != null ? getPlayerName(client, callerUuid) : "Unknown";
+        String callerName = callerUuid != null ? getPlayerName(client, callerUuid) : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Check if the current player is the exile target
         boolean isTarget = client.player.getUuid().equals(exileTargetUuid);
@@ -212,6 +212,6 @@ public class ExileHUD {
         AbstractClientPlayerEntity player = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(playerUuid);
         if (player != null) return player.getName().getString();
         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, playerUuid);
-        return info != null ? info.name() : "Unknown";
+        return info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
     }
 }

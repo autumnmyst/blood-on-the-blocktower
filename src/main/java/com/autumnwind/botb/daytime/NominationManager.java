@@ -133,8 +133,8 @@ public class NominationManager {
         }
 
         // Get player names
-        String nominatorName = "Unknown";
-        String nomineeName = "Unknown";
+        String nominatorName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String nomineeName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         ServerPlayerEntity nominatorPlayer = server.getPlayerManager().getPlayer(nominator);
         if (nominatorPlayer != null) {

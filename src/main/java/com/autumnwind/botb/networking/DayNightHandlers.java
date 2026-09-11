@@ -41,7 +41,7 @@ final class DayNightHandlers {
                     // Block if storyteller's internal state has an MFE (the "real" mark)
                     if (storytellerMFE != null) {
                         ServerPlayerEntity mfePlayer = context.server().getPlayerManager().getPlayer(storytellerMFE);
-                        String mfeName = mfePlayer != null ? mfePlayer.getName().getString() : "Unknown";
+                        String mfeName = mfePlayer != null ? mfePlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
                         player.sendMessage(Text.translatable("message.blood-on-the-blocktower.night.cannot_dusk_marked", mfeName).formatted(Formatting.RED), true);
                         return;
                     }
@@ -49,7 +49,7 @@ final class DayNightHandlers {
                     if (currentNominee != null) {
                         // Get nominee player name for the message
                         ServerPlayerEntity nomineePlayer = context.server().getPlayerManager().getPlayer(currentNominee);
-                        String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : "Unknown";
+                        String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
                         player.sendMessage(Text.translatable("message.blood-on-the-blocktower.night.cannot_dusk_nominated", nomineeName).formatted(Formatting.RED), true);
                         return;
                     }
@@ -58,7 +58,7 @@ final class DayNightHandlers {
                     UUID currentExileTarget = DaytimeState.getCurrentExileTarget();
                     if (currentExileTarget != null) {
                         ServerPlayerEntity exilePlayer = context.server().getPlayerManager().getPlayer(currentExileTarget);
-                        String exileName = exilePlayer != null ? exilePlayer.getName().getString() : "Unknown";
+                        String exileName = exilePlayer != null ? exilePlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
                         player.sendMessage(Text.translatable("message.blood-on-the-blocktower.night.cannot_dusk_exile", exileName).formatted(Formatting.RED), true);
                         return;
                     }

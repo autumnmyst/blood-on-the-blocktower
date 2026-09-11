@@ -483,7 +483,7 @@ public class GameEndAnimationHUD {
             }
 
             // Get player name and skin
-            String playerName = "Unknown";
+            String playerName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
             Identifier skinTexture = null;
 
             AbstractClientPlayerEntity playerEntity = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(playerUuid);

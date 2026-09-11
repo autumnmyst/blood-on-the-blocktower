@@ -723,7 +723,7 @@ public class VoiceChatSidebar {
          */
         static PlayerEntry fromUuid(MinecraftClient client, UUID uuid, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
             PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayerOrCached(client, uuid);
-            String name = info != null ? info.name() : "Unknown";
+            String name = info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
             Identifier skin = info != null ? info.skinTexture() : Identifier.of("minecraft", "textures/entity/steve.png");
             return new PlayerEntry(uuid, name, skin, seat, isDead, isTalking, shouldFade);
         }

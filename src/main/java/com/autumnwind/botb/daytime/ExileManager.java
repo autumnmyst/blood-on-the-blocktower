@@ -124,8 +124,8 @@ public class ExileManager {
         }
 
         // Get player names
-        String callerName = callerPlayer != null ? callerPlayer.getName().getString() : "Unknown";
-        String travelerName = travelerPlayer != null ? travelerPlayer.getName().getString() : "Unknown";
+        String callerName = callerPlayer != null ? callerPlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String travelerName = travelerPlayer != null ? travelerPlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Calculate support required - at least half of ALL players (not just alive)
         int supportRequired = (int) Math.ceil(totalPlayerCount / 2.0);
