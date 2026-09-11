@@ -25,12 +25,12 @@ final class ConfigCommands {
             ServerConfig.SEAT_HOMES.put(seat, blockPos);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set home for seat " + seat + " to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.seat_home", seat, blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting seat home: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.seat_home", e.getMessage()));
             return 0;
         }
     }
@@ -47,12 +47,12 @@ final class ConfigCommands {
             ServerConfig.TOWN_SQUARE_SEATS.put(seat, blockPos);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set town square seat for seat " + seat + " to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.town_square_seat", seat, blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting town square seat: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.town_square_seat", e.getMessage()));
             return 0;
         }
     }
@@ -69,12 +69,12 @@ final class ConfigCommands {
             ServerConfig.TOWN_SQUARE = blockPos;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set Town Square to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.town_square", blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting Town Square: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.town_square", e.getMessage()));
             return 0;
         }
     }
@@ -84,12 +84,12 @@ final class ConfigCommands {
             ServerConfig.DEATH_COMMANDS.put(seat, command);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set death command for seat " + seat + " to: " + command)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.death_command", seat, command)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting death command: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.death_command", e.getMessage()));
             return 0;
         }
     }
@@ -99,12 +99,12 @@ final class ConfigCommands {
             ServerConfig.REVIVE_COMMANDS.put(seat, command);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set revive command for seat " + seat + " to: " + command)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.revive_command", seat, command)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting revive command: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.revive_command", e.getMessage()));
             return 0;
         }
     }
@@ -114,12 +114,12 @@ final class ConfigCommands {
             ServerConfig.SEAT_ASSIGNMENT_COMMANDS.put(seat, command);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set seat assignment command for seat " + seat + " to: " + command)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.seat_assignment_command", seat, command)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting seat assignment command: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.seat_assignment_command", e.getMessage()));
             return 0;
         }
     }
@@ -129,12 +129,12 @@ final class ConfigCommands {
             ServerConfig.DUSK_COMMAND = command;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set dusk command to: " + command)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.dusk_command", command)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting dusk command: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.dusk_command", e.getMessage()));
             return 0;
         }
     }
@@ -144,12 +144,12 @@ final class ConfigCommands {
             ServerConfig.DAWN_COMMAND = command;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set dawn command to: " + command)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.dawn_command", command)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting dawn command: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.dawn_command", e.getMessage()));
             return 0;
         }
     }
@@ -166,12 +166,12 @@ final class ConfigCommands {
             ServerConfig.SEAT_SWITCH_POSITIONS.put(seat, blockPos);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set switch position for seat " + seat + " to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.switch_position", seat, blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting switch position: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.switch_position", e.getMessage()));
             return 0;
         }
     }
@@ -188,12 +188,12 @@ final class ConfigCommands {
             ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.put(seat, blockPos);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set vote indicator position for seat " + seat + " to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.vote_indicator_position", seat, blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting vote indicator position: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.vote_indicator_position", e.getMessage()));
             return 0;
         }
     }
@@ -203,12 +203,12 @@ final class ConfigCommands {
             ServerConfig.EXECUTION_COMMANDS.put(seat, command);
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set execution command for seat " + seat + " to: " + command)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.execution_command", seat, command)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting execution command: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.execution_command", e.getMessage()));
             return 0;
         }
     }
@@ -218,12 +218,12 @@ final class ConfigCommands {
             ServerConfig.VOTE_TIME_PER_PLAYER = millis;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set vote time per player to " + millis + " ms")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.vote_time_per_player", millis)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting vote time per player: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.vote_time_per_player", e.getMessage()));
             return 0;
         }
     }
@@ -233,12 +233,12 @@ final class ConfigCommands {
             ServerConfig.EXECUTION_SOUND_DELAY = delay;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set execution sound delay to " + delay + " ms")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.execution_sound_delay", delay)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting execution sound delay: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.execution_sound_delay", e.getMessage()));
             return 0;
         }
     }
@@ -248,12 +248,12 @@ final class ConfigCommands {
             ServerConfig.EXECUTION_DEATH_TITLE_DELAY = delay;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set execution death title delay to " + delay + " ms")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.execution_death_title_delay", delay)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting execution death title delay: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.execution_death_title_delay", e.getMessage()));
             return 0;
         }
     }
@@ -263,12 +263,12 @@ final class ConfigCommands {
             ServerConfig.EXECUTION_SURVIVED_SOUND_DELAY = delay;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set execution survived sound delay to " + delay + " ms")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.execution_survived_sound_delay", delay)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting execution survived sound delay: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.execution_survived_sound_delay", e.getMessage()));
             return 0;
         }
     }
@@ -285,12 +285,12 @@ final class ConfigCommands {
             ServerConfig.EXECUTION_POSITION = blockPos;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set execution position to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.execution_position", blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting execution position: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.execution_position", e.getMessage()));
             return 0;
         }
     }
@@ -301,16 +301,16 @@ final class ConfigCommands {
             ServerConfig.save();
 
             if (height <= 0) {
-                source.sendFeedback(() -> Text.literal("Anvil disabled (height set to " + height + ")")
+                source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.anvil_disabled", height)
                         .formatted(Formatting.GREEN), true);
             } else {
-                source.sendFeedback(() -> Text.literal("Set anvil height to " + height + " blocks above execution position")
+                source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.anvil_height", height)
                         .formatted(Formatting.GREEN), true);
             }
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting anvil height: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.anvil_height", e.getMessage()));
             return 0;
         }
     }
@@ -320,12 +320,12 @@ final class ConfigCommands {
             ServerConfig.LOCK_IN_EXECUTION_POSITION = lock;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Lock in execution position set to " + lock)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.lock_in_execution_position", lock)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting lock in execution position: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.lock_in_execution_position", e.getMessage()));
             return 0;
         }
     }
@@ -335,12 +335,12 @@ final class ConfigCommands {
             ServerConfig.TIME_DAWN = time;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Dawn time set to " + time)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.dawn_time", time)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting dawn time: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.dawn_time", e.getMessage()));
             return 0;
         }
     }
@@ -350,12 +350,12 @@ final class ConfigCommands {
             ServerConfig.TIME_EVENING = time;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Evening time set to " + time)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.evening_time", time)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting evening time: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.evening_time", e.getMessage()));
             return 0;
         }
     }
@@ -365,12 +365,12 @@ final class ConfigCommands {
             ServerConfig.TIME_DUSK = time;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Dusk time set to " + time)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.dusk_time", time)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting dusk time: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.dusk_time", e.getMessage()));
             return 0;
         }
     }
@@ -387,12 +387,12 @@ final class ConfigCommands {
             ServerConfig.CLOCK_CENTER = blockPos;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set clock center to " + blockPos.toShortString())
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.clock_center", blockPos.toShortString())
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting clock center: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.clock_center", e.getMessage()));
             return 0;
         }
     }
@@ -402,12 +402,12 @@ final class ConfigCommands {
             ServerConfig.CLOCK_HAND_SCALE = scale;
             ServerConfig.save();
 
-            source.sendFeedback(() -> Text.literal("Set clock hand scale to " + scale)
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.clock_hand_scale", scale)
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting clock hand scale: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.clock_hand_scale", e.getMessage()));
             return 0;
         }
     }
@@ -416,11 +416,11 @@ final class ConfigCommands {
         try {
             ServerConfig.MAX_NAME_LENGTH = length;
             ServerConfig.save();
-            source.sendFeedback(() -> Text.literal("Custom names are now limited to " + length + " characters")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.config.name_max_length", length)
                     .formatted(Formatting.GREEN), true);
             return 1;
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting name length: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.config.error.name_length", e.getMessage()));
             return 0;
         }
     }

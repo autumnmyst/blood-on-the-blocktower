@@ -58,14 +58,14 @@ final class GameCommands {
                     }
                 }
 
-                source.sendFeedback(() -> Text.literal("Teleported to seat " + seat).formatted(Formatting.GRAY), false);
+                source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.command.teleported_to_seat", seat).formatted(Formatting.GRAY), false);
                 return 1;
             } else {
-                source.sendError(Text.literal("Home for seat " + seat + " has not been set."));
+                source.sendError(Text.translatable("message.blood-on-the-blocktower.teleport.seat_home_not_set", seat));
                 return 0;
             }
         } catch (Exception e) {
-            source.sendError(Text.literal("Error teleporting: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.command.error.teleport", e.getMessage()));
             return 0;
         }
     }
@@ -80,7 +80,7 @@ final class GameCommands {
 
             return 1;
         } catch (Exception e) {
-            source.sendError(Text.literal("Error ending game: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.command.error.end_game", e.getMessage()));
             return 0;
         }
     }
@@ -264,12 +264,12 @@ final class GameCommands {
                     new ClearGrimoireS2CPayload());
             }
 
-            source.sendFeedback(() -> Text.literal("Full reset: everything Reset Game does, plus all players unseated and their grimoires wiped.")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.command.full_reset")
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error resetting game: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.command.error.reset_game", e.getMessage()));
             return 0;
         }
     }
@@ -434,12 +434,12 @@ final class GameCommands {
                 }
             }
 
-            source.sendFeedback(() -> Text.literal("Game reset: everyone revived, roles cleared, day/night back to 0. Seats and grimoires kept.")
+            source.sendFeedback(() -> Text.translatable("message.blood-on-the-blocktower.command.game_reset")
                     .formatted(Formatting.GREEN), true);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error starting new game: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.command.error.new_game", e.getMessage()));
             return 0;
         }
     }
@@ -452,7 +452,7 @@ final class GameCommands {
             // An empty name means "reset", so drop the saved entry instead of storing a blank.
             boolean reset = name == null || name.isBlank();
             if (!reset && name.trim().length() > ServerConfig.MAX_NAME_LENGTH) {
-                source.sendError(Text.literal("Names can be at most " + ServerConfig.MAX_NAME_LENGTH + " characters."));
+                source.sendError(Text.translatable("message.blood-on-the-blocktower.command.name_too_long", ServerConfig.MAX_NAME_LENGTH));
                 return 0;
             }
             if (reset) {
@@ -465,13 +465,13 @@ final class GameCommands {
             StateBroadcaster.syncCustomNames(server, player);
 
             source.sendFeedback(() -> (reset
-                    ? Text.literal("Name reset to " + player.getGameProfile().getName())
-                    : Text.literal("Set your name to: " + name.trim()))
+                    ? Text.translatable("message.blood-on-the-blocktower.command.name_reset", player.getGameProfile().getName())
+                    : Text.translatable("message.blood-on-the-blocktower.command.name_set", name.trim()))
                     .formatted(Formatting.GREEN), false);
             return 1;
 
         } catch (Exception e) {
-            source.sendError(Text.literal("Error setting name: " + e.getMessage()));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.command.error.set_name", e.getMessage()));
             return 0;
         }
     }
