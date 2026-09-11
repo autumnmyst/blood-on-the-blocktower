@@ -52,22 +52,30 @@ public final class SetupStick {
     private SetupStick() {}
 
     private enum Step {
-        TOWN_SQUARE("Town Square", "floor where you teleport to at dawn", true),
-        EXECUTION("Execution spot", "floor where the executed player stands", true),
-        CLOCK_CENTER("Clock center", "floor block under the clock center", true),
-        TOWN_SQUARE_SEAT("Seat %d town square seat", "floor block where the player sits and votes from", true),
-        SWITCH("Seat %d lever", "lever to toggle vote", false),
-        VOTE_INDICATOR("Seat %d vote indicator", "block that shows vote state", false),
-        SEAT_HOME("Home %d", "floor block teleported to when sent home/visiting", true);
+        TOWN_SQUARE("town_square", true),
+        EXECUTION("execution", true),
+        CLOCK_CENTER("clock_center", true),
+        TOWN_SQUARE_SEAT("town_square_seat", true),
+        SWITCH("switch", false),
+        VOTE_INDICATOR("vote_indicator", false),
+        SEAT_HOME("seat_home", true);
 
-        final String title;
-        final String target;
+        final String key;
         final boolean standing;
 
-        Step(String title, String target, boolean standing) {
-            this.title = title;
-            this.target = target;
+        Step(String key, boolean standing) {
+            this.key = "hud.blood-on-the-blocktower.setup.step." + key;
             this.standing = standing;
+        }
+
+        /** The step name, with the seat number filled in for the per-seat steps. */
+        MutableText title(int seat) {
+            return Text.translatable(key, seat);
+        }
+
+        /** What to click, with the floor word in bold so it's clear the click goes on the ground block. */
+        MutableText target() {
+            return Text.translatable(key + ".target", Text.translatable("hud.blood-on-the-blocktower.setup.floor").formatted(Formatting.BOLD));
         }
 
         /** The seat loop: town square seat, lever, vote indicator. */
@@ -112,7 +120,7 @@ public final class SetupStick {
     public static int startCommand(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null) {
-            source.sendError(Text.literal("Only a player can run map setup."));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.only_player_run"));
             return 0;
         }
         GameRules rules = source.getServer().getGameRules();
@@ -130,7 +138,7 @@ public final class SetupStick {
     public static int helpCommand(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null) {
-            source.sendError(Text.literal("Only a player can view map setup help."));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.only_player_help"));
             return 0;
         }
         sendPositionsSummary(player);
@@ -143,7 +151,7 @@ public final class SetupStick {
         ServerPlayerEntity player = source.getPlayer();
         Session session = player != null ? SESSIONS.get(player.getUuid()) : null;
         if (session == null) {
-            source.sendError(Text.literal("No map setup in progress. Run /botb setup first."));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
             return 0;
         }
         skip(player, session);
@@ -155,7 +163,7 @@ public final class SetupStick {
         ServerPlayerEntity player = source.getPlayer();
         Session session = player != null ? SESSIONS.get(player.getUuid()) : null;
         if (session == null) {
-            source.sendError(Text.literal("No map setup in progress. Run /botb setup first."));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
             return 0;
         }
         back(player, session);
@@ -166,7 +174,7 @@ public final class SetupStick {
     public static int finishCommand(ServerCommandSource source) {
         ServerPlayerEntity player = source.getPlayer();
         if (player == null || SESSIONS.remove(player.getUuid()) == null) {
-            source.sendError(Text.literal("No map setup in progress. Run /botb setup first."));
+            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
             return 0;
         }
         finish(player);
@@ -187,7 +195,7 @@ public final class SetupStick {
         if (world.isClient()) return ActionResult.SUCCESS; // the server does the work
         if (!(player instanceof ServerPlayerEntity serverPlayer)) return ActionResult.PASS;
         if (!serverPlayer.hasPermissionLevel(2)) {
-            send(serverPlayer, Text.literal("Only operators can use the Setup Stick.").formatted(Formatting.RED));
+            send(serverPlayer, Text.translatable("message.blood-on-the-blocktower.setup.operators_only").formatted(Formatting.RED));
             return ActionResult.SUCCESS;
         }
 
@@ -208,7 +216,7 @@ public final class SetupStick {
         BlockPos target = session.step.standing ? pos.offset(side) : pos;
         apply(session, target);
         ServerConfig.save();
-        serverPlayer.sendMessage(Text.literal(title(session) + " set: ").formatted(Formatting.GREEN)
+        serverPlayer.sendMessage(Text.translatable("message.blood-on-the-blocktower.setup.step_set", session.step.title(session.seat)).formatted(Formatting.GREEN)
                 .append(Text.literal(target.toShortString()).formatted(Formatting.WHITE)), true);
         advance(serverPlayer, session);
         return ActionResult.SUCCESS;
@@ -237,14 +245,13 @@ public final class SetupStick {
 
     private static void rightClick(ServerPlayerEntity player) {
         if (!player.hasPermissionLevel(2)) {
-            send(player, Text.literal("Only operators can use the Setup Stick.").formatted(Formatting.RED));
+            send(player, Text.translatable("message.blood-on-the-blocktower.setup.operators_only").formatted(Formatting.RED));
             return;
         }
         Session session = SESSIONS.get(player.getUuid());
         if (session == null) {
-            send(player, Text.literal("Run ").formatted(Formatting.GRAY)
-                    .append(command("/botb setup", "/botb setup"))
-                    .append(Text.literal(" or MB1 a block to start map setup.").formatted(Formatting.GRAY)));
+            send(player, Text.translatable("message.blood-on-the-blocktower.setup.run_to_start", command("/botb setup", "/botb setup"))
+                    .formatted(Formatting.GRAY));
             return;
         }
         if (player.isSneaking()) {
@@ -340,7 +347,7 @@ public final class SetupStick {
     private static void back(ServerPlayerEntity player, Session session) {
         switch (session.step) {
             case TOWN_SQUARE -> {
-                send(player, Text.literal("Already at the first step.").formatted(Formatting.YELLOW));
+                send(player, Text.translatable("message.blood-on-the-blocktower.setup.already_first_step").formatted(Formatting.YELLOW));
                 return;
             }
             case EXECUTION -> session.step = Step.TOWN_SQUARE;
@@ -375,7 +382,7 @@ public final class SetupStick {
     private static Session startSession(ServerPlayerEntity player) {
         Session session = new Session();
         SESSIONS.put(player.getUuid(), session);
-        send(player, Text.literal("Map setup started: use the setup stick to set locations.").formatted(Formatting.GOLD));
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.started").formatted(Formatting.GOLD));
         prompt(player);
         return session;
     }
@@ -384,9 +391,9 @@ public final class SetupStick {
         Session session = SESSIONS.get(player.getUuid());
         if (session == null) return;
         BlockPos existing = current(session);
-        ServerPlayNetworking.send(player, new SetupHudS2CPayload(true, title(session),
-                existing != null ? existing.toShortString() : "", session.step.target,
-                session.step.isSeatStep() ? "Homes" : "Finish"));
+        ServerPlayNetworking.send(player, new SetupHudS2CPayload(true, session.step.title(session.seat),
+                existing != null ? existing.toShortString() : "", session.step.target(),
+                Text.translatable(session.step.isSeatStep() ? "hud.blood-on-the-blocktower.setup.control.homes" : "hud.blood-on-the-blocktower.setup.control.finish")));
     }
 
     private static void hideHud(ServerPlayerEntity player) {
@@ -396,32 +403,28 @@ public final class SetupStick {
     // ========== Chat summaries ==========
 
     private static void sendTownSquareSummary(ServerPlayerEntity player) {
-        send(player, Text.literal("Town square setup:").formatted(Formatting.GOLD));
-        line(player, "Town Square", posOrUnset(ServerConfig.TOWN_SQUARE));
-        line(player, "Execution spot", posOrUnset(ServerConfig.EXECUTION_POSITION));
-        line(player, "Clock center", posOrUnset(ServerConfig.CLOCK_CENTER));
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.town_square_summary").formatted(Formatting.GOLD));
+        line(player, Step.TOWN_SQUARE.title(0), posOrUnset(ServerConfig.TOWN_SQUARE));
+        line(player, Step.EXECUTION.title(0), posOrUnset(ServerConfig.EXECUTION_POSITION));
+        line(player, Step.CLOCK_CENTER.title(0), posOrUnset(ServerConfig.CLOCK_CENTER));
     }
 
     private static void sendSeatSummary(ServerPlayerEntity player, int seat) {
-        send(player, Text.literal("Seat " + seat + ": ").formatted(Formatting.GOLD)
-                .append(labeled("seat", posOrUnset(ServerConfig.TOWN_SQUARE_SEATS.get(seat))))
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.seat_summary", seat).formatted(Formatting.GOLD)
+                .append(labeled("message.blood-on-the-blocktower.setup.seat_label", posOrUnset(ServerConfig.TOWN_SQUARE_SEATS.get(seat))))
                 .append(Text.literal(", ").formatted(Formatting.GRAY))
-                .append(labeled("lever", posOrUnset(ServerConfig.SEAT_SWITCH_POSITIONS.get(seat))))
+                .append(labeled("message.blood-on-the-blocktower.setup.lever_label", posOrUnset(ServerConfig.SEAT_SWITCH_POSITIONS.get(seat))))
                 .append(Text.literal(", ").formatted(Formatting.GRAY))
-                .append(labeled("indicator", posOrUnset(ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat)))));
+                .append(labeled("message.blood-on-the-blocktower.setup.indicator_label", posOrUnset(ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat)))));
     }
 
     private static void sendHomeSummary(ServerPlayerEntity player, int seat) {
-        send(player, Text.literal("Home " + seat + ": ").formatted(Formatting.GOLD)
-                .append(Text.literal(posOrUnset(ServerConfig.SEAT_HOMES.get(seat))).formatted(Formatting.WHITE)));
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.home_summary", seat).formatted(Formatting.GOLD)
+                .append(posOrUnset(ServerConfig.SEAT_HOMES.get(seat)).copy().formatted(Formatting.WHITE)));
     }
 
-    private static MutableText labeled(String label, String value) {
-        return Text.literal(label + " ").formatted(Formatting.GRAY).append(Text.literal(value).formatted(Formatting.WHITE));
-    }
-
-    private static String title(Session session) {
-        return String.format(session.step.title, session.seat);
+    private static MutableText labeled(String labelKey, Text value) {
+        return Text.translatable(labelKey).formatted(Formatting.GRAY).append(value.copy().formatted(Formatting.WHITE));
     }
 
     // ========== Finish: remaining settings ==========
@@ -431,83 +434,90 @@ public final class SetupStick {
         takeStick(player);
         VoteIndicators.paintVoteIndicatorStacks(player.getServer(), true);
         ElectionManager.powerAllSeatPistons(player.getServer());
-        send(player, Text.literal("World setup complete! Stick removed, vote indicators painted. ").formatted(Formatting.GREEN)
-                .append(Text.literal("Run ").formatted(Formatting.GRAY))
-                .append(Text.literal("/botb setup help").styled(style -> style
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.complete").formatted(Formatting.GREEN)
+                .append(Text.translatable("message.blood-on-the-blocktower.setup.run_for_settings", Text.literal("/botb setup help").styled(style -> style
                         .withColor(Formatting.AQUA)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/botb setup help"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to run")))))
-                .append(Text.literal(" for the other map settings.").formatted(Formatting.GRAY)));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.blood-on-the-blocktower.setup.click_to_run")))))
+                        .formatted(Formatting.GRAY)));
     }
 
     /** The map positions with their current values, as one summary line. */
     private static void sendPositionsSummary(ServerPlayerEntity player) {
         int seats = Math.max(Math.max(ServerConfig.SEAT_HOMES.size(), ServerConfig.TOWN_SQUARE_SEATS.size()),
                 Math.max(ServerConfig.SEAT_SWITCH_POSITIONS.size(), ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.size()));
-        send(player, Text.literal("Map positions: ").formatted(Formatting.GOLD)
-                .append(Text.literal("Seats configured: " + seats + " (homes " + ServerConfig.SEAT_HOMES.size()
-                        + ", town square seats " + ServerConfig.TOWN_SQUARE_SEATS.size()
-                        + ", levers " + ServerConfig.SEAT_SWITCH_POSITIONS.size()
-                        + ", indicators " + ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.size() + "). "
-                        + "Town Square " + posOrUnset(ServerConfig.TOWN_SQUARE)
-                        + ", execution " + posOrUnset(ServerConfig.EXECUTION_POSITION)
-                        + ", clock center " + posOrUnset(ServerConfig.CLOCK_CENTER) + ".").formatted(Formatting.GRAY)));
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.positions").formatted(Formatting.GOLD)
+                .append(Text.translatable("message.blood-on-the-blocktower.setup.positions_summary", seats, ServerConfig.SEAT_HOMES.size(),
+                        ServerConfig.TOWN_SQUARE_SEATS.size(),
+                        ServerConfig.SEAT_SWITCH_POSITIONS.size(),
+                        ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.size(),
+                        posOrUnset(ServerConfig.TOWN_SQUARE),
+                        posOrUnset(ServerConfig.EXECUTION_POSITION),
+                        posOrUnset(ServerConfig.CLOCK_CENTER)).formatted(Formatting.GRAY)));
     }
 
     /** The other map settings with their current values; each command is clickable. */
     private static void sendSettings(ServerPlayerEntity player) {
-        send(player, Text.literal("Other map settings (click a command to fill it in):").formatted(Formatting.GOLD));
-        setting(player, "/botb setClockHandScale <scale>", "/botb setClockHandScale ", "clock hand scale", String.valueOf(ServerConfig.CLOCK_HAND_SCALE));
-        setting(player, "/botb setNameMaxLength <length>", "/botb setNameMaxLength ", "longest custom name players may set", String.valueOf(ServerConfig.MAX_NAME_LENGTH));
-        setting(player, "/botb setVoteTimePerPlayer <ms>", "/botb setVoteTimePerPlayer ", "time between each vote lock-in", ServerConfig.VOTE_TIME_PER_PLAYER + " ms");
-        setting(player, "/botb setAnvilHeight <blocks>", "/botb setAnvilHeight ", "anvil height above execution spot (0 = no anvil)", String.valueOf(ServerConfig.ANVIL_HEIGHT));
-        setting(player, "/botb lockInExecutionPosition <true|false>", "/botb lockInExecutionPosition ", "lock the executed player in place", String.valueOf(ServerConfig.LOCK_IN_EXECUTION_POSITION));
-        setting(player, "/botb setExecution soundDelay <ms>", "/botb setExecution soundDelay ", "execution sound delay", ServerConfig.EXECUTION_SOUND_DELAY + " ms");
-        setting(player, "/botb setExecution survivedSoundDelay <ms>", "/botb setExecution survivedSoundDelay ", "survived-execution sound delay", ServerConfig.EXECUTION_SURVIVED_SOUND_DELAY + " ms");
-        setting(player, "/botb setExecution deathTitleDelay <ms>", "/botb setExecution deathTitleDelay ", "execution death title delay", ServerConfig.EXECUTION_DEATH_TITLE_DELAY + " ms");
-        setting(player, "/botb setTime dawn <ticks>", "/botb setTime dawn ", "dawn time", String.valueOf(ServerConfig.TIME_DAWN));
-        setting(player, "/botb setTime evening <ticks>", "/botb setTime evening ", "evening time", String.valueOf(ServerConfig.TIME_EVENING));
-        setting(player, "/botb setTime dusk <ticks>", "/botb setTime dusk ", "dusk time", String.valueOf(ServerConfig.TIME_DUSK));
-        setting(player, "/botb setDuskCommand <command>", "/botb setDuskCommand ", "command run at dusk", orNone(ServerConfig.DUSK_COMMAND));
-        setting(player, "/botb setDawnCommand <command>", "/botb setDawnCommand ", "command run at dawn", orNone(ServerConfig.DAWN_COMMAND));
-        setting(player, "/botb setDeathCommand <seat> <command>", "/botb setDeathCommand ", "per-seat command on death", ServerConfig.DEATH_COMMANDS.size() + " seats set");
-        setting(player, "/botb setReviveCommand <seat> <command>", "/botb setReviveCommand ", "per-seat command on revive", ServerConfig.REVIVE_COMMANDS.size() + " seats set");
-        setting(player, "/botb setSeatAssignmentCommand <seat> <command>", "/botb setSeatAssignmentCommand ", "per-seat command when a seat is assigned", ServerConfig.SEAT_ASSIGNMENT_COMMANDS.size() + " seats set");
-        setting(player, "/botb setExecutionCommand <seat> <command>", "/botb setExecutionCommand ", "per-seat command on execution", ServerConfig.EXECUTION_COMMANDS.size() + " seats set");
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.other_settings").formatted(Formatting.GOLD));
+        setting(player, "/botb setClockHandScale <scale>", "/botb setClockHandScale ", "message.blood-on-the-blocktower.setup.setting.clock_hand_scale", Text.literal(String.valueOf(ServerConfig.CLOCK_HAND_SCALE)));
+        setting(player, "/botb setNameMaxLength <length>", "/botb setNameMaxLength ", "message.blood-on-the-blocktower.setup.setting.name_max_length", Text.literal(String.valueOf(ServerConfig.MAX_NAME_LENGTH)));
+        setting(player, "/botb setVoteTimePerPlayer <ms>", "/botb setVoteTimePerPlayer ", "message.blood-on-the-blocktower.setup.setting.vote_time_per_player", ms(ServerConfig.VOTE_TIME_PER_PLAYER));
+        setting(player, "/botb setAnvilHeight <blocks>", "/botb setAnvilHeight ", "message.blood-on-the-blocktower.setup.setting.anvil_height", Text.literal(String.valueOf(ServerConfig.ANVIL_HEIGHT)));
+        setting(player, "/botb lockInExecutionPosition <true|false>", "/botb lockInExecutionPosition ", "message.blood-on-the-blocktower.setup.setting.lock_in_execution_position", Text.literal(String.valueOf(ServerConfig.LOCK_IN_EXECUTION_POSITION)));
+        setting(player, "/botb setExecution soundDelay <ms>", "/botb setExecution soundDelay ", "message.blood-on-the-blocktower.setup.setting.execution_sound_delay", ms(ServerConfig.EXECUTION_SOUND_DELAY));
+        setting(player, "/botb setExecution survivedSoundDelay <ms>", "/botb setExecution survivedSoundDelay ", "message.blood-on-the-blocktower.setup.setting.execution_survived_sound_delay", ms(ServerConfig.EXECUTION_SURVIVED_SOUND_DELAY));
+        setting(player, "/botb setExecution deathTitleDelay <ms>", "/botb setExecution deathTitleDelay ", "message.blood-on-the-blocktower.setup.setting.execution_death_title_delay", ms(ServerConfig.EXECUTION_DEATH_TITLE_DELAY));
+        setting(player, "/botb setTime dawn <ticks>", "/botb setTime dawn ", "message.blood-on-the-blocktower.setup.setting.time_dawn", Text.literal(String.valueOf(ServerConfig.TIME_DAWN)));
+        setting(player, "/botb setTime evening <ticks>", "/botb setTime evening ", "message.blood-on-the-blocktower.setup.setting.time_evening", Text.literal(String.valueOf(ServerConfig.TIME_EVENING)));
+        setting(player, "/botb setTime dusk <ticks>", "/botb setTime dusk ", "message.blood-on-the-blocktower.setup.setting.time_dusk", Text.literal(String.valueOf(ServerConfig.TIME_DUSK)));
+        setting(player, "/botb setDuskCommand <command>", "/botb setDuskCommand ", "message.blood-on-the-blocktower.setup.setting.dusk_command", orNone(ServerConfig.DUSK_COMMAND));
+        setting(player, "/botb setDawnCommand <command>", "/botb setDawnCommand ", "message.blood-on-the-blocktower.setup.setting.dawn_command", orNone(ServerConfig.DAWN_COMMAND));
+        setting(player, "/botb setDeathCommand <seat> <command>", "/botb setDeathCommand ", "message.blood-on-the-blocktower.setup.setting.death_command", seatsSet(ServerConfig.DEATH_COMMANDS.size()));
+        setting(player, "/botb setReviveCommand <seat> <command>", "/botb setReviveCommand ", "message.blood-on-the-blocktower.setup.setting.revive_command", seatsSet(ServerConfig.REVIVE_COMMANDS.size()));
+        setting(player, "/botb setSeatAssignmentCommand <seat> <command>", "/botb setSeatAssignmentCommand ", "message.blood-on-the-blocktower.setup.setting.seat_assignment_command", seatsSet(ServerConfig.SEAT_ASSIGNMENT_COMMANDS.size()));
+        setting(player, "/botb setExecutionCommand <seat> <command>", "/botb setExecutionCommand ", "message.blood-on-the-blocktower.setup.setting.execution_command", seatsSet(ServerConfig.EXECUTION_COMMANDS.size()));
     }
 
-    private static void setting(ServerPlayerEntity player, String usage, String suggest, String description, String value) {
+    private static void setting(ServerPlayerEntity player, String usage, String suggest, String descriptionKey, Text value) {
         send(player, Text.literal("  ").append(command(usage, suggest))
-                .append(Text.literal("\n    " + description + ": ").formatted(Formatting.GRAY))
-                .append(Text.literal(value).formatted(Formatting.WHITE)));
+                .append(Text.literal("\n    ").append(Text.translatable(descriptionKey)).append(": ").formatted(Formatting.GRAY))
+                .append(value.copy().formatted(Formatting.WHITE)));
     }
 
     private static MutableText command(String label, String suggest) {
         return Text.literal(label).styled(style -> style
                 .withColor(Formatting.AQUA)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, suggest))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Click to put this command in chat"))));
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.blood-on-the-blocktower.setup.click_to_suggest"))));
     }
 
-    private static String posOrUnset(BlockPos pos) {
-        return pos != null ? pos.toShortString() : "unset";
+    private static Text posOrUnset(BlockPos pos) {
+        return pos != null ? Text.literal(pos.toShortString()) : Text.translatable("message.blood-on-the-blocktower.setup.unset");
     }
 
-    private static String orNone(String value) {
-        return value != null && !value.isBlank() ? value : "none";
+    private static Text orNone(String value) {
+        return value != null && !value.isBlank() ? Text.literal(value) : Text.translatable("message.blood-on-the-blocktower.setup.none");
+    }
+
+    private static Text ms(long millis) {
+        return Text.translatable("message.blood-on-the-blocktower.setup.ms", millis);
+    }
+
+    private static Text seatsSet(int count) {
+        return Text.translatable("message.blood-on-the-blocktower.setup.seats_set", count);
     }
 
     // ========== Helpers ==========
 
-    private static void line(ServerPlayerEntity player, String label, String value) {
-        send(player, Text.literal("  " + label + ": ").formatted(Formatting.GRAY)
-                .append(Text.literal(value).formatted(Formatting.WHITE)));
+    private static void line(ServerPlayerEntity player, Text label, Text value) {
+        send(player, Text.literal("  ").append(label).append(": ").formatted(Formatting.GRAY)
+                .append(value.copy().formatted(Formatting.WHITE)));
     }
 
     /** Lists the gamerules World Setup manages, one per line, red when not at the expected value. */
     private static void reportGamerules(ServerPlayerEntity player) {
         GameRules rules = player.getServer().getGameRules();
-        send(player, Text.literal("Gamerules:").formatted(Formatting.GOLD));
+        send(player, Text.translatable("message.blood-on-the-blocktower.setup.gamerules").formatted(Formatting.GOLD));
         gamerule(player, "doImmediateRespawn", rules.getBoolean(GameRules.DO_IMMEDIATE_RESPAWN), true);
         gamerule(player, "doDaylightCycle", rules.getBoolean(GameRules.DO_DAYLIGHT_CYCLE), false);
         gamerule(player, "doMobSpawning", rules.getBoolean(GameRules.DO_MOB_SPAWNING), false);

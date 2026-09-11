@@ -30,37 +30,25 @@ public class SetupHUD {
         if (s == null) return;
 
         List<Text> lines = new ArrayList<>();
-        lines.add(Text.literal("Set: ").formatted(Formatting.YELLOW)
-                .append(Text.literal(s.title()).formatted(Formatting.GOLD, Formatting.BOLD)));
+        lines.add(Text.translatable("hud.blood-on-the-blocktower.setup.set").formatted(Formatting.YELLOW)
+                .append(s.title().copy().formatted(Formatting.GOLD, Formatting.BOLD)));
         if (!s.current().isEmpty()) {
-            lines.add(Text.literal("Current: ").formatted(Formatting.WHITE)
+            lines.add(Text.translatable("hud.blood-on-the-blocktower.setup.current").formatted(Formatting.WHITE)
                     .append(Text.literal(s.current()).formatted(Formatting.AQUA)));
         }
-        if (!s.description().isEmpty()) {
-            lines.add(description(s.description()));
+        if (!s.description().getString().isEmpty()) {
+            lines.add(s.description().copy().formatted(Formatting.GRAY, Formatting.ITALIC));
         }
-        lines.add(control("Set", "MB1")
-                .append("  ").append(control("Back", "MB2"))
-                .append("  ").append(control("Skip", "Shift+MB1"))
+        lines.add(control(Text.translatable("hud.blood-on-the-blocktower.setup.control.set"), "MB1")
+                .append("  ").append(control(Text.translatable("hud.blood-on-the-blocktower.setup.control.back"), "MB2"))
+                .append("  ").append(control(Text.translatable("hud.blood-on-the-blocktower.setup.control.skip"), "Shift+MB1"))
                 .append("  ").append(control(s.finishLabel(), "Shift+MB2")));
 
         CenteredHudBox.draw(context, client, MIN_WIDTH, CenteredHudBox.IDLE_BORDER, false, lines);
     }
 
-    /** Grey italic, with "floor" in bold so it's clear the click goes on the ground block. */
-    private static MutableText description(String text) {
-        MutableText line = Text.empty();
-        String[] parts = text.split("(?i)(?=floor)|(?i)(?<=floor)");
-        for (String part : parts) {
-            MutableText piece = Text.literal(part).formatted(Formatting.GRAY, Formatting.ITALIC);
-            if (part.equalsIgnoreCase("floor")) piece.formatted(Formatting.BOLD);
-            line.append(piece);
-        }
-        return line;
-    }
-
-    private static MutableText control(String label, String keys) {
-        return Text.literal(label + ": ").formatted(Formatting.GRAY)
+    private static MutableText control(Text label, String keys) {
+        return label.copy().append(": ").formatted(Formatting.GRAY)
                 .append(Text.literal("[" + keys + "]").formatted(Formatting.AQUA));
     }
 }
