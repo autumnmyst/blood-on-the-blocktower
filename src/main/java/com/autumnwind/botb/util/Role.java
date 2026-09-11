@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Language;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -271,11 +272,13 @@ public enum Role {
     private final String description;
     private final RoleType type;
     private final Identifier icon;
+    private final String nameKey;
 
     Role(String description, RoleType type, Identifier icon) {
         this.description = description;
         this.type = type;
         this.icon = icon;
+        this.nameKey = "role." + BloodOnTheBlocktower.MOD_ID + "." + getId();
     }
 
     public String getDescription() {
@@ -299,35 +302,9 @@ public enum Role {
         return icon;
     }
 
-    /**
-     * Returns a formatted display name for this role with proper punctuation.
-     * Converts enum names like FORTUNE_TELLER to "FORTUNE TELLER" (all caps).
-     */
+    /** The role's name from the lang file, in caps. */
     public String getDisplayName() {
-        // Handle special cases with punctuation
-        return switch (this) {
-            case DEVILS_ADVOCATE -> "DEVIL'S ADVOCATE";
-            case PIT_HAG -> "PIT-HAG";
-            case AL_HADIKHIA -> "AL-HADIKHIA";
-            case LIL_MONSTA -> "LIL' MONSTA";
-            case HELLS_LIBRARIAN -> "HELL'S LIBRARIAN";
-            case NO_ROLE -> "No Role";
-            default -> {
-                // Convert FORTUNE_TELLER to "FORTUNE TELLER" (all caps with spaces)
-                String name = this.name();
-                StringBuilder result = new StringBuilder();
-
-                for (char c : name.toCharArray()) {
-                    if (c == '_') {
-                        result.append(' ');
-                    } else {
-                        result.append(Character.toUpperCase(c));
-                    }
-                }
-
-                yield result.toString();
-            }
-        };
+        return Language.getInstance().get(nameKey);
     }
 
 }
