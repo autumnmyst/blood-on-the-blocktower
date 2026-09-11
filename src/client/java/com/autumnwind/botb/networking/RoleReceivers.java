@@ -3,11 +3,13 @@ package com.autumnwind.botb.networking;
 import com.autumnwind.botb.config.PlayerConfig;
 import com.autumnwind.botb.gui.AssignRolesScreen;
 import com.autumnwind.botb.hud.NightOrderHudManager;
+import com.autumnwind.botb.sound.CustomSounds;
 import com.autumnwind.botb.sound.ModSounds;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -167,11 +169,9 @@ final class RoleReceivers {
                     // Play role receive sound - Role Receive category
                     float madnessVolume = ClientState.BASE_VOLUME_ROLE_RECEIVE * ClientState.volumeRoleReceive;
                     if (context.client().player != null && context.client().world != null && madnessVolume > 0) {
-                        context.client().player.playSound(
-                            ModSounds.ROLE_RECEIVE,
-                            madnessVolume,
-                            1.0f
-                        );
+                        List<String> candidates = ClientState.myAssignment != null
+                                ? CustomSounds.roleReceiveCandidates(ClientState.myAssignment) : List.of();
+                        CustomSounds.playOneShot(context.client(), candidates, ModSounds.ROLE_RECEIVE, madnessVolume);
                     }
                 }
             });

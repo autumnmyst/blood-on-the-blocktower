@@ -56,7 +56,7 @@ final class SoundReceivers {
                     case PlaySoundS2CPayload.DOORBELL, PlaySoundS2CPayload.DOORKNOCK -> {
                         // Play whichever sound the storyteller chose
                         float volume = ClientState.BASE_VOLUME_DOORBELL * ClientState.volumeDoorbell;
-                        if (volume > 0) client.player.playSound(ModSounds.of(type), volume, 1.0f);
+                        if (volume > 0) CustomSounds.playOneShot(client, List.of(), ModSounds.of(type), volume);
                     }
                     case PlaySoundS2CPayload.VOTE_MUSIC, PlaySoundS2CPayload.VOTE_MUSIC_ORGAN_GRINDER -> {
                         boolean organGrinder = type.equals(PlaySoundS2CPayload.VOTE_MUSIC_ORGAN_GRINDER);
@@ -74,7 +74,7 @@ final class SoundReceivers {
                         OneShot oneShot = ONE_SHOTS.get(type);
                         if (oneShot != null) {
                             float volume = oneShot.volume();
-                            if (volume > 0) client.player.playSound(oneShot.sound(), volume, 1.0f);
+                            if (volume > 0) CustomSounds.playOneShot(client, List.of(), oneShot.sound(), volume);
                         }
                     }
                 }
