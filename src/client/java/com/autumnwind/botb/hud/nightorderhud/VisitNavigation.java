@@ -68,7 +68,7 @@ public class VisitNavigation {
         if (isSetupPhase && currentlyOnDusk) {
             if (client.player != null) {
                 client.player.sendMessage(
-                    Text.literal("Must activate Dusk to start the game")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_to_start")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -80,7 +80,7 @@ public class VisitNavigation {
         if (direction > 0 && currentlyOnDusk && !isNightTime) {
             if (client.player != null) {
                 client.player.sendMessage(
-                    Text.literal("Must activate Dusk before progressing night order")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_before_progress")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -92,7 +92,7 @@ public class VisitNavigation {
         if (direction > 0 && currentlyOnDawn && !isDayTime) {
             if (client.player != null) {
                 client.player.sendMessage(
-                    Text.literal("Must activate Dawn before progressing night order")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_before_progress")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -107,7 +107,7 @@ public class VisitNavigation {
         if (direction < 0 && currentlyOnDusk && isNightTime) {
             if (client.player != null) {
                 client.player.sendMessage(
-                    Text.literal("Cannot move backwards from Dusk")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dusk")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -119,7 +119,7 @@ public class VisitNavigation {
         if (direction < 0 && currentlyOnDawn && isDayTime) {
             if (client.player != null) {
                 client.player.sendMessage(
-                    Text.literal("Cannot move backwards from Dawn")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dawn")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -171,7 +171,7 @@ public class VisitNavigation {
             if (seat > 0) {
                 String playerName = getPlayerName(client, playerUUID);
                 if (playerName != null) {
-                    MutableText message = Text.literal("Visiting Seat ").formatted(Formatting.GRAY);
+                    MutableText message = Text.translatable("hud.blood-on-the-blocktower.night_order.nav.visiting_seat").formatted(Formatting.GRAY);
 
                     String reminderSuffix = getPlayerReminderSuffix(playerUUID, minstrelPlayer);
                     PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(playerUUID);
@@ -197,7 +197,7 @@ public class VisitNavigation {
             }
         } else {
             // Multiple players (supports distant players)
-            MutableText message = Text.literal("Multiple players for ").append(visit.getName().copy().formatted(Formatting.YELLOW)).append(":");
+            MutableText message = Text.translatable("hud.blood-on-the-blocktower.night_order.nav.multiple_players", visit.getName().copy().formatted(Formatting.YELLOW));
 
             for (UUID playerUUID : players) {
                 String playerName = getPlayerName(client, playerUUID);
@@ -218,17 +218,17 @@ public class VisitNavigation {
 
                 Style teleportStyle = Style.EMPTY
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/botb teleportToSeat " + seat))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal("Teleport to seat " + seat))).withColor(Formatting.GREEN);
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport_to_seat", seat))).withColor(Formatting.GREEN);
 
                 message.append(Text.literal("\n- ").formatted(Formatting.GRAY))
                         .append(Text.literal(playerName).formatted(Formatting.WHITE))
                         .append(Text.literal(" (").formatted(Formatting.GRAY))
                         .append(roleText.styled(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(assignment)))))
                         .append(Text.literal(reminderSuffix).formatted(Formatting.GRAY))
-                        .append(Text.literal(", Seat ").formatted(Formatting.GRAY))
+                        .append(Text.translatable("hud.blood-on-the-blocktower.night_order.nav.seat_suffix").formatted(Formatting.GRAY))
                         .append(Text.literal(String.valueOf(seat)).formatted(Formatting.GOLD))
                         .append(Text.literal(") [").formatted(Formatting.GRAY))
-                        .append(Text.literal("TELEPORT").setStyle(teleportStyle))
+                        .append(Text.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport").setStyle(teleportStyle))
                         .append(Text.literal("]").formatted(Formatting.GRAY));
             }
             client.player.sendMessage(message, false);
@@ -476,7 +476,7 @@ public class VisitNavigation {
             // Dusk can only be activated during the day
             if (isNightTime) {
                 client.player.sendMessage(
-                    Text.literal("Dusk can only be activated during the day")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_only_day")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -496,7 +496,7 @@ public class VisitNavigation {
             // Dawn can only be activated during the night
             if (isDayTime) {
                 client.player.sendMessage(
-                    Text.literal("Dawn can only be activated during the night")
+                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_only_night")
                         .formatted(Formatting.RED),
                     true
                 );
@@ -645,7 +645,7 @@ public class VisitNavigation {
                         && r.text().equals(Reminders.VORTOX_EFFECT));
         if (!vortoxOnVisit) return extraInfo;
         // Unstyled root so the helper info keeps its own colors instead of inheriting red
-        MutableText result = Text.empty().append(Text.literal("Tell them lies").formatted(Formatting.RED));
+        MutableText result = Text.empty().append(Text.translatable("hud.blood-on-the-blocktower.night_order.nav.tell_them_lies").formatted(Formatting.RED));
         return extraInfo == null ? result : result.append("\n").append(extraInfo);
     }
 }

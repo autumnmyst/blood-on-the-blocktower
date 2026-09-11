@@ -154,14 +154,14 @@ public record RoleVisit(
         }
         if (staticAction != null) {
             return switch (staticAction) {
-                case DAWN -> Text.literal("Dawn");
-                case NOMINATIONS -> Text.literal("Nominations");
-                case DUSK -> Text.literal("Dusk");
-                case MINION_INFO -> Text.literal("Minion Info");
-                case DEMON_INFO -> Text.literal("Demon Info & Bluffs");
+                case DAWN -> Text.translatable("nightorder.blood-on-the-blocktower.static.dawn");
+                case NOMINATIONS -> Text.translatable("nightorder.blood-on-the-blocktower.static.nominations");
+                case DUSK -> Text.translatable("nightorder.blood-on-the-blocktower.static.dusk");
+                case MINION_INFO -> Text.translatable("nightorder.blood-on-the-blocktower.static.minion_info");
+                case DEMON_INFO -> Text.translatable("nightorder.blood-on-the-blocktower.static.demon_info");
             };
         }
-        return Text.literal("Unknown");
+        return Text.translatable("nightorder.blood-on-the-blocktower.static.unknown");
     }
 
     public Identifier getIcon() {
