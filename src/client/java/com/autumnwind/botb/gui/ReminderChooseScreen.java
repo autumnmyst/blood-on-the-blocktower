@@ -475,7 +475,7 @@ public class ReminderChooseScreen extends Screen {
         for (Map.Entry<UUID, PendingRoleAssignment> entry : StorytellerState.PENDING_ROLES.entrySet()) {
             UUID playerUuid = entry.getKey();
             // Get player name for the reminder text (supports distant players)
-            String playerName = "Unknown Player";
+            String playerName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
             if (client != null) {
                 var player = client.world != null ? client.world.getPlayerByUuid(playerUuid) : null;
                 if (player != null) {
