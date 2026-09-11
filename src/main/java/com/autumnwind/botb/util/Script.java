@@ -4,9 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,6 +15,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import java.util.Locale;
 
 /**
@@ -55,7 +54,7 @@ public record Script(
      * Packet codec that transmits the raw JSON as compressed bytes.
      * This allows large scripts to be sent without hitting the 32767 character string limit.
      */
-    public static final PacketCodec<ByteBuf, Script> PACKET_CODEC = new PacketCodec<>() {
+    public static final StreamCodec<ByteBuf, Script> PACKET_CODEC = new StreamCodec<>() {
         @Override
         public Script decode(ByteBuf buf) {
             int length = buf.readInt();
@@ -83,8 +82,8 @@ public record Script(
         }
     };
 
-    public static final PacketCodec<ByteBuf, Optional<Script>> OPTIONAL_PACKET_CODEC =
-            PACKET_CODEC.collect(PacketCodecs::optional);
+    public static final StreamCodec<ByteBuf, Optional<Script>> OPTIONAL_PACKET_CODEC =
+            PACKET_CODEC.apply(ByteBufCodecs::optional);
 
     /**
      * Compress a string using GZIP.

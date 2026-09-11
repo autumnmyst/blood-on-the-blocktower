@@ -6,13 +6,12 @@ import com.autumnwind.botb.networking.WhisperEffectS2CPayload;
 import com.autumnwind.botb.sound.WhisperSoundInstance;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.UUID;
  * and gets vanilla's existing particle pipeline for free.
  */
 public final class WhisperEffectManager {
-    private static final Identifier WHISPER_SOUND_ID = Identifier.of("blood-on-the-blocktower", "whisper");
+    private static final ResourceLocation WHISPER_SOUND_ID = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "whisper");
 
     /** Effect-level lifetime cap (10 s). Safety net so effects can't accumulate forever. */
     private static final int MAX_EFFECT_TICKS = 200;
@@ -62,11 +61,11 @@ public final class WhisperEffectManager {
      * client as audio-eligible, and visuals queue up an Effect for the world render pass.
      */
     public static void onEffect(WhisperEffectS2CPayload payload) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null) return;
 
-        AbstractClientPlayerEntity sender = lookupPlayer(client, payload.senderUuid());
-        AbstractClientPlayerEntity target = lookupPlayer(client, payload.targetUuid());
+        AbstractClientPlayer sender = lookupPlayer(client, payload.senderUuid());
+        AbstractClientPlayer target = lookupPlayer(client, payload.targetUuid());
         WhisperSettings.VisualMode visualMode = payload.visual();
 
         BloodOnTheBlocktower.LOGGER.debug("Whisper effect received: visual={} audio={} sender={} target={} senderLoaded={} targetLoaded={}",
@@ -84,23 +83,23 @@ public final class WhisperEffectManager {
             ACTIVE.add(new Effect(
                     payload.senderUuid(),
                     payload.targetUuid(),
-                    client.world.getTime()
+                    client.level.getGameTime()
             ));
         }
     }
 
-    private static AbstractClientPlayerEntity lookupPlayer(MinecraftClient client, UUID uuid) {
-        if (client.world == null) return null;
-        for (AbstractClientPlayerEntity p : client.world.getPlayers()) {
-            if (p.getUuid().equals(uuid)) return p;
+    private static AbstractClientPlayer lookupPlayer(Minecraft client, UUID uuid) {
+        if (client.level == null) return null;
+        for (AbstractClientPlayer p : client.level.players()) {
+            if (p.getUUID().equals(uuid)) return p;
         }
         return null;
     }
 
-    private static void playWhisperSound(MinecraftClient client,
-                                          AbstractClientPlayerEntity sender,
+    private static void playWhisperSound(Minecraft client,
+                                          AbstractClientPlayer sender,
                                           float pitch) {
-        SoundEvent event = SoundEvent.of(WHISPER_SOUND_ID);
+        SoundEvent event = SoundEvent.createVariableRangeEvent(WHISPER_SOUND_ID);
         WhisperSoundInstance inst = new WhisperSoundInstance(
                 event, WHISPER_BASE_VOLUME, pitch, sender);
         client.getSoundManager().play(inst);
@@ -108,26 +107,26 @@ public final class WhisperEffectManager {
 
     private static void render(WorldRenderContext ctx) {
         if (ACTIVE.isEmpty()) return;
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null) return;
 
-        float tickDelta = ctx.tickCounter().getTickDelta(true);
-        long worldTick = client.world.getTime();
+        float tickDelta = ctx.tickCounter().getGameTimeDeltaPartialTick(true);
+        long worldTick = client.level.getGameTime();
 
         Iterator<Effect> it = ACTIVE.iterator();
         while (it.hasNext()) {
             Effect e = it.next();
             long ageTicks = worldTick - e.startTick;
 
-            AbstractClientPlayerEntity sender = lookupPlayer(client, e.senderUuid);
-            AbstractClientPlayerEntity target = lookupPlayer(client, e.targetUuid);
+            AbstractClientPlayer sender = lookupPlayer(client, e.senderUuid);
+            AbstractClientPlayer target = lookupPlayer(client, e.targetUuid);
             if (sender == null || target == null) {
                 it.remove();
                 continue;
             }
 
-            Vec3d senderHead = headPos(sender, tickDelta);
-            Vec3d targetHead = headPos(target, tickDelta);
+            Vec3 senderHead = headPos(sender, tickDelta);
+            Vec3 targetHead = headPos(target, tickDelta);
 
             // One physics step per game tick, gated so multiple render frames within
             // the same tick don't double-step. Emission progress and ENCHANT spawns
@@ -146,9 +145,9 @@ public final class WhisperEffectManager {
         }
     }
 
-    private static Vec3d headPos(AbstractClientPlayerEntity p, float tickDelta) {
-        Vec3d lerped = p.getLerpedPos(tickDelta);
-        return new Vec3d(lerped.x, lerped.y + p.getStandingEyeHeight(), lerped.z);
+    private static Vec3 headPos(AbstractClientPlayer p, float tickDelta) {
+        Vec3 lerped = p.getPosition(tickDelta);
+        return new Vec3(lerped.x, lerped.y + p.getEyeHeight(), lerped.z);
     }
 
     /**
@@ -156,10 +155,10 @@ public final class WhisperEffectManager {
      * for all live particles, and spawn a vanilla ENCHANT at each particle's current
      * position to render the rune visual.
      */
-    private static void stepSimulation(MinecraftClient client, Effect e,
-                                         Vec3d senderHead, Vec3d targetHead,
+    private static void stepSimulation(Minecraft client, Effect e,
+                                         Vec3 senderHead, Vec3 targetHead,
                                          long ageTicks) {
-        if (client.world == null) return;
+        if (client.level == null) return;
 
         // Emission is linear across the emission window. Slight rounding-up so all
         // particles get emitted by the end of the window even if the count doesn't
@@ -186,7 +185,7 @@ public final class WhisperEffectManager {
             double dx = (RNG.nextDouble() - 0.5) * 0.2;
             double dy = (RNG.nextDouble() - 0.5) * 0.2;
             double dz = (RNG.nextDouble() - 0.5) * 0.2;
-            client.world.addParticle(
+            client.level.addParticle(
                     ParticleTypes.ENCHANT,
                     p.x, p.y, p.z,
                     dx, dy, dz
@@ -199,18 +198,18 @@ public final class WhisperEffectManager {
      * sampled uniformly within a {@link #CONE_HALF_ANGLE} cone around the
      * sender→receiver line. Speed is randomized so particles don't move in lockstep.
      */
-    private static WhisperParticle emitParticle(Vec3d senderHead, Vec3d targetHead) {
-        Vec3d toTarget = targetHead.subtract(senderHead);
+    private static WhisperParticle emitParticle(Vec3 senderHead, Vec3 targetHead) {
+        Vec3 toTarget = targetHead.subtract(senderHead);
         double dist = toTarget.length();
-        Vec3d toTargetN = dist > 1e-6 ? toTarget.multiply(1.0 / dist) : new Vec3d(0, 1, 0);
+        Vec3 toTargetN = dist > 1e-6 ? toTarget.scale(1.0 / dist) : new Vec3(0, 1, 0);
 
-        Vec3d dir = randomConeDirection(toTargetN, CONE_HALF_ANGLE);
+        Vec3 dir = randomConeDirection(toTargetN, CONE_HALF_ANGLE);
         double speed = 0.05 + RNG.nextDouble() * 0.10; // 0.05–0.15 blocks/tick
-        Vec3d vel = dir.multiply(speed);
+        Vec3 vel = dir.scale(speed);
 
         // Per-particle target jitter so they don't all converge to one exact point.
         double jitter = 0.4;
-        Vec3d targetOffset = new Vec3d(
+        Vec3 targetOffset = new Vec3(
                 (RNG.nextDouble() - 0.5) * 2 * jitter,
                 (RNG.nextDouble() - 0.5) * 2 * jitter,
                 (RNG.nextDouble() - 0.5) * 2 * jitter
@@ -224,19 +223,19 @@ public final class WhisperEffectManager {
      * around {@code axis}. Standard spherical-coordinates trick: pick (azimuth ∈ [0, 2π],
      * zenith ∈ [0, halfAngle]) in the cone's local frame, then convert back to world.
      */
-    private static Vec3d randomConeDirection(Vec3d axis, double halfAngle) {
-        Vec3d up = Math.abs(axis.y) > 0.95 ? new Vec3d(1, 0, 0) : new Vec3d(0, 1, 0);
-        Vec3d right = axis.crossProduct(up).normalize();
-        Vec3d localUp = right.crossProduct(axis).normalize();
+    private static Vec3 randomConeDirection(Vec3 axis, double halfAngle) {
+        Vec3 up = Math.abs(axis.y) > 0.95 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+        Vec3 right = axis.cross(up).normalize();
+        Vec3 localUp = right.cross(axis).normalize();
 
         double azimuth = RNG.nextDouble() * 2 * Math.PI;
         double zenith = RNG.nextDouble() * halfAngle;
         double cz = Math.cos(zenith);
         double sz = Math.sin(zenith);
 
-        return axis.multiply(cz)
-                .add(right.multiply(sz * Math.cos(azimuth)))
-                .add(localUp.multiply(sz * Math.sin(azimuth)));
+        return axis.scale(cz)
+                .add(right.scale(sz * Math.cos(azimuth)))
+                .add(localUp.scale(sz * Math.sin(azimuth)));
     }
 
     /** Per-effect state: sender/receiver, particles, and emission progress. */
@@ -275,10 +274,10 @@ public final class WhisperEffectManager {
 
         double x, y, z;
         double vx, vy, vz;
-        final Vec3d targetOffset;
+        final Vec3 targetOffset;
         int age = 0;
 
-        WhisperParticle(double x, double y, double z, Vec3d initialVelocity, Vec3d targetOffset) {
+        WhisperParticle(double x, double y, double z, Vec3 initialVelocity, Vec3 targetOffset) {
             this.x = x;
             this.y = y;
             this.z = z;
@@ -289,7 +288,7 @@ public final class WhisperEffectManager {
         }
 
         /** Advance one tick. Returns true while the particle is alive. */
-        boolean tick(Vec3d currentTargetHead) {
+        boolean tick(Vec3 currentTargetHead) {
             double tx = currentTargetHead.x + targetOffset.x;
             double ty = currentTargetHead.y + targetOffset.y;
             double tz = currentTargetHead.z + targetOffset.z;

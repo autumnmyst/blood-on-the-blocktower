@@ -6,9 +6,9 @@ import com.autumnwind.botb.states.ServerState;
 import java.util.*;
 import java.util.stream.Collectors;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 /** Server-bound packet handlers: Nominations, votes, executions, and exiles. */
 final class DaytimeHandlers {
@@ -18,7 +18,7 @@ final class DaytimeHandlers {
     static void register() {
         // Open Nominations
         ModPackets.registerGuarded(OpenNominationsC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 // Get all alive players
                 Map<UUID, Boolean> deathStatus = ServerState.PLAYER_DEATH_STATUS;
                 Set<UUID> alivePlayers = ServerState.PLAYER_SEAT_NUMBERS.keySet().stream()
@@ -68,15 +68,15 @@ final class DaytimeHandlers {
                 ModPackets.syncBansheeAbility(context.server(), payload.bansheeHasAbilityPlayers(), deadPlayers);
 
                 // Set in-game time to evening when nominations open
-                context.server().getOverworld().setTimeOfDay(ServerConfig.TIME_EVENING);
+                context.server().overworld().setDayTime(ServerConfig.TIME_EVENING);
 
                 // Broadcast state
                 StateBroadcaster.broadcastDaytimeState(context.server());
 
                 // Send chat message to all players
-                Text message = Text.translatable("message.blood-on-the-blocktower.daytime.nominations_open").formatted(Formatting.YELLOW);
-                for (ServerPlayerEntity player : context.server().getPlayerManager().getPlayerList()) {
-                    player.sendMessage(message, false);
+                Component message = Component.translatable("message.blood-on-the-blocktower.daytime.nominations_open").withStyle(ChatFormatting.YELLOW);
+                for (ServerPlayer player : context.server().getPlayerList().getPlayers()) {
+                    player.displayClientMessage(message, false);
 
                     // Play call back sound
                     ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.CALL_BACK));
@@ -86,7 +86,7 @@ final class DaytimeHandlers {
 
         // Nominate Player
         ModPackets.registerGuarded(NominatePlayerC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 UUID nominator = payload.nominator();
                 UUID nominee = payload.nominee();
                 boolean override = payload.override();
@@ -133,7 +133,7 @@ final class DaytimeHandlers {
 
         // Run Vote
         ModPackets.registerGuarded(RunVoteC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 // Get dead players
                 Map<UUID, Boolean> deathStatus = ServerState.PLAYER_DEATH_STATUS;
                 Set<UUID> deadPlayers = ServerState.deadPlayers();
@@ -174,7 +174,7 @@ final class DaytimeHandlers {
 
         // Reset Vote
         ModPackets.registerGuarded(ResetVoteC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 // Reset vote
                 VotingManager.resetVote(context.server());
 
@@ -185,7 +185,7 @@ final class DaytimeHandlers {
 
         // Hard Reset Vote
         ModPackets.registerGuarded(HardResetVoteC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 // Remove glowing from old MFE if any
                 UUID oldMFE = DaytimeState.getMarkedForExecution();
                 if (oldMFE != null) {
@@ -217,7 +217,7 @@ final class DaytimeHandlers {
 
         // Execute Player
         ModPackets.registerGuarded(ExecutePlayerC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 UUID player = payload.player();
                 boolean forced = payload.forced();
                 boolean butcherAliveWithAbility = payload.butcherAliveWithAbility();
@@ -241,7 +241,7 @@ final class DaytimeHandlers {
 
         // Execute Player (Failed - no death)
         ModPackets.registerGuarded(ExecutePlayerFailC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 UUID player = payload.player();
                 boolean forced = payload.forced();
                 boolean butcherAliveWithAbility = payload.butcherAliveWithAbility();
@@ -267,7 +267,7 @@ final class DaytimeHandlers {
 
         // Call for Exile (traveler exile system)
         ModPackets.registerGuarded(CallForExileC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 UUID caller = payload.caller();
                 UUID traveler = payload.traveler();
                 boolean override = payload.override();
@@ -291,7 +291,7 @@ final class DaytimeHandlers {
 
         // Run Exile Support
         ModPackets.registerGuarded(RunExileSupportC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 // Get dead players
                 Map<UUID, Boolean> deathStatus = ServerState.PLAYER_DEATH_STATUS;
                 Set<UUID> deadPlayers = ServerState.deadPlayers();
@@ -306,7 +306,7 @@ final class DaytimeHandlers {
 
         // Reset Exile
         ModPackets.registerGuarded(ResetExileC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 // Check if exile support is in progress
                 if (DaytimeState.isExileSupportInProgress()) {
                     // Get dead players for restoring indicators

@@ -17,7 +17,7 @@ final class WhisperReceivers {
         ClientPlayNetworking.registerGlobalReceiver(SyncWhisperSettingsS2CPayload.ID, (payload, context) -> {
             ClientWhisperSettings.current = payload.settings();
             context.client().execute(() -> {
-                if (context.client().currentScreen instanceof WhisperSettingsScreen ws) {
+                if (context.client().screen instanceof WhisperSettingsScreen ws) {
                     ws.onSettingsSync(payload.settings());
                 }
             });

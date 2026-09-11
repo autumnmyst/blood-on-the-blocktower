@@ -3,18 +3,6 @@ package com.autumnwind.botb.gui;
 import com.autumnwind.botb.event.KeyInputHandler;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -22,6 +10,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 import java.util.Locale;
 
 public class RoleCatalogScreen extends Screen {
@@ -47,15 +47,15 @@ public class RoleCatalogScreen extends Screen {
             .toList();
 
     private List<Role> filteredRoles;
-    private TextFieldWidget searchField;
+    private EditBox searchField;
     private RoleCatalogListWidget roleListWidget;
-    private ButtonWidget toggleButton;
+    private Button toggleButton;
 
     /** Saved scroll amounts for each view */
     private double savedMainScrollAmount = 0.0;
     private double savedExtraScrollAmount = 0.0;
 
-    public RoleCatalogScreen(Text title) {
+    public RoleCatalogScreen(Component title) {
         super(title);
         this.filteredRoles = new ArrayList<>(MAIN_ROLES);
     }
@@ -67,36 +67,36 @@ public class RoleCatalogScreen extends Screen {
         int gap = 5;
 
         // Search field - shifted left to make room for toggle button
-        this.searchField = new TextFieldWidget(this.textRenderer, this.width / 2 - searchWidth / 2 - toggleWidth / 2 - gap, 20, searchWidth, 20, Text.empty());
-        this.searchField.setChangedListener(this::filterRoles);
-        this.addDrawableChild(this.searchField);
+        this.searchField = new EditBox(this.font, this.width / 2 - searchWidth / 2 - toggleWidth / 2 - gap, 20, searchWidth, 20, Component.empty());
+        this.searchField.setResponder(this::filterRoles);
+        this.addRenderableWidget(this.searchField);
 
         // Toggle button next to search field
-        this.toggleButton = ButtonWidget.builder(getToggleButtonText(), this::onTogglePressed)
-                .dimensions(this.width / 2 + searchWidth / 2 - toggleWidth / 2 + gap, 20, toggleWidth, 20)
+        this.toggleButton = Button.builder(getToggleButtonText(), this::onTogglePressed)
+                .bounds(this.width / 2 + searchWidth / 2 - toggleWidth / 2 + gap, 20, toggleWidth, 20)
                 .build();
-        this.addDrawableChild(this.toggleButton);
+        this.addRenderableWidget(this.toggleButton);
 
         int listTopY = 50;
         int footerHeight = 10;
-        this.roleListWidget = new RoleCatalogListWidget(this.client, this.width, this.height - listTopY - footerHeight, listTopY);
+        this.roleListWidget = new RoleCatalogListWidget(this.minecraft, this.width, this.height - listTopY - footerHeight, listTopY);
 
         // Apply search filter and populate
-        filterRoles(this.searchField.getText());
+        filterRoles(this.searchField.getValue());
 
         // Restore scroll position for current view
         double savedScroll = showingExtraRoles ? savedExtraScrollAmount : savedMainScrollAmount;
         this.roleListWidget.setScrollAmount(savedScroll);
-        this.addDrawableChild(this.roleListWidget);
+        this.addRenderableWidget(this.roleListWidget);
     }
 
-    private Text getToggleButtonText() {
-        return Text.translatable(showingExtraRoles
+    private Component getToggleButtonText() {
+        return Component.translatable(showingExtraRoles
                 ? "gui.blood-on-the-blocktower.role_catalog.main"
                 : "gui.blood-on-the-blocktower.role_catalog.extra");
     }
 
-    private void onTogglePressed(ButtonWidget button) {
+    private void onTogglePressed(Button button) {
         // Save current scroll position
         if (showingExtraRoles) {
             savedExtraScrollAmount = this.roleListWidget.getScrollAmount();
@@ -111,7 +111,7 @@ public class RoleCatalogScreen extends Screen {
         this.toggleButton.setMessage(getToggleButtonText());
 
         // Re-filter with current search text
-        filterRoles(this.searchField.getText());
+        filterRoles(this.searchField.getValue());
 
         // Restore scroll position for new view
         double savedScroll = showingExtraRoles ? savedExtraScrollAmount : savedMainScrollAmount;
@@ -135,25 +135,25 @@ public class RoleCatalogScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 8, 0xFFFFFF);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 8, 0xFFFFFF);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openCatalogKey.matchesKey(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openCatalogKey.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.searchField.isFocused()) {
-            this.close();
+            this.onClose();
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    private class RoleCatalogListWidget extends ElementListWidget<RoleCatalogListWidget.RoleCatalogEntry> {
+    private class RoleCatalogListWidget extends ContainerObjectSelectionList<RoleCatalogListWidget.RoleCatalogEntry> {
 
-        public RoleCatalogListWidget(MinecraftClient client, int width, int height, int y) {
+        public RoleCatalogListWidget(Minecraft client, int width, int height, int y) {
             // MODIFIED: Decreased height of each row.
             super(client, width, height, y, 70);
         }
@@ -171,9 +171,9 @@ public class RoleCatalogScreen extends Screen {
 
         // MODIFIED: Adjusted row width to match new item width.
         @Override public int getRowWidth() { return 75 * 5; }
-        @Override protected int getScrollbarX() { return super.getScrollbarX() + 30; }
+        @Override protected int getScrollbarPosition() { return super.getScrollbarPosition() + 30; }
 
-        public class RoleCatalogEntry extends ElementListWidget.Entry<RoleCatalogEntry> {
+        public class RoleCatalogEntry extends ContainerObjectSelectionList.Entry<RoleCatalogEntry> {
             private final List<Role> rolesInRow;
             private int entryY;
 
@@ -182,7 +182,7 @@ public class RoleCatalogScreen extends Screen {
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 this.entryY = y;
                 // MODIFIED: Widened item width slightly to prevent text cutoff.
                 int itemWidth = 75;
@@ -201,9 +201,9 @@ public class RoleCatalogScreen extends Screen {
                     int borderColor = role.getType().getColor();
 
                     // MODIFIED: Drawing a smaller 40x40 border.
-                    context.drawBorder(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
                     // MODIFIED: Drawing a smaller 38x38 texture to fit inside.
-                    context.drawTexture(role.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                    context.blit(role.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
 
                     int textCenterX = borderX + (borderWidth / 2);
                     String roleNameString = role.getDisplayName();
@@ -211,29 +211,29 @@ public class RoleCatalogScreen extends Screen {
                     // Use wider margin for single words, narrower for multi-word names
                     int wrapWidth = roleNameString.contains(" ") ? itemWidth - 4 : itemWidth + 1;
 
-                    List<Text> textLines = client.textRenderer.getTextHandler()
-                            .wrapLines(roleNameString, wrapWidth, Style.EMPTY)
+                    List<Component> textLines = minecraft.font.getSplitter()
+                            .splitLines(roleNameString, wrapWidth, Style.EMPTY)
                             .stream()
-                            .map(line -> Text.literal(line.getString()))
+                            .map(line -> Component.literal(line.getString()))
                             .collect(Collectors.toList());
 
                     // MODIFIED: Adjusted Y position to be closer to the smaller icon.
                     int startY = y + 50;
 
                     for (int j = 0; j < textLines.size(); j++) {
-                        Text line = textLines.get(j);
-                        int currentLineY = startY + (j * client.textRenderer.fontHeight);
-                        context.drawCenteredTextWithShadow(client.textRenderer, line, textCenterX, currentLineY, 0xFFFFFF);
+                        Component line = textLines.get(j);
+                        int currentLineY = startY + (j * minecraft.font.lineHeight);
+                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
                     }
 
                     if (isMouseOverRole) {
                         int tooltipMaxWidth = 170;
-                        List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                                .wrapLines(role.getDescription(), tooltipMaxWidth, Style.EMPTY);
-                        List<Text> tooltipTextLines = wrappedLines.stream()
-                                .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
+                        List<FormattedText> wrappedLines = minecraft.font.getSplitter()
+                                .splitLines(role.getDescription(), tooltipMaxWidth, Style.EMPTY);
+                        List<Component> tooltipTextLines = wrappedLines.stream()
+                                .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.drawTooltip(client.textRenderer, tooltipTextLines, mouseX, mouseY);
+                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
@@ -263,7 +263,7 @@ public class RoleCatalogScreen extends Screen {
                             List<Role> fullCatalogList = RoleCatalogScreen.this.filteredRoles;
 
                             // Call the new constructor with the full list
-                            client.setScreen(new CharacterDetailsScreen(selectedRole, RoleCatalogScreen.this, fullCatalogList));
+                            minecraft.setScreen(new CharacterDetailsScreen(selectedRole, RoleCatalogScreen.this, fullCatalogList));
 
                             return true;
                         }
@@ -272,8 +272,8 @@ public class RoleCatalogScreen extends Screen {
                 return false;
             }
 
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
     }
 }

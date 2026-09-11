@@ -4,13 +4,12 @@ import com.autumnwind.botb.daytime.*;
 import com.autumnwind.botb.networking.*;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.RoleType;
-import com.autumnwind.botb.world.TeamManager;
 import java.util.*;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.Team;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 
 /** The scoreboard teams used for the end-of-game reveal. */
 public final class TeamManager {
@@ -40,10 +39,10 @@ public final class TeamManager {
             REVEAL_TEAM_TOWNSFOLK, REVEAL_TEAM_OUTSIDER, REVEAL_TEAM_MINION, REVEAL_TEAM_DEMON
     };
 
-    public static void ensureRevealTeam(Scoreboard sb, String name, Formatting color) {
-        Team t = sb.getTeam(name);
+    public static void ensureRevealTeam(Scoreboard sb, String name, ChatFormatting color) {
+        PlayerTeam t = sb.getPlayerTeam(name);
         if (t == null) {
-            t = sb.addTeam(name);
+            t = sb.addPlayerTeam(name);
         }
         t.setColor(color);
     }
@@ -80,19 +79,19 @@ public final class TeamManager {
 
     public static void assignRevealTeams(MinecraftServer server, Map<UUID, PendingRoleAssignment> roles) {
         Scoreboard scoreboard = server.getScoreboard();
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_TOWNSFOLK, Formatting.BLUE);
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_OUTSIDER,  Formatting.AQUA);
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_MINION,    Formatting.RED);
-        ensureRevealTeam(scoreboard, REVEAL_TEAM_DEMON,     Formatting.DARK_RED);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_TOWNSFOLK, ChatFormatting.BLUE);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_OUTSIDER,  ChatFormatting.AQUA);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_MINION,    ChatFormatting.RED);
+        ensureRevealTeam(scoreboard, REVEAL_TEAM_DEMON,     ChatFormatting.DARK_RED);
 
         for (Map.Entry<UUID, PendingRoleAssignment> entry : roles.entrySet()) {
-            ServerPlayerEntity player = server.getPlayerManager().getPlayer(entry.getKey());
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
             if (player == null) continue;
             String playerName = player.getGameProfile().getName();
-            Team target = scoreboard.getTeam(computeRevealTeamName(entry.getValue()));
+            PlayerTeam target = scoreboard.getPlayerTeam(computeRevealTeamName(entry.getValue()));
             if (target == null) continue;
-            if (scoreboard.getScoreHolderTeam(playerName) == target) continue;
-            scoreboard.addScoreHolderToTeam(playerName, target);
+            if (scoreboard.getPlayersTeam(playerName) == target) continue;
+            scoreboard.addPlayerToTeam(playerName, target);
         }
     }
 }

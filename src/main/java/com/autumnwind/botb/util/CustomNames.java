@@ -1,11 +1,10 @@
 package com.autumnwind.botb.util;
 
-import net.minecraft.text.Text;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
 
 /**
  * Display names players have chosen with /botb setName, keyed by UUID.
@@ -27,9 +26,9 @@ public final class CustomNames {
     }
 
     /** The custom name as text, or null. Used by the name mixins. */
-    public static Text text(UUID uuid) {
+    public static Component text(UUID uuid) {
         String name = NAMES.get(uuid);
-        return name != null ? Text.literal(name) : null;
+        return name != null ? Component.literal(name) : null;
     }
 
     /** Sets or, for a null or blank name, clears a player's custom name. */

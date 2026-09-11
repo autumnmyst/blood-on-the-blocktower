@@ -3,8 +3,8 @@ package com.autumnwind.botb.networking;
 import com.autumnwind.botb.config.GrimoirePersistence;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.util.Script;
+import net.minecraft.network.chat.Component;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.text.Text;
 
 /** Client-bound packet receivers for the script the storyteller sent. */
 final class ScriptReceivers {
@@ -18,7 +18,7 @@ final class ScriptReceivers {
             if (ClientState.currentScript == null || !ClientState.currentScript.equals(payload.script())) {
                 ClientState.currentScript = payload.script();
                 // Only notify the player if it's a new script.
-                context.client().player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.script_received", payload.script().name()), false);
+                context.client().player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.client.script_received", payload.script().name()), false);
                 // Clear crossed out roles only when a NEW script is received
                 ClientState.crossedOutRoles.clear();
                 // Initialize custom role support

@@ -2,14 +2,13 @@ package com.autumnwind.botb.hud;
 
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.util.PlayerListUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
 import java.util.UUID;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +23,7 @@ public class ExileHUD {
     /**
      * Renders the exile HUD if there's an active exile call or support vote in progress.
      */
-    public static void render(DrawContext context, MinecraftClient client) {
+    public static void render(GuiGraphics context, Minecraft client) {
         // Show if there's an exile target
         UUID exileTargetUuid = ClientState.currentExileTarget;
         if (exileTargetUuid == null) {
@@ -36,10 +35,10 @@ public class ExileHUD {
 
         // Get caller player (supports distant players)
         UUID callerUuid = ClientState.currentExileCaller;
-        String callerName = callerUuid != null ? getPlayerName(client, callerUuid) : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String callerName = callerUuid != null ? getPlayerName(client, callerUuid) : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Check if the current player is the exile target
-        boolean isTarget = client.player.getUuid().equals(exileTargetUuid);
+        boolean isTarget = client.player.getUUID().equals(exileTargetUuid);
 
         // Calculate total player count for support threshold
         int totalPlayers = ClientState.playerSeatNumbers.size();
@@ -47,17 +46,17 @@ public class ExileHUD {
 
         // All three lines are built before anything is drawn, so the box can be sized to
         // whichever is widest, since the title carries two player names.
-        int screenWidth = context.getScaledWindowWidth();
+        int screenWidth = context.guiWidth();
 
         // Line 1: Title - "X calls for exile of Y" or "Exile support for: Y"
-        MutableText titleText;
+        MutableComponent titleText;
         if (ClientState.exileSupportInProgress) {
             if (isTarget) {
-                titleText = Text.translatable("hud.blood-on-the-blocktower.exile.support_for").formatted(Formatting.LIGHT_PURPLE)
-                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Component.translatable("hud.blood-on-the-blocktower.exile.support_for").withStyle(ChatFormatting.LIGHT_PURPLE)
+                        .append(Component.translatable("hud.blood-on-the-blocktower.common.you").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             } else {
-                titleText = Text.translatable("hud.blood-on-the-blocktower.exile.support_for").formatted(Formatting.LIGHT_PURPLE)
-                        .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)).formatted(Formatting.BOLD));
+                titleText = Component.translatable("hud.blood-on-the-blocktower.exile.support_for").withStyle(ChatFormatting.LIGHT_PURPLE)
+                        .append(Component.literal(targetName).withStyle(style -> style.withColor(0x9932CC)).withStyle(ChatFormatting.BOLD));
             }
         } else {
             // Check if caller is a traveler (only travelers are in the canBeExiled map)
@@ -65,80 +64,80 @@ public class ExileHUD {
             int callerColor = isCallerTraveler ? 0x9932CC : 0xFFAA00; // Purple for travelers, yellow for non-travelers
 
             if (isTarget) {
-                titleText = Text.literal(callerName).styled(style -> style.withColor(callerColor))
-                        .append(Text.translatable("hud.blood-on-the-blocktower.exile.calls_for_exile_of").formatted(Formatting.WHITE))
-                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Component.literal(callerName).withStyle(style -> style.withColor(callerColor))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.exile.calls_for_exile_of").withStyle(ChatFormatting.WHITE))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.common.you").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             } else {
                 // Target is always a traveler (purple)
-                titleText = Text.literal(callerName).styled(style -> style.withColor(callerColor))
-                        .append(Text.translatable("hud.blood-on-the-blocktower.exile.calls_for_exile_of").formatted(Formatting.WHITE))
-                        .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)));
+                titleText = Component.literal(callerName).withStyle(style -> style.withColor(callerColor))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.exile.calls_for_exile_of").withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(targetName).withStyle(style -> style.withColor(0x9932CC)));
             }
         }
 
         // Line 2: Support requirements (show current/required during support vote)
-        MutableText requirementsText;
+        MutableComponent requirementsText;
         if (ClientState.exileSupportInProgress) {
             // Show as fraction during support vote
             int currentCount = ClientState.exileSupportCount;
             boolean atRequired = currentCount >= supportsRequired;
-            MutableText fraction = Text.literal(currentCount + "/" + supportsRequired);
+            MutableComponent fraction = Component.literal(currentCount + "/" + supportsRequired);
             if (atRequired) {
-                fraction = fraction.formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD);
+                fraction = fraction.withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
             } else {
-                fraction = fraction.formatted(Formatting.WHITE, Formatting.BOLD);
+                fraction = fraction.withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD);
             }
-            requirementsText = Text.translatable("hud.blood-on-the-blocktower.exile.support").append(fraction);
+            requirementsText = Component.translatable("hud.blood-on-the-blocktower.exile.support").append(fraction);
         } else {
             // Show requirement before support vote
-            requirementsText = Text.translatable("hud.blood-on-the-blocktower.exile.support_required")
-                    .append(Text.literal(String.valueOf(supportsRequired)).formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD));
+            requirementsText = Component.translatable("hud.blood-on-the-blocktower.exile.support_required")
+                    .append(Component.literal(String.valueOf(supportsRequired)).withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
         }
 
         // Line 3: Vote position or status
-        MutableText line3Text;
+        MutableComponent line3Text;
         if (ClientState.exileSupportInProgress) {
             // Show countdown or status during support vote
-            UUID playerUuid = client.player.getUuid();
+            UUID playerUuid = client.player.getUUID();
             // Use exile-specific lever states
             Boolean leverState = ClientState.exileLeverStates.get(playerUuid);
 
             // Use exile-specific countdown
             if (ClientState.exileSupportLockInTime > 0) {
-                line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.locks_in")
-                        .append(Text.literal(ClientState.exileSupportLockInTime + "s").formatted(Formatting.AQUA));
+                line3Text = Component.translatable("hud.blood-on-the-blocktower.exile.locks_in")
+                        .append(Component.literal(ClientState.exileSupportLockInTime + "s").withStyle(ChatFormatting.AQUA));
 
                 if (leverState != null) {
-                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
-                    Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
-                    line3Text.append(Text.literal(" - "))
-                            .append(voteStatus.copy().formatted(voteColor, Formatting.BOLD));
+                    Component voteStatus = leverState ? Component.translatable("hud.blood-on-the-blocktower.common.yes") : Component.translatable("hud.blood-on-the-blocktower.common.no");
+                    ChatFormatting voteColor = leverState ? ChatFormatting.GREEN : ChatFormatting.RED;
+                    line3Text.append(Component.literal(" - "))
+                            .append(voteStatus.copy().withStyle(voteColor, ChatFormatting.BOLD));
                 }
             } else {
                 if (leverState != null) {
-                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
-                    Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
-                    line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.you_supported")
-                            .append(voteStatus.copy().formatted(voteColor));
+                    Component voteStatus = leverState ? Component.translatable("hud.blood-on-the-blocktower.common.yes") : Component.translatable("hud.blood-on-the-blocktower.common.no");
+                    ChatFormatting voteColor = leverState ? ChatFormatting.GREEN : ChatFormatting.RED;
+                    line3Text = Component.translatable("hud.blood-on-the-blocktower.exile.you_supported")
+                            .append(voteStatus.copy().withStyle(voteColor));
                 } else {
-                    boolean isOperator = client.player.hasPermissionLevel(2);
+                    boolean isOperator = client.player.hasPermissions(2);
                     if (isOperator) {
-                        line3Text = Text.literal(""); // Empty for storyteller
+                        line3Text = Component.literal(""); // Empty for storyteller
                     } else {
-                        line3Text = Text.translatable("hud.blood-on-the-blocktower.common.check_lever").formatted(Formatting.GRAY, Formatting.ITALIC);
+                        line3Text = Component.translatable("hud.blood-on-the-blocktower.common.check_lever").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
                     }
                 }
             }
         } else {
             // Before support vote: Show vote position
             if (isTarget) {
-                line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.you_support_last").formatted(Formatting.AQUA);
+                line3Text = Component.translatable("hud.blood-on-the-blocktower.exile.you_support_last").withStyle(ChatFormatting.AQUA);
             } else {
-                int position = calculateSupportPosition(client.player.getUuid(), exileTargetUuid);
+                int position = calculateSupportPosition(client.player.getUUID(), exileTargetUuid);
                 if (position == 0) {
-                    line3Text = Text.empty();
+                    line3Text = Component.empty();
                 } else {
-                    line3Text = Text.translatable("hud.blood-on-the-blocktower.exile.you_support", getOrdinalText(position)).formatted(Formatting.AQUA);
+                    line3Text = Component.translatable("hud.blood-on-the-blocktower.exile.you_support", getOrdinalText(position)).withStyle(ChatFormatting.AQUA);
                 }
             }
         }
@@ -192,26 +191,26 @@ public class ExileHUD {
     /**
      * Converts a number to its ordinal string representation (1st, 2nd, 3rd, etc.)
      */
-    private static Text getOrdinalText(int number) {
+    private static Component getOrdinalText(int number) {
         if (number % 100 >= 11 && number % 100 <= 13) {
-            return Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
+            return Component.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         }
 
         return switch (number % 10) {
-            case 1 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_1", number);
-            case 2 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_2", number);
-            case 3 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_3", number);
-            default -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
+            case 1 -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_1", number);
+            case 2 -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_2", number);
+            case 3 -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_3", number);
+            default -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         };
     }
 
     /**
      * Gets player name with fallback for distant players.
      */
-    private static String getPlayerName(MinecraftClient client, UUID playerUuid) {
-        AbstractClientPlayerEntity player = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(playerUuid);
+    private static String getPlayerName(Minecraft client, UUID playerUuid) {
+        AbstractClientPlayer player = (AbstractClientPlayer) client.level.getPlayerByUUID(playerUuid);
         if (player != null) return player.getName().getString();
         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, playerUuid);
-        return info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        return info != null ? info.name() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
     }
 }

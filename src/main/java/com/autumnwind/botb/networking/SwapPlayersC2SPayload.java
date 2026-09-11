@@ -1,14 +1,13 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client-to-Server payload for swapping two players' seats.
@@ -19,19 +18,19 @@ import java.util.UUID;
  * seats up there alone made every swap fail with "not seated" while the storyteller was
  * still arranging the table before the first send.
  */
-public record SwapPlayersC2SPayload(UUID player1, UUID player2, Map<UUID, Integer> seatNumbers) implements CustomPayload {
-    public static final CustomPayload.Id<SwapPlayersC2SPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "swap_players"));
+public record SwapPlayersC2SPayload(UUID player1, UUID player2, Map<UUID, Integer> seatNumbers) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<SwapPlayersC2SPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "swap_players"));
 
-    public static final PacketCodec<RegistryByteBuf, SwapPlayersC2SPayload> CODEC = PacketCodec.tuple(
-            Uuids.PACKET_CODEC, SwapPlayersC2SPayload::player1,
-            Uuids.PACKET_CODEC, SwapPlayersC2SPayload::player2,
+    public static final StreamCodec<RegistryFriendlyByteBuf, SwapPlayersC2SPayload> CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, SwapPlayersC2SPayload::player1,
+            UUIDUtil.STREAM_CODEC, SwapPlayersC2SPayload::player2,
             PayloadCodecs.SEAT_MAP_CODEC, SwapPlayersC2SPayload::seatNumbers,
             SwapPlayersC2SPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

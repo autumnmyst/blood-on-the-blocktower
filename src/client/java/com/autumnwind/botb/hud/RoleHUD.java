@@ -4,16 +4,15 @@ import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.timer.ClientTimerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.ColorHelper;
-
 import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
+import net.minecraft.util.FormattedCharSequence;
 import com.autumnwind.botb.event.KeyInputHandler;
 
 /**
@@ -31,7 +30,7 @@ public class RoleHUD {
      * @param drawContext The draw context
      * @param client The Minecraft client
      */
-    public static void render(DrawContext drawContext, MinecraftClient client) {
+    public static void render(GuiGraphics drawContext, Minecraft client) {
         if (client.player == null) return;
 
         // Get player count and role info
@@ -58,19 +57,19 @@ public class RoleHUD {
     /**
      * Renders the full HUD with detailed player counts and role box.
      */
-    private static void renderFullHUD(DrawContext drawContext, MinecraftClient client,
+    private static void renderFullHUD(GuiGraphics drawContext, Minecraft client,
                                        RoleCounts.RoleCountInfo counts, Role role, Boolean isGood,
                                        int playerCount, int travelerCount, int playerCountsHeight) {
         // 1. Render detailed player counts
-        Text countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, true);
+        Component countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, true);
         if (countText != null) {
-            int screenWidth = drawContext.getScaledWindowWidth();
-            drawContext.drawCenteredTextWithShadow(client.textRenderer, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
+            int screenWidth = drawContext.guiWidth();
+            drawContext.drawCenteredString(client.font, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
         }
 
         // 2. Render full role box OR night order instructions box
         // For operators with night info enabled and current visit, show instructions HUD instead
-        boolean isOperator = client.player.hasPermissionLevel(2);
+        boolean isOperator = client.player.hasPermissions(2);
         boolean isActuallyNight = ClientState.currentNight > ClientState.currentDay;
         boolean isOperatorWithVisits = isOperator &&
                 StorytellerState.sendTeleportInfo &&
@@ -94,7 +93,7 @@ public class RoleHUD {
         // Determine what to display
         if (showInstructionsHud) {
             // Storyteller instructions HUD - use visit state
-            Identifier displayIcon = StorytellerState.currentVisitIcon;
+            ResourceLocation displayIcon = StorytellerState.currentVisitIcon;
             String displayText = StorytellerState.currentVisitInstructions;
             boolean displayIsGoodVal = StorytellerState.currentVisitIsGood;
 
@@ -145,65 +144,65 @@ public class RoleHUD {
      * @param showExtraInfo If true, show extra info from NightOrderInfoGenerator (operators only)
      * @param override The alignment override (null for storyteller HUD)
      */
-    private static void renderRoleBox(DrawContext drawContext, MinecraftClient client,
-                                       Identifier icon, String displayName, RoleType roleType,
+    private static void renderRoleBox(GuiGraphics drawContext, Minecraft client,
+                                       ResourceLocation icon, String displayName, RoleType roleType,
                                        boolean isDefaultGood, boolean displayIsGood, String displayText,
                                        boolean showExtraInfo, AlignmentOverride override) {
         // Text Preparation
         // For storyteller instructions HUD, use the role/associated role text and player names
-        Text roleNameText;
-        MutableText roleTypeText;
+        Component roleNameText;
+        MutableComponent roleTypeText;
 
         if (showExtraInfo && StorytellerState.currentVisitRoleText != null) {
             // Show "ASSIGNED / ASSOCIATED (Drunk)" format for storyteller with proper colors
             roleNameText = StorytellerState.currentVisitRoleText;
             // Show player name(s) in yellow instead of role type (no italics)
             roleTypeText = StorytellerState.currentVisitPlayerNames != null
-                ? StorytellerState.currentVisitPlayerNames.copy() : Text.empty();
+                ? StorytellerState.currentVisitPlayerNames.copy() : Component.empty();
         } else {
             // Normal player HUD - show role name and type
-            roleNameText = Text.literal(displayName);
+            roleNameText = Component.literal(displayName);
             boolean isTraveler = roleType == RoleType.TRAVELER;
             boolean alignmentMismatched = displayIsGood != isDefaultGood;
 
             if (isTraveler) {
                 // Travelers show alignment indicator based on override:
                 // FORCE_GOOD -> (GOOD), FORCE_BAD -> (EVIL), DEFAULT -> (---)
-                roleTypeText = Text.literal(roleType.getDisplayName());
+                roleTypeText = Component.literal(roleType.getDisplayName());
                 if (override == AlignmentOverride.FORCE_GOOD) {
-                    roleTypeText.append(Text.translatable("hud.blood-on-the-blocktower.role.good").formatted(Formatting.BOLD, Formatting.BLUE));
+                    roleTypeText.append(Component.translatable("hud.blood-on-the-blocktower.role.good").withStyle(ChatFormatting.BOLD, ChatFormatting.BLUE));
                 } else if (override == AlignmentOverride.FORCE_BAD) {
-                    roleTypeText.append(Text.translatable("hud.blood-on-the-blocktower.role.evil").formatted(Formatting.BOLD, Formatting.RED));
+                    roleTypeText.append(Component.translatable("hud.blood-on-the-blocktower.role.evil").withStyle(ChatFormatting.BOLD, ChatFormatting.RED));
                 } else {
                     // Default alignment - show neutral indicator
-                    roleTypeText.append(Text.literal(" (---)").formatted(Formatting.ITALIC, Formatting.GRAY));
+                    roleTypeText.append(Component.literal(" (---)").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY));
                 }
             } else {
-                roleTypeText = Text.literal(roleType.getDisplayName());
+                roleTypeText = Component.literal(roleType.getDisplayName());
                 if (alignmentMismatched) {
-                    roleTypeText.append(Text.translatable(displayIsGood ? "hud.blood-on-the-blocktower.role.good" : "hud.blood-on-the-blocktower.role.evil").formatted(Formatting.BOLD));
+                    roleTypeText.append(Component.translatable(displayIsGood ? "hud.blood-on-the-blocktower.role.good" : "hud.blood-on-the-blocktower.role.evil").withStyle(ChatFormatting.BOLD));
                 }
             }
-            roleTypeText.formatted(Formatting.ITALIC);
+            roleTypeText.withStyle(ChatFormatting.ITALIC);
         }
 
-        MutableText descText = Text.literal(displayText);
+        MutableComponent descText = Component.literal(displayText);
         if (!showExtraInfo && ClientState.hintsEnabled) {
             String keyName = KeyInputHandler.openMyRoleDetailsKey
-                    .getBoundKeyLocalizedText().getString();
+                    .getTranslatedKeyMessage().getString();
             String hideKeyName = KeyInputHandler.toggleShowRole
-                    .getBoundKeyLocalizedText().getString();
-            descText.append(Text.literal("\n\n").append(Text.translatable("hud.blood-on-the-blocktower.role.hint_keys",
-                            Text.literal(keyName).formatted(Formatting.YELLOW),
-                            Text.literal(hideKeyName).formatted(Formatting.YELLOW))
-                    .formatted(Formatting.GRAY, Formatting.ITALIC)));
+                    .getTranslatedKeyMessage().getString();
+            descText.append(Component.literal("\n\n").append(Component.translatable("hud.blood-on-the-blocktower.role.hint_keys",
+                            Component.literal(keyName).withStyle(ChatFormatting.YELLOW),
+                            Component.literal(hideKeyName).withStyle(ChatFormatting.YELLOW))
+                    .withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC)));
         }
-        List<OrderedText> wrappedDesc = client.textRenderer.wrapLines(descText, 200);
+        List<FormattedCharSequence> wrappedDesc = client.font.split(descText, 200);
 
         // Extra info for storyteller only (from NightOrderInfoGenerator)
-        List<OrderedText> wrappedExtraInfo = List.of();
+        List<FormattedCharSequence> wrappedExtraInfo = List.of();
         if (showExtraInfo && StorytellerState.currentVisitExtraInfo != null) {
-            wrappedExtraInfo = client.textRenderer.wrapLines(StorytellerState.currentVisitExtraInfo, 200);
+            wrappedExtraInfo = client.font.split(StorytellerState.currentVisitExtraInfo, 200);
         }
         int extraInfoGap = wrappedExtraInfo.isEmpty() ? 0 : 4; // Gap before extra info
 
@@ -215,7 +214,7 @@ public class RoleHUD {
         // Layout Calculations
         int x_padding = 10, y_padding = 10, icon_size = 48, text_x_padding = 5;
         int text_x_start = x_padding + icon_size + text_x_padding;
-        int font_height = client.textRenderer.fontHeight;
+        int font_height = client.font.lineHeight;
         int text_lines = 1 + (hasRoleType ? 1 : 0) + wrappedDesc.size() + wrappedExtraInfo.size();
         int text_height = font_height * text_lines + 2 + extraInfoGap;
         int box_inner_height = Math.max(icon_size, text_height);
@@ -228,14 +227,14 @@ public class RoleHUD {
 
         // Rendering
         int alpha = 128;
-        int background_color = displayIsGood ? ColorHelper.Argb.getArgb(alpha, 135, 206, 235) : ColorHelper.Argb.getArgb(alpha, 240, 128, 128);
+        int background_color = displayIsGood ? FastColor.ARGB32.color(alpha, 135, 206, 235) : FastColor.ARGB32.color(alpha, 240, 128, 128);
         drawContext.fill(x, y, x + box_width, y + box_height, background_color);
 
         int icon_x = x + x_padding, icon_y = y + y_padding;
-        drawContext.drawTexture(icon, icon_x, icon_y, 0, 0, icon_size, icon_size, icon_size, icon_size);
-        drawContext.drawBorder(icon_x - 1, icon_y - 1, icon_size + 2, icon_size + 2, 0xFFFFFFFF);
+        drawContext.blit(icon, icon_x, icon_y, 0, 0, icon_size, icon_size, icon_size, icon_size);
+        drawContext.renderOutline(icon_x - 1, icon_y - 1, icon_size + 2, icon_size + 2, 0xFFFFFFFF);
 
-        int text_backdrop_color = ColorHelper.Argb.getArgb(191, 0, 0, 0);
+        int text_backdrop_color = FastColor.ARGB32.color(191, 0, 0, 0);
         drawContext.fill(text_area_x1, text_area_y1, text_area_x2, text_area_y2, text_backdrop_color);
 
         int text_start_x = icon_x + icon_size + text_x_padding;
@@ -259,26 +258,26 @@ public class RoleHUD {
             // No alignment override - use role's type color
             name_color = roleType.getColor() | 0xFF000000;
         }
-        drawContext.drawTextWithShadow(client.textRenderer, roleNameText, text_start_x, current_y, name_color);
+        drawContext.drawString(client.font, roleNameText, text_start_x, current_y, name_color);
         current_y += font_height;
 
         if (hasRoleType) {
-            drawContext.drawTextWithShadow(client.textRenderer, roleTypeText, text_start_x, current_y, 0xFFAAAAAA);
+            drawContext.drawString(client.font, roleTypeText, text_start_x, current_y, 0xFFAAAAAA);
             current_y += font_height + 2;
         } else {
             current_y += 2; // small gap before description, matching the spaced-out look
         }
 
-        for (OrderedText line : wrappedDesc) {
-            drawContext.drawText(client.textRenderer, line, text_start_x, current_y, 0xFFFFFFFF, false);
+        for (FormattedCharSequence line : wrappedDesc) {
+            drawContext.drawString(client.font, line, text_start_x, current_y, 0xFFFFFFFF, false);
             current_y += font_height;
         }
 
         // Render extra info if present (for storyteller HUD)
         if (!wrappedExtraInfo.isEmpty()) {
             current_y += extraInfoGap;
-            for (OrderedText line : wrappedExtraInfo) {
-                drawContext.drawText(client.textRenderer, line, text_start_x, current_y, 0xFFFFFFFF, false);
+            for (FormattedCharSequence line : wrappedExtraInfo) {
+                drawContext.drawString(client.font, line, text_start_x, current_y, 0xFFFFFFFF, false);
                 current_y += font_height;
             }
         }
@@ -287,24 +286,24 @@ public class RoleHUD {
     /**
      * Renders the minimal HUD with compact player counts and small role icon.
      */
-    private static void renderMinimalHUD(DrawContext drawContext, MinecraftClient client,
+    private static void renderMinimalHUD(GuiGraphics drawContext, Minecraft client,
                                           RoleCounts.RoleCountInfo counts, Role role, int travelerCount, int playerCountsHeight) {
         // 1. Render minimal player counts
         // Note: travelerCount is already available, but we need playerCount for the utility
         int playerCount = ClientState.activePlayerCount;
-        Text countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, false);
+        Component countText = PlayerCountsDisplay.buildPlayerCountsText(playerCount, travelerCount, counts, false);
         if (countText != null) {
-            int screenWidth = drawContext.getScaledWindowWidth();
-            drawContext.drawCenteredTextWithShadow(client.textRenderer, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
+            int screenWidth = drawContext.guiWidth();
+            drawContext.drawCenteredString(client.font, countText, screenWidth / 2, playerCountsHeight, 0xFFFFFF);
         }
 
         // 2. Render small role icon - either night order visit role or player's role
         // For operators with night info enabled, show the current visit icon instead
-        boolean isOperatorInNightMode = client.player.hasPermissionLevel(2) &&
+        boolean isOperatorInNightMode = client.player.hasPermissions(2) &&
                 StorytellerState.sendTeleportInfo &&
                 ClientState.isNightHudVisible;
 
-        Identifier iconToRender = null;
+        ResourceLocation iconToRender = null;
 
         if (isOperatorInNightMode && StorytellerState.currentVisitIcon != null) {
             // Storyteller visit icon (works for both official and custom roles)
@@ -323,7 +322,7 @@ public class RoleHUD {
         if (iconToRender != null) {
             int iconSize = 32;
             int x = 10, y = 10;
-            drawContext.drawTexture(iconToRender, x, y, 0, 0, iconSize, iconSize, iconSize, iconSize);
+            drawContext.blit(iconToRender, x, y, 0, 0, iconSize, iconSize, iconSize, iconSize);
         }
     }
 }

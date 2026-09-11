@@ -2,16 +2,15 @@ package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.daytime.VotingManager;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Server-to-Client payload for the final vote result.
@@ -30,21 +29,21 @@ public record VoteResultS2CPayload(
         VotingManager.VoteResult storytellerResult,
         UUID storytellerMFE,
         int storytellerMFEVotes
-) implements CustomPayload {
-    public static final CustomPayload.Id<VoteResultS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "vote_result"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<VoteResultS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "vote_result"));
 
-    public static final PacketCodec<RegistryByteBuf, VoteResultS2CPayload> CODEC = PacketCodec.of(
+    public static final StreamCodec<RegistryFriendlyByteBuf, VoteResultS2CPayload> CODEC = StreamCodec.ofMember(
             VoteResultS2CPayload::write,
             VoteResultS2CPayload::read
     );
 
-    private static void write(VoteResultS2CPayload payload, RegistryByteBuf buf) {
+    private static void write(VoteResultS2CPayload payload, RegistryFriendlyByteBuf buf) {
         // Write result as ordinal
         buf.writeInt(payload.result.ordinal());
 
         // Write nominee name
-        PacketCodecs.STRING.encode(buf, payload.nomineeName);
+        ByteBufCodecs.STRING_UTF8.encode(buf, payload.nomineeName);
 
         // Write vote count
         buf.writeInt(payload.voteCount);
@@ -52,7 +51,7 @@ public record VoteResultS2CPayload(
         // Write voters list
         buf.writeInt(payload.voters.size());
         for (UUID voter : payload.voters) {
-            Uuids.PACKET_CODEC.encode(buf, voter);
+            UUIDUtil.STREAM_CODEC.encode(buf, voter);
         }
 
         // Write Organ Grinder mode
@@ -65,18 +64,18 @@ public record VoteResultS2CPayload(
         buf.writeInt(payload.storytellerResult.ordinal());
         buf.writeBoolean(payload.storytellerMFE != null);
         if (payload.storytellerMFE != null) {
-            Uuids.PACKET_CODEC.encode(buf, payload.storytellerMFE);
+            UUIDUtil.STREAM_CODEC.encode(buf, payload.storytellerMFE);
         }
         buf.writeInt(payload.storytellerMFEVotes);
     }
 
-    private static VoteResultS2CPayload read(RegistryByteBuf buf) {
+    private static VoteResultS2CPayload read(RegistryFriendlyByteBuf buf) {
         // Read result
         int resultOrdinal = buf.readInt();
         VotingManager.VoteResult result = VotingManager.VoteResult.values()[resultOrdinal];
 
         // Read nominee name
-        String nomineeName = PacketCodecs.STRING.decode(buf);
+        String nomineeName = ByteBufCodecs.STRING_UTF8.decode(buf);
 
         // Read vote count
         int voteCount = buf.readInt();
@@ -85,7 +84,7 @@ public record VoteResultS2CPayload(
         int votersSize = buf.readInt();
         List<UUID> voters = new ArrayList<>();
         for (int i = 0; i < votersSize; i++) {
-            voters.add(Uuids.PACKET_CODEC.decode(buf));
+            voters.add(UUIDUtil.STREAM_CODEC.decode(buf));
         }
 
         // Read Organ Grinder mode
@@ -98,14 +97,14 @@ public record VoteResultS2CPayload(
         int storytellerResultOrdinal = buf.readInt();
         VotingManager.VoteResult storytellerResult = VotingManager.VoteResult.values()[storytellerResultOrdinal];
         boolean hasStorytellerMFE = buf.readBoolean();
-        UUID storytellerMFE = hasStorytellerMFE ? Uuids.PACKET_CODEC.decode(buf) : null;
+        UUID storytellerMFE = hasStorytellerMFE ? UUIDUtil.STREAM_CODEC.decode(buf) : null;
         int storytellerMFEVotes = buf.readInt();
 
         return new VoteResultS2CPayload(result, nomineeName, voteCount, voters, organGrinderMode, legionProtectedVote, storytellerResult, storytellerMFE, storytellerMFEVotes);
     }
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

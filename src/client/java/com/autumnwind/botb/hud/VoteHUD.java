@@ -2,14 +2,13 @@ package com.autumnwind.botb.hud;
 
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.util.PlayerListUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
 import java.util.UUID;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +23,7 @@ public class VoteHUD {
     /**
      * Renders the vote HUD if there's an active nomination or vote in progress.
      */
-    public static void render(DrawContext context, MinecraftClient client) {
+    public static void render(GuiGraphics context, Minecraft client) {
         // Show if there's a nomination OR a vote in progress
         UUID nomineeUuid = ClientState.currentNominee;
         if (nomineeUuid == null) {
@@ -33,19 +32,19 @@ public class VoteHUD {
 
         // Get nominee player (supports distant players)
         String nomineeName;
-        AbstractClientPlayerEntity nominee = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(nomineeUuid);
+        AbstractClientPlayer nominee = (AbstractClientPlayer) client.level.getPlayerByUUID(nomineeUuid);
         if (nominee != null) {
             nomineeName = nominee.getName().getString();
         } else {
             PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, nomineeUuid);
-            nomineeName = info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+            nomineeName = info != null ? info.name() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
         }
 
         // Check if the current player is the nominee
-        boolean isNominee = client.player.getUuid().equals(nomineeUuid);
+        boolean isNominee = client.player.getUUID().equals(nomineeUuid);
 
         // Check if player is an operator (for Organ Grinder mode visibility)
-        boolean isOperator = client.player.hasPermissionLevel(2);
+        boolean isOperator = client.player.hasPermissions(2);
 
         // Organ Grinder hides vote info from everyone but the storyteller. The day-scoped flag
         // is the one that matters here: it is set when the day's first OG vote starts and holds
@@ -71,51 +70,51 @@ public class VoteHUD {
 
         // Check if player is dead and lost ghost vote (either publicly or secretly in OG mode)
         // In Voudon mode dead players vote freely, so a used ghost vote doesn't block them
-        boolean isDead = ClientState.playerDeathStatus.getOrDefault(client.player.getUuid(), false);
+        boolean isDead = ClientState.playerDeathStatus.getOrDefault(client.player.getUUID(), false);
         boolean hasLostGhostVote = isDead && !ClientState.voudonModeActive
-                && (ClientState.hasUsedGhostVote.getOrDefault(client.player.getUuid(), false) || ClientState.hasSecretlyUsedGhostVote);
+                && (ClientState.hasUsedGhostVote.getOrDefault(client.player.getUUID(), false) || ClientState.hasSecretlyUsedGhostVote);
 
         // Voudon-blocked: alive seated non-Voudon players have no vote while Voudon mode
         // is active. Computed from synced state so it already shows during the nomination,
         // before the vote itself starts.
         boolean isVoudonBlocked = ClientState.isVoudonBlocked
                 || (ClientState.voudonModeActive && !isDead
-                        && ClientState.playerSeatNumbers.containsKey(client.player.getUuid())
-                        && !client.player.getUuid().equals(ClientState.voudonPlayerUuid));
+                        && ClientState.playerSeatNumbers.containsKey(client.player.getUUID())
+                        && !client.player.getUUID().equals(ClientState.voudonPlayerUuid));
 
         // All three lines are built before anything is drawn, so the box can be sized to
         // whichever is widest, since nominee names have no length limit.
-        int screenWidth = context.getScaledWindowWidth();
+        int screenWidth = context.guiWidth();
 
         // Line 1: Title
-        MutableText titleText;
+        MutableComponent titleText;
         if (ClientState.voteInProgress) {
             // Show "Now voting for: " in yellow
             if (isNominee) {
-                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.now_voting_for").formatted(Formatting.YELLOW)
-                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Component.translatable("hud.blood-on-the-blocktower.vote.now_voting_for").withStyle(ChatFormatting.YELLOW)
+                        .append(Component.translatable("hud.blood-on-the-blocktower.common.you").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             } else {
-                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.now_voting_for").formatted(Formatting.YELLOW)
-                        .append(Text.literal(nomineeName).formatted(Formatting.GOLD, Formatting.BOLD));
+                titleText = Component.translatable("hud.blood-on-the-blocktower.vote.now_voting_for").withStyle(ChatFormatting.YELLOW)
+                        .append(Component.literal(nomineeName).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
             }
         } else {
             if (isNominee) {
-                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.nominated").formatted(Formatting.YELLOW)
-                        .append(Text.translatable("hud.blood-on-the-blocktower.common.you").formatted(Formatting.RED, Formatting.BOLD));
+                titleText = Component.translatable("hud.blood-on-the-blocktower.vote.nominated").withStyle(ChatFormatting.YELLOW)
+                        .append(Component.translatable("hud.blood-on-the-blocktower.common.you").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
             } else {
-                titleText = Text.translatable("hud.blood-on-the-blocktower.vote.nominated").formatted(Formatting.YELLOW)
-                        .append(Text.literal(nomineeName).formatted(Formatting.GOLD, Formatting.BOLD));
+                titleText = Component.translatable("hud.blood-on-the-blocktower.vote.nominated").withStyle(ChatFormatting.YELLOW)
+                        .append(Component.literal(nomineeName).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
             }
         }
         // Line 2: Vote requirements (with current count if voting)
-        MutableText requirementsText;
+        MutableComponent requirementsText;
         if (hideVoteInfo) {
             // Organ Grinder mode: hide all vote info with purple "?", but show the
             // static "≥ ceil(alive/2)" baseline threshold, which is public info and
             // doesn't leak how many votes any prior OG nominee received.
-            requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.votes").formatted(Formatting.WHITE)
-                    .append(Text.literal("?").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD))
-                    .append(Text.literal(" (≥" + votesRequired + ")").formatted(Formatting.GRAY));
+            requirementsText = Component.translatable("hud.blood-on-the-blocktower.vote.votes").withStyle(ChatFormatting.WHITE)
+                    .append(Component.literal("?").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
+                    .append(Component.literal(" (≥" + votesRequired + ")").withStyle(ChatFormatting.GRAY));
         } else if (ClientState.voteInProgress) {
             // During vote: Show as fraction
             int currentCount = ClientState.currentVoteCount;
@@ -124,111 +123,111 @@ public class VoteHUD {
                 // With MFE: show both tie and execute as fractions
                 // Tie: yellow if exactly at tie count (and not at execute), otherwise white - always bold
                 boolean atTie = (currentCount == votesForTie) && (currentCount < votesForTie + 1);
-                MutableText tieFraction = Text.literal(currentCount + "/" + votesForTie);
+                MutableComponent tieFraction = Component.literal(currentCount + "/" + votesForTie);
                 if (atTie) {
-                    tieFraction = tieFraction.formatted(Formatting.YELLOW, Formatting.BOLD);
+                    tieFraction = tieFraction.withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD);
                 } else {
-                    tieFraction = tieFraction.formatted(Formatting.WHITE, Formatting.BOLD);
+                    tieFraction = tieFraction.withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD);
                 }
 
                 // Execute: red if at or above execute count, otherwise white - always bold
                 boolean atExecute = currentCount >= votesForTie + 1;
-                MutableText execFraction = Text.literal(currentCount + "/" + (votesForTie + 1));
+                MutableComponent execFraction = Component.literal(currentCount + "/" + (votesForTie + 1));
                 if (atExecute) {
-                    execFraction = execFraction.formatted(Formatting.RED, Formatting.BOLD);
+                    execFraction = execFraction.withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
                 } else {
-                    execFraction = execFraction.formatted(Formatting.WHITE, Formatting.BOLD);
+                    execFraction = execFraction.withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD);
                 }
 
-                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.tie")
+                requirementsText = Component.translatable("hud.blood-on-the-blocktower.vote.tie")
                         .append(tieFraction)
-                        .append(Text.translatable("hud.blood-on-the-blocktower.vote.execute").formatted(Formatting.WHITE))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.vote.execute").withStyle(ChatFormatting.WHITE))
                         .append(execFraction);
             } else {
                 // Without MFE: show votes required as fraction
                 // Red if at or above required, otherwise white - always bold
                 boolean atRequired = currentCount >= votesRequired;
-                MutableText requiredFraction = Text.literal(currentCount + "/" + votesRequired);
+                MutableComponent requiredFraction = Component.literal(currentCount + "/" + votesRequired);
                 if (atRequired) {
-                    requiredFraction = requiredFraction.formatted(Formatting.RED, Formatting.BOLD);
+                    requiredFraction = requiredFraction.withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
                 } else {
-                    requiredFraction = requiredFraction.formatted(Formatting.WHITE, Formatting.BOLD);
+                    requiredFraction = requiredFraction.withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD);
                 }
 
-                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.votes_required")
+                requirementsText = Component.translatable("hud.blood-on-the-blocktower.vote.votes_required")
                         .append(requiredFraction);
             }
         } else {
             // Before vote: Show requirements without current count
             if (hasMFE) {
-                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.tie")
-                        .append(Text.literal(String.valueOf(votesForTie)).formatted(Formatting.YELLOW))
-                        .append(Text.translatable("hud.blood-on-the-blocktower.vote.execute").formatted(Formatting.WHITE))
-                        .append(Text.literal(String.valueOf(votesForTie + 1)).formatted(Formatting.RED));
+                requirementsText = Component.translatable("hud.blood-on-the-blocktower.vote.tie")
+                        .append(Component.literal(String.valueOf(votesForTie)).withStyle(ChatFormatting.YELLOW))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.vote.execute").withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(String.valueOf(votesForTie + 1)).withStyle(ChatFormatting.RED));
             } else {
-                requirementsText = Text.translatable("hud.blood-on-the-blocktower.vote.votes_required")
-                        .append(Text.literal(String.valueOf(votesRequired)).formatted(Formatting.YELLOW));
+                requirementsText = Component.translatable("hud.blood-on-the-blocktower.vote.votes_required")
+                        .append(Component.literal(String.valueOf(votesRequired)).withStyle(ChatFormatting.YELLOW));
             }
         }
         // Line 3: Vote position / countdown / locked status / cannot vote. Unseated viewers
         // (the storyteller, spectators) have no lever and no place in the voting order, so
         // they get no line at all: the server sends them a zero countdown and, in Voudon mode,
         // a blocked flag, and an Atheist-nominated storyteller would otherwise read "You vote Last".
-        MutableText line3Text;
-        boolean seated = ClientState.playerSeatNumbers.containsKey(client.player.getUuid());
+        MutableComponent line3Text;
+        boolean seated = ClientState.playerSeatNumbers.containsKey(client.player.getUUID());
 
         if (!seated) {
-            line3Text = Text.empty();
+            line3Text = Component.empty();
         } else if (hasLostGhostVote) {
             // Player has lost their ghost vote
-            line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.cannot_vote").formatted(Formatting.DARK_RED, Formatting.ITALIC);
+            line3Text = Component.translatable("hud.blood-on-the-blocktower.vote.cannot_vote").withStyle(ChatFormatting.DARK_RED, ChatFormatting.ITALIC);
         } else if (isVoudonBlocked) {
             // Player is Voudon-blocked (alive non-Voudon in Voudon mode)
-            line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.cannot_vote").formatted(Formatting.DARK_RED, Formatting.ITALIC);
+            line3Text = Component.translatable("hud.blood-on-the-blocktower.vote.cannot_vote").withStyle(ChatFormatting.DARK_RED, ChatFormatting.ITALIC);
         } else if (ClientState.voteInProgress) {
             // During vote: Show countdown or locked status
-            UUID playerUuid = client.player.getUuid();
+            UUID playerUuid = client.player.getUUID();
             Boolean leverState = ClientState.leverStates.get(playerUuid);
 
             if (ClientState.myVoteLockInTime > 0) {
                 // Show countdown - YES/NO is bold while unlocked
-                line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.locks_in")
-                        .append(Text.literal(ClientState.myVoteLockInTime + "s").formatted(Formatting.AQUA));
+                line3Text = Component.translatable("hud.blood-on-the-blocktower.vote.locks_in")
+                        .append(Component.literal(ClientState.myVoteLockInTime + "s").withStyle(ChatFormatting.AQUA));
 
                 if (leverState != null) {
-                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
-                    Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
-                    line3Text.append(Text.literal(" - "))
-                            .append(voteStatus.copy().formatted(voteColor, Formatting.BOLD));
+                    Component voteStatus = leverState ? Component.translatable("hud.blood-on-the-blocktower.common.yes") : Component.translatable("hud.blood-on-the-blocktower.common.no");
+                    ChatFormatting voteColor = leverState ? ChatFormatting.GREEN : ChatFormatting.RED;
+                    line3Text.append(Component.literal(" - "))
+                            .append(voteStatus.copy().withStyle(voteColor, ChatFormatting.BOLD));
                 }
             } else {
                 // Vote is locked - YES/NO is not bold once locked
                 if (leverState != null) {
-                    Text voteStatus = leverState ? Text.translatable("hud.blood-on-the-blocktower.common.yes") : Text.translatable("hud.blood-on-the-blocktower.common.no");
-                    Formatting voteColor = leverState ? Formatting.GREEN : Formatting.RED;
-                    line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.you_voted")
-                            .append(voteStatus.copy().formatted(voteColor));
+                    Component voteStatus = leverState ? Component.translatable("hud.blood-on-the-blocktower.common.yes") : Component.translatable("hud.blood-on-the-blocktower.common.no");
+                    ChatFormatting voteColor = leverState ? ChatFormatting.GREEN : ChatFormatting.RED;
+                    line3Text = Component.translatable("hud.blood-on-the-blocktower.vote.you_voted")
+                            .append(voteStatus.copy().withStyle(voteColor));
                 } else {
                     // Storytellers don't have levers and don't vote - show nothing
                     if (isOperator) {
-                        line3Text = Text.literal(""); // Empty for storyteller
+                        line3Text = Component.literal(""); // Empty for storyteller
                     } else {
-                        line3Text = Text.translatable("hud.blood-on-the-blocktower.common.check_lever").formatted(Formatting.GRAY, Formatting.ITALIC);
+                        line3Text = Component.translatable("hud.blood-on-the-blocktower.common.check_lever").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC);
                     }
                 }
             }
         } else {
             // Before vote: Show vote position
             if (isNominee) {
-                line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.you_vote_last").formatted(Formatting.AQUA);
+                line3Text = Component.translatable("hud.blood-on-the-blocktower.vote.you_vote_last").withStyle(ChatFormatting.AQUA);
             } else {
                 // Calculate vote position based on seat numbers
-                int position = calculateVotePosition(client.player.getUuid(), nomineeUuid);
+                int position = calculateVotePosition(client.player.getUUID(), nomineeUuid);
                 if (position == 0) {
                     // Player is unseated (e.g., storyteller) - don't show vote position
-                    line3Text = Text.empty();
+                    line3Text = Component.empty();
                 } else {
-                    line3Text = Text.translatable("hud.blood-on-the-blocktower.vote.you_vote", getOrdinalText(position)).formatted(Formatting.AQUA);
+                    line3Text = Component.translatable("hud.blood-on-the-blocktower.vote.you_vote", getOrdinalText(position)).withStyle(ChatFormatting.AQUA);
                 }
             }
         }
@@ -236,7 +235,7 @@ public class VoteHUD {
         // Spectators and the storyteller have no vote position or lever line, so the box
         // shrinks to two lines instead of keeping a blank third one
         boolean hasLine3 = !line3Text.getString().isEmpty();
-        List<Text> lines = hasLine3 ? List.of(titleText, requirementsText, line3Text) : List.of(titleText, requirementsText);
+        List<Component> lines = hasLine3 ? List.of(titleText, requirementsText, line3Text) : List.of(titleText, requirementsText);
 
         // Purple and double thickness while a vote is running, yellow otherwise.
         if (ClientState.voteInProgress) {
@@ -296,16 +295,16 @@ public class VoteHUD {
     /**
      * Converts a number to its ordinal string representation (1st, 2nd, 3rd, etc.)
      */
-    private static Text getOrdinalText(int number) {
+    private static Component getOrdinalText(int number) {
         if (number % 100 >= 11 && number % 100 <= 13) {
-            return Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
+            return Component.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         }
 
         return switch (number % 10) {
-            case 1 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_1", number);
-            case 2 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_2", number);
-            case 3 -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_3", number);
-            default -> Text.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
+            case 1 -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_1", number);
+            case 2 -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_2", number);
+            case 3 -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_3", number);
+            default -> Component.translatable("hud.blood-on-the-blocktower.common.ordinal_other", number);
         };
     }
 }

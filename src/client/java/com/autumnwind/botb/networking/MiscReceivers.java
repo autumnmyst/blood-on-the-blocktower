@@ -4,9 +4,9 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.hud.SetupHUD;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.util.CustomNames;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 /** Client-bound packet receivers for lobby counts, custom names, the setup wizard box, and the version check. */
 final class MiscReceivers {
@@ -31,9 +31,9 @@ final class MiscReceivers {
             String local = BloodOnTheBlocktower.version();
             if (local.equals(payload.version())) return;
             BloodOnTheBlocktower.LOGGER.warn("BotB version mismatch: server {} / client {}", payload.version(), local);
-            context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.client.version_mismatch").formatted(Formatting.RED)
-                    .append(Text.translatable("message.blood-on-the-blocktower.client.version_mismatch_versions", payload.version(), local).formatted(Formatting.YELLOW))
-                    .append(Text.translatable("message.blood-on-the-blocktower.client.version_mismatch_hint").formatted(Formatting.GRAY)), false);
+            context.player().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.client.version_mismatch").withStyle(ChatFormatting.RED)
+                    .append(Component.translatable("message.blood-on-the-blocktower.client.version_mismatch_versions", payload.version(), local).withStyle(ChatFormatting.YELLOW))
+                    .append(Component.translatable("message.blood-on-the-blocktower.client.version_mismatch_hint").withStyle(ChatFormatting.GRAY)), false);
         });
     }
 }

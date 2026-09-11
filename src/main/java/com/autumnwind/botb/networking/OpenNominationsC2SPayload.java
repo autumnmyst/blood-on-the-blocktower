@@ -1,16 +1,15 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client-to-Server payload for opening nominations (triggered by storyteller clicking NOMINATIONS static action).
@@ -26,20 +25,20 @@ public record OpenNominationsC2SPayload(
         boolean voudonModeActive,
         Optional<UUID> voudonPlayerUuid,
         List<UUID> mayNotNominatePlayers
-) implements CustomPayload {
-    public static final CustomPayload.Id<OpenNominationsC2SPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "open_nominations"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<OpenNominationsC2SPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "open_nominations"));
 
-    public static final PacketCodec<RegistryByteBuf, OpenNominationsC2SPayload> CODEC = PacketCodec.tuple(
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), OpenNominationsC2SPayload::bansheeHasAbilityPlayers,
-            PacketCodecs.BOOL, OpenNominationsC2SPayload::voudonModeActive,
-            PacketCodecs.optional(Uuids.PACKET_CODEC), OpenNominationsC2SPayload::voudonPlayerUuid,
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), OpenNominationsC2SPayload::mayNotNominatePlayers,
+    public static final StreamCodec<RegistryFriendlyByteBuf, OpenNominationsC2SPayload> CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), OpenNominationsC2SPayload::bansheeHasAbilityPlayers,
+            ByteBufCodecs.BOOL, OpenNominationsC2SPayload::voudonModeActive,
+            ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), OpenNominationsC2SPayload::voudonPlayerUuid,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), OpenNominationsC2SPayload::mayNotNominatePlayers,
             OpenNominationsC2SPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

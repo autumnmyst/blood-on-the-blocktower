@@ -5,16 +5,15 @@ import com.autumnwind.botb.networking.ClockHandsStateS2CPayload;
 import com.autumnwind.botb.networking.PlaySoundS2CPayload;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.Team;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import java.util.UUID;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.world.TeamManager;
@@ -104,7 +103,7 @@ public class NominationManager {
         }
 
         // Get nominee player - works for both seated and unseated players
-        ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
+        ServerPlayer nomineePlayer = server.getPlayerList().getPlayer(nominee);
 
         // Apply white glowing effect to nominee (for all nominees including unseated/storyteller)
         // All players stay on botb_player team for white glow - travelers only use botb_traveler during exile
@@ -113,17 +112,17 @@ public class NominationManager {
             String playerName = nomineePlayer.getGameProfile().getName();
 
             // Ensure player is on botb_player team for white glow color
-            Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+            PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
             if (playerTeam == null) {
-                playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
-                playerTeam.setColor(Formatting.WHITE);
+                playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
+                playerTeam.setColor(ChatFormatting.WHITE);
             }
-            if (scoreboard.getScoreHolderTeam(playerName) != playerTeam) {
-                scoreboard.addScoreHolderToTeam(playerName, playerTeam);
+            if (scoreboard.getPlayersTeam(playerName) != playerTeam) {
+                scoreboard.addPlayerToTeam(playerName, playerTeam);
             }
 
-            nomineePlayer.addStatusEffect(new StatusEffectInstance(
-                    StatusEffects.GLOWING,
+            nomineePlayer.addEffect(new MobEffectInstance(
+                    MobEffects.GLOWING,
                     Integer.MAX_VALUE, // Infinite duration
                     0,
                     false,
@@ -133,10 +132,10 @@ public class NominationManager {
         }
 
         // Get player names
-        String nominatorName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-        String nomineeName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String nominatorName = Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String nomineeName = Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
-        ServerPlayerEntity nominatorPlayer = server.getPlayerManager().getPlayer(nominator);
+        ServerPlayer nominatorPlayer = server.getPlayerList().getPlayer(nominator);
         if (nominatorPlayer != null) {
             nominatorName = nominatorPlayer.getName().getString();
         }
@@ -148,42 +147,42 @@ public class NominationManager {
         int votesRequired = (int) Math.ceil(alivePlayerCount / 2.0);
 
         // Build message
-        Text titleText = Text.translatable("message.blood-on-the-blocktower.daytime.nominates",
-                Text.literal(nominatorName).styled(style -> style.withColor(0x4FC3F7)), // Light blue (canNominate color)
-                Text.literal(nomineeName).styled(style -> style.withColor(0xFF8C00))) // Orange (canBeNominated color)
-                .formatted(Formatting.WHITE);
+        Component titleText = Component.translatable("message.blood-on-the-blocktower.daytime.nominates",
+                Component.literal(nominatorName).withStyle(style -> style.withColor(0x4FC3F7)), // Light blue (canNominate color)
+                Component.literal(nomineeName).withStyle(style -> style.withColor(0xFF8C00))) // Orange (canBeNominated color)
+                .withStyle(ChatFormatting.WHITE);
 
-        Text subtitleText;
+        Component subtitleText;
         int votesForTie = DaytimeState.getVotesForMarkedPlayer();
         if (votesForTie > 0) {
             votesRequired = votesForTie + 1;
         }
         if (DaytimeState.getMarkedForExecution() != null) {
-            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.votes_to_tie_execute", votesForTie, votesRequired)
-                    .formatted(Formatting.GRAY);
+            subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.votes_to_tie_execute", votesForTie, votesRequired)
+                    .withStyle(ChatFormatting.GRAY);
         } else {
-            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.votes_required", votesRequired)
-                    .formatted(Formatting.GRAY);
+            subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.votes_required", votesRequired)
+                    .withStyle(ChatFormatting.GRAY);
         }
 
         // Hidden subtitle for non-operators on OG days (light purple color)
-        Text hiddenSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.votes_required_hidden")
-                .styled(style -> style.withColor(0xDA70D6)); // Light purple/orchid
+        Component hiddenSubtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.votes_required_hidden")
+                .withStyle(style -> style.withColor(0xDA70D6)); // Light purple/orchid
 
         // Send title and chat message to all players
         boolean isOGDay = DaytimeState.isOrganGrinderModeActiveToday();
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             // On OG days, non-operators see hidden vote counts
-            Text messageSubtitle = (isOGDay && !player.hasPermissionLevel(2)) ? hiddenSubtitleText : subtitleText;
-            player.sendMessage(titleText.copy().append(" ").append(messageSubtitle), false);
+            Component messageSubtitle = (isOGDay && !player.hasPermissions(2)) ? hiddenSubtitleText : subtitleText;
+            player.displayClientMessage(titleText.copy().append(" ").append(messageSubtitle), false);
 
             // Send nomination sound
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.NOMINATION));
         }
 
         // Broadcast clock hands state - show both hands pointing at nominator and nominee
-        Vec3d nominatorPos = nominatorPlayer != null ? nominatorPlayer.getPos() : null;
-        Vec3d nomineePos = nomineePlayer != null ? nomineePlayer.getPos() : null;
+        Vec3 nominatorPos = nominatorPlayer != null ? nominatorPlayer.position() : null;
+        Vec3 nomineePos = nomineePlayer != null ? nomineePlayer.position() : null;
         StateBroadcaster.broadcastClockHandsState(
                 server,
                 ClockHandsStateS2CPayload.MODE_NOMINATION,
@@ -207,22 +206,22 @@ public class NominationManager {
             UUID currentMFE = DaytimeState.getMarkedForExecution();
             boolean isMFE = nominee.equals(currentMFE);
 
-            ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
+            ServerPlayer nomineePlayer = server.getPlayerList().getPlayer(nominee);
             if (nomineePlayer != null && !isMFE) {
                 // Only remove glow if they're NOT the MFE player
-                nomineePlayer.removeStatusEffect(StatusEffects.GLOWING);
+                nomineePlayer.removeEffect(MobEffects.GLOWING);
 
                 // Ensure player stays on botb_player team (travelers only use botb_traveler during exile)
                 Scoreboard scoreboard = server.getScoreboard();
                 String playerName = nomineePlayer.getGameProfile().getName();
 
-                Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+                PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
                 if (playerTeam == null) {
-                    playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
-                    playerTeam.setColor(Formatting.WHITE);
+                    playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
+                    playerTeam.setColor(ChatFormatting.WHITE);
                 }
-                if (scoreboard.getScoreHolderTeam(playerName) != playerTeam) {
-                    scoreboard.addScoreHolderToTeam(playerName, playerTeam);
+                if (scoreboard.getPlayersTeam(playerName) != playerTeam) {
+                    scoreboard.addPlayerToTeam(playerName, playerTeam);
                 }
             }
             // If they ARE MFE, they keep their glow and botb_mfe team - no changes needed
@@ -257,7 +256,7 @@ public class NominationManager {
     public static void updateMarkedGlow(MinecraftServer server, UUID player, boolean apply) {
         if (player == null) return;
 
-        ServerPlayerEntity serverPlayer = server.getPlayerManager().getPlayer(player);
+        ServerPlayer serverPlayer = server.getPlayerList().getPlayer(player);
         if (serverPlayer == null) return;
 
         Scoreboard scoreboard = server.getScoreboard();
@@ -266,37 +265,37 @@ public class NominationManager {
         if (apply) {
             // Order matters: the glow takes its colour from the team the player is on when the
             // effect is applied, so it comes off first and goes back on last.
-            serverPlayer.removeStatusEffect(StatusEffects.GLOWING);
+            serverPlayer.removeEffect(MobEffects.GLOWING);
 
             // Off whichever team they normally sit on.
-            Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
-            if (playerTeam != null && scoreboard.getScoreHolderTeam(playerName) == playerTeam) {
-                scoreboard.removeScoreHolderFromTeam(playerName, playerTeam);
+            PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
+            if (playerTeam != null && scoreboard.getPlayersTeam(playerName) == playerTeam) {
+                scoreboard.removePlayerFromTeam(playerName, playerTeam);
             }
-            Team travelerTeam = scoreboard.getTeam(TeamManager.TRAVELER_TEAM);
-            if (travelerTeam != null && scoreboard.getScoreHolderTeam(playerName) == travelerTeam) {
-                scoreboard.removeScoreHolderFromTeam(playerName, travelerTeam);
+            PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
+            if (travelerTeam != null && scoreboard.getPlayersTeam(playerName) == travelerTeam) {
+                scoreboard.removePlayerFromTeam(playerName, travelerTeam);
             }
 
             // The red MFE team, created on first use. The colour is reasserted every time in
             // case something else changed it.
-            Team mfeTeam = scoreboard.getTeam(TeamManager.MFE_TEAM);
+            PlayerTeam mfeTeam = scoreboard.getPlayerTeam(TeamManager.MFE_TEAM);
             if (mfeTeam == null) {
-                mfeTeam = scoreboard.addTeam(TeamManager.MFE_TEAM);
+                mfeTeam = scoreboard.addPlayerTeam(TeamManager.MFE_TEAM);
             }
-            mfeTeam.setColor(Formatting.RED);
+            mfeTeam.setColor(ChatFormatting.RED);
 
             // Verify and retry once if the scoreboard didn't take it.
-            if (!scoreboard.addScoreHolderToTeam(playerName, mfeTeam) || scoreboard.getScoreHolderTeam(playerName) != mfeTeam) {
-                scoreboard.addScoreHolderToTeam(playerName, mfeTeam);
-                if (scoreboard.getScoreHolderTeam(playerName) != mfeTeam) {
+            if (!scoreboard.addPlayerToTeam(playerName, mfeTeam) || scoreboard.getPlayersTeam(playerName) != mfeTeam) {
+                scoreboard.addPlayerToTeam(playerName, mfeTeam);
+                if (scoreboard.getPlayersTeam(playerName) != mfeTeam) {
                     BloodOnTheBlocktower.LOGGER.warn("Failed to assign {} to botb_mfe team after retry", playerName);
                 }
             }
 
             // Red, because they're on the red team now.
-            serverPlayer.addStatusEffect(new StatusEffectInstance(
-                    StatusEffects.GLOWING,
+            serverPlayer.addEffect(new MobEffectInstance(
+                    MobEffects.GLOWING,
                     Integer.MAX_VALUE,
                     0,
                     false,
@@ -305,21 +304,21 @@ public class NominationManager {
             ));
         } else {
             // Remove from MFE team if player is on it
-            Team mfeTeam = scoreboard.getTeam(TeamManager.MFE_TEAM);
-            if (mfeTeam != null && scoreboard.getScoreHolderTeam(playerName) == mfeTeam) {
-                scoreboard.removeScoreHolderFromTeam(playerName, mfeTeam);
+            PlayerTeam mfeTeam = scoreboard.getPlayerTeam(TeamManager.MFE_TEAM);
+            if (mfeTeam != null && scoreboard.getPlayersTeam(playerName) == mfeTeam) {
+                scoreboard.removePlayerFromTeam(playerName, mfeTeam);
             }
 
             // Remove glowing effect
-            serverPlayer.removeStatusEffect(StatusEffects.GLOWING);
+            serverPlayer.removeEffect(MobEffects.GLOWING);
 
             // Add player back to botb_player team (travelers only use botb_traveler during exile)
-            Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+            PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
             if (playerTeam == null) {
-                playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
-                playerTeam.setColor(Formatting.WHITE);
+                playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
+                playerTeam.setColor(ChatFormatting.WHITE);
             }
-            scoreboard.addScoreHolderToTeam(playerName, playerTeam);
+            scoreboard.addPlayerToTeam(playerName, playerTeam);
         }
     }
 }

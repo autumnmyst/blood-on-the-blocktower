@@ -1,14 +1,15 @@
 package com.autumnwind.botb.states;
 
+import com.autumnwind.botb.util.Role;
+import com.autumnwind.botb.util.ScriptRole;
 import com.autumnwind.botb.hud.nightorderhud.RoleHelpers;
 import com.autumnwind.botb.networking.SyncGrimoireC2SPayload;
 import com.autumnwind.botb.util.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import java.util.*;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 public class StorytellerState {
 
@@ -177,12 +178,12 @@ public class StorytellerState {
 
     // Current visit instructions HUD state (populated by showCurrentVisitInfo)
     public static ScriptRole currentVisitScriptRole = null; // Unified: Official, Custom, or null
-    public static Identifier currentVisitIcon = null; // Icon for current visit (supports custom roles)
+    public static ResourceLocation currentVisitIcon = null; // Icon for current visit (supports custom roles)
     public static String currentVisitInstructions = null;
     public static boolean currentVisitIsGood = true; // Alignment of the role for coloring
-    public static Text currentVisitExtraInfo = null; // Extra info from NightOrderInfoGenerator
-    public static Text currentVisitRoleText = null; // Role text for HUD with colors (e.g., "DRUNK / EMPATH (Drunk)")
-    public static Text currentVisitPlayerNames = null; // Visited player name(s) for HUD in yellow
+    public static Component currentVisitExtraInfo = null; // Extra info from NightOrderInfoGenerator
+    public static Component currentVisitRoleText = null; // Role text for HUD with colors (e.g., "DRUNK / EMPATH (Drunk)")
+    public static Component currentVisitPlayerNames = null; // Visited player name(s) for HUD in yellow
 
     // Night order info tracking (for Flowergirl, Town Crier, Undertaker, etc.)
     public static boolean demonVotedToday = false;      // For Flowergirl
@@ -352,8 +353,8 @@ public class StorytellerState {
      * Call this when meaningful grimoire changes occur (role assignments, reminders, etc.)
      */
     public static void syncGrimoire() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || !client.player.hasPermissionLevel(2)) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || !client.player.hasPermissions(2)) {
             return; // Only operators can sync
         }
 

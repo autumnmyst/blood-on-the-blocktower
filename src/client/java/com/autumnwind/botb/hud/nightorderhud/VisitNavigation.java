@@ -1,9 +1,6 @@
 package com.autumnwind.botb.hud.nightorderhud;
 
 import com.autumnwind.botb.networking.ExecuteDuskDawnC2SPayload;
-import com.autumnwind.botb.util.RoleVisit;
-import net.minecraft.text.Text;
-import net.minecraft.text.MutableText;
 import com.autumnwind.botb.networking.OpenNominationsC2SPayload;
 import com.autumnwind.botb.networking.TeleportPlayersToSeatC2SPayload;
 import com.autumnwind.botb.networking.TeleportToSeatC2SPayload;
@@ -12,11 +9,15 @@ import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.text.*;
-import net.minecraft.util.Formatting;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import java.util.*;
 
 import static com.autumnwind.botb.hud.nightorderhud.RoleHelpers.*;
@@ -62,14 +63,14 @@ public class VisitNavigation {
         // Check if we're in setup phase (day 0, night 0)
         boolean isSetupPhase = ClientState.currentDay == 0 && ClientState.currentNight == 0;
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // Rule 0: During setup, cannot move off Dusk at all (must activate Dusk to start the game)
         if (isSetupPhase && currentlyOnDusk) {
             if (client.player != null) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_to_start")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_to_start")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
             }
@@ -79,9 +80,9 @@ public class VisitNavigation {
         // Rule 1: Don't allow progressing past Dusk if it's not nighttime
         if (direction > 0 && currentlyOnDusk && !isNightTime) {
             if (client.player != null) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_before_progress")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_before_progress")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
             }
@@ -91,9 +92,9 @@ public class VisitNavigation {
         // Rule 2: Don't allow progressing past Dawn if it's not daytime
         if (direction > 0 && currentlyOnDawn && !isDayTime) {
             if (client.player != null) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_before_progress")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_before_progress")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
             }
@@ -106,9 +107,9 @@ public class VisitNavigation {
         // Rule 3: Don't allow moving backwards FROM Dusk once nighttime has started
         if (direction < 0 && currentlyOnDusk && isNightTime) {
             if (client.player != null) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dusk")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dusk")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
             }
@@ -118,9 +119,9 @@ public class VisitNavigation {
         // Rule 4: Don't allow moving backwards FROM Dawn once daytime has started
         if (direction < 0 && currentlyOnDawn && isDayTime) {
             if (client.player != null) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dawn")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.no_back_from_dawn")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
             }
@@ -152,7 +153,7 @@ public class VisitNavigation {
 
         RoleVisit visit = StorytellerState.activeNightOrder.get(StorytellerState.currentNightVisitIndex);
         List<UUID> players = visit.players();
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
 
         // Update HUD state for night order instructions display
@@ -171,7 +172,7 @@ public class VisitNavigation {
             if (seat > 0) {
                 String playerName = getPlayerName(client, playerUUID);
                 if (playerName != null) {
-                    MutableText message = Text.translatable("hud.blood-on-the-blocktower.night_order.nav.visiting_seat").formatted(Formatting.GRAY);
+                    MutableComponent message = Component.translatable("hud.blood-on-the-blocktower.night_order.nav.visiting_seat").withStyle(ChatFormatting.GRAY);
 
                     String reminderSuffix = getPlayerReminderSuffix(playerUUID, minstrelPlayer);
                     PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(playerUUID);
@@ -179,25 +180,25 @@ public class VisitNavigation {
                     // Build Role Text: (Assigned Role / Associated Role)
                     // Use assignment.getDisplayName() which handles both official and custom roles
                     String visitText = visit.getName().getString();
-                    MutableText roleText = Text.literal((assignment != null) ? assignment.getDisplayName() : visitText);
+                    MutableComponent roleText = Component.literal((assignment != null) ? assignment.getDisplayName() : visitText);
                     if (visit.hasAssociatedRole()) {
-                        roleText.append(Text.literal(" / " + visit.getAssociatedRoleDisplayName()).formatted(Formatting.GRAY));
+                        roleText.append(Component.literal(" / " + visit.getAssociatedRoleDisplayName()).withStyle(ChatFormatting.GRAY));
                     }
 
-                    message.append(Text.literal(String.valueOf(seat)).formatted(Formatting.GOLD))
-                            .append(Text.literal(": ").formatted(Formatting.GRAY))
-                            .append(Text.literal(playerName).formatted(Formatting.WHITE))
-                            .append(Text.literal(" (").formatted(Formatting.GRAY))
-                            .append(roleText.styled(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(assignment)))))
-                            .append(Text.literal(")").formatted(Formatting.GRAY))
-                            .append(Text.literal(reminderSuffix).formatted(Formatting.GRAY));
+                    message.append(Component.literal(String.valueOf(seat)).withStyle(ChatFormatting.GOLD))
+                            .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(playerName).withStyle(ChatFormatting.WHITE))
+                            .append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
+                            .append(roleText.withStyle(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(assignment)))))
+                            .append(Component.literal(")").withStyle(ChatFormatting.GRAY))
+                            .append(Component.literal(reminderSuffix).withStyle(ChatFormatting.GRAY));
 
-                    client.player.sendMessage(message, false);
+                    client.player.displayClientMessage(message, false);
                 }
             }
         } else {
             // Multiple players (supports distant players)
-            MutableText message = Text.translatable("hud.blood-on-the-blocktower.night_order.nav.multiple_players", visit.getName().copy().formatted(Formatting.YELLOW));
+            MutableComponent message = Component.translatable("hud.blood-on-the-blocktower.night_order.nav.multiple_players", visit.getName().copy().withStyle(ChatFormatting.YELLOW));
 
             for (UUID playerUUID : players) {
                 String playerName = getPlayerName(client, playerUUID);
@@ -211,27 +212,27 @@ public class VisitNavigation {
                 // Build Role Text: (Assigned Role / Associated Role)
                 // Use assignment.getDisplayName() which handles both official and custom roles
                 String visitText = visit.getName().getString();
-                MutableText roleText = Text.literal((assignment != null) ? assignment.getDisplayName() : visitText);
+                MutableComponent roleText = Component.literal((assignment != null) ? assignment.getDisplayName() : visitText);
                 if (visit.hasAssociatedRole()) {
-                    roleText.append(Text.literal(" / " + visit.getAssociatedRoleDisplayName()).formatted(Formatting.GRAY));
+                    roleText.append(Component.literal(" / " + visit.getAssociatedRoleDisplayName()).withStyle(ChatFormatting.GRAY));
                 }
 
                 Style teleportStyle = Style.EMPTY
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/botb teleportToSeat " + seat))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport_to_seat", seat))).withColor(Formatting.GREEN);
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport_to_seat", seat))).withColor(ChatFormatting.GREEN);
 
-                message.append(Text.literal("\n- ").formatted(Formatting.GRAY))
-                        .append(Text.literal(playerName).formatted(Formatting.WHITE))
-                        .append(Text.literal(" (").formatted(Formatting.GRAY))
-                        .append(roleText.styled(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(assignment)))))
-                        .append(Text.literal(reminderSuffix).formatted(Formatting.GRAY))
-                        .append(Text.translatable("hud.blood-on-the-blocktower.night_order.nav.seat_suffix").formatted(Formatting.GRAY))
-                        .append(Text.literal(String.valueOf(seat)).formatted(Formatting.GOLD))
-                        .append(Text.literal(") [").formatted(Formatting.GRAY))
-                        .append(Text.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport").setStyle(teleportStyle))
-                        .append(Text.literal("]").formatted(Formatting.GRAY));
+                message.append(Component.literal("\n- ").withStyle(ChatFormatting.GRAY))
+                        .append(Component.literal(playerName).withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(" (").withStyle(ChatFormatting.GRAY))
+                        .append(roleText.withStyle(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(assignment)))))
+                        .append(Component.literal(reminderSuffix).withStyle(ChatFormatting.GRAY))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.night_order.nav.seat_suffix").withStyle(ChatFormatting.GRAY))
+                        .append(Component.literal(String.valueOf(seat)).withStyle(ChatFormatting.GOLD))
+                        .append(Component.literal(") [").withStyle(ChatFormatting.GRAY))
+                        .append(Component.translatable("hud.blood-on-the-blocktower.night_order.nav.teleport").setStyle(teleportStyle))
+                        .append(Component.literal("]").withStyle(ChatFormatting.GRAY));
             }
-            client.player.sendMessage(message, false);
+            client.player.displayClientMessage(message, false);
         }
     }
 
@@ -244,13 +245,13 @@ public class VisitNavigation {
 
         RoleVisit visit = StorytellerState.activeNightOrder.get(StorytellerState.currentNightVisitIndex);
         List<UUID> players = visit.players();
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
 
         updateHudState(visit, players, client);
     }
 
-    private static void updateHudState(RoleVisit visit, List<UUID> players, MinecraftClient client) {
+    private static void updateHudState(RoleVisit visit, List<UUID> players, Minecraft client) {
         // Pure phase transitions have nothing to display in the role HUD, so clear it.
         // MINION_INFO / DEMON_INFO are info phases that DO carry an instruction and (for
         // triggered evil-traveler visits) a role, so they fall through to the regular
@@ -288,23 +289,23 @@ public class VisitNavigation {
                 PendingRoleAssignment firstAssignment = StorytellerState.PENDING_ROLES.get(firstPlayerUUID);
 
                 // Build role text with colors
-                MutableText roleText = Text.literal((firstAssignment != null) ? firstAssignment.getDisplayName() : visitRole.getDisplayName())
-                        .styled(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(firstAssignment))));
+                MutableComponent roleText = Component.literal((firstAssignment != null) ? firstAssignment.getDisplayName() : visitRole.getDisplayName())
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(getAlignedRoleColor(firstAssignment))));
                 if (visit.hasAssociatedRole()) {
-                    roleText.append(Text.literal(" / " + visit.getAssociatedRoleDisplayName()).formatted(Formatting.GRAY));
+                    roleText.append(Component.literal(" / " + visit.getAssociatedRoleDisplayName()).withStyle(ChatFormatting.GRAY));
                 }
 
                 // Add reminder suffix (Drunk/Poisoned) in gray
                 String reminderSuffix = getPlayerReminderSuffix(firstPlayerUUID, minstrelPlayerForRoleText);
                 if (!reminderSuffix.isEmpty()) {
-                    roleText.append(Text.literal(reminderSuffix).formatted(Formatting.GRAY));
+                    roleText.append(Component.literal(reminderSuffix).withStyle(ChatFormatting.GRAY));
                 }
 
                 StorytellerState.currentVisitRoleText = roleText;
                 StorytellerState.currentVisitPlayerNames = buildPlayerNamesText(players, client);
             } else {
-                StorytellerState.currentVisitRoleText = Text.literal(visitRole.getDisplayName())
-                        .styled(style -> style.withColor(TextColor.fromRgb(visitRole.getType().getColor())));
+                StorytellerState.currentVisitRoleText = Component.literal(visitRole.getDisplayName())
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(visitRole.getType().getColor())));
                 StorytellerState.currentVisitPlayerNames = null;
             }
         } else if (visit.isCustomRole()) {
@@ -337,21 +338,21 @@ public class VisitNavigation {
                 String assignedDisplayName = (firstAssignment != null) ? firstAssignment.getDisplayName() : customRole.getDisplayName();
                 int assignedColor = (firstAssignment != null) ? getAlignedRoleColor(firstAssignment) : customRole.team().getColor();
 
-                MutableText roleText = Text.literal(assignedDisplayName)
-                        .styled(style -> style.withColor(TextColor.fromRgb(assignedColor)));
+                MutableComponent roleText = Component.literal(assignedDisplayName)
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(assignedColor)));
 
                 // Add associated role text if this is an associated visit
                 if (visit.hasAssociatedRole()) {
-                    roleText.append(Text.literal(" / " + visit.getAssociatedRoleDisplayName()).formatted(Formatting.GRAY));
+                    roleText.append(Component.literal(" / " + visit.getAssociatedRoleDisplayName()).withStyle(ChatFormatting.GRAY));
                 }
 
                 StorytellerState.currentVisitRoleText = roleText;
                 StorytellerState.currentVisitPlayerNames = buildPlayerNamesText(players, client);
             } else {
-                MutableText roleText = Text.literal(customRole.getDisplayName())
-                        .styled(style -> style.withColor(TextColor.fromRgb(customRole.team().getColor())));
+                MutableComponent roleText = Component.literal(customRole.getDisplayName())
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(customRole.team().getColor())));
                 if (visit.hasAssociatedRole()) {
-                    roleText.append(Text.literal(" / " + visit.getAssociatedRoleDisplayName()).formatted(Formatting.GRAY));
+                    roleText.append(Component.literal(" / " + visit.getAssociatedRoleDisplayName()).withStyle(ChatFormatting.GRAY));
                 }
                 StorytellerState.currentVisitRoleText = roleText;
                 StorytellerState.currentVisitPlayerNames = null;
@@ -385,7 +386,7 @@ public class VisitNavigation {
             StorytellerState.currentVisitIcon = visit.getIcon();
             StorytellerState.currentVisitInstructions = visit.instruction();
             StorytellerState.currentVisitIsGood = true;
-            StorytellerState.currentVisitRoleText = visit.getName().copy().formatted(Formatting.GOLD);
+            StorytellerState.currentVisitRoleText = visit.getName().copy().withStyle(ChatFormatting.GOLD);
             StorytellerState.currentVisitPlayerNames = players.isEmpty() ? null : buildPlayerNamesText(players, client);
             StorytellerState.currentVisitExtraInfo = null;
         } else {
@@ -404,16 +405,16 @@ public class VisitNavigation {
         StorytellerState.currentVisitPlayerNames = null;
     }
 
-    private static MutableText buildPlayerNamesText(List<UUID> players, MinecraftClient client) {
-        MutableText playerNamesText = Text.empty();
+    private static MutableComponent buildPlayerNamesText(List<UUID> players, Minecraft client) {
+        MutableComponent playerNamesText = Component.empty();
         boolean first = true;
         for (UUID playerUUID : players) {
             String playerName = getPlayerName(client, playerUUID);
             if (playerName != null) {
                 if (!first) {
-                    playerNamesText.append(Text.literal(", ").formatted(Formatting.YELLOW));
+                    playerNamesText.append(Component.literal(", ").withStyle(ChatFormatting.YELLOW));
                 }
-                playerNamesText.append(Text.literal(playerName).formatted(Formatting.YELLOW));
+                playerNamesText.append(Component.literal(playerName).withStyle(ChatFormatting.YELLOW));
                 first = false;
             }
         }
@@ -423,9 +424,9 @@ public class VisitNavigation {
     /**
      * Gets player name with fallback for distant players.
      */
-    private static String getPlayerName(MinecraftClient client, UUID playerUuid) {
-        if (client.world != null) {
-            AbstractClientPlayerEntity player = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(playerUuid);
+    private static String getPlayerName(Minecraft client, UUID playerUuid) {
+        if (client.level != null) {
+            AbstractClientPlayer player = (AbstractClientPlayer) client.level.getPlayerByUUID(playerUuid);
             if (player != null) return player.getName().getString();
         }
         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayer(client, playerUuid);
@@ -441,7 +442,7 @@ public class VisitNavigation {
 
         RoleVisit visit = StorytellerState.activeNightOrder.get(StorytellerState.currentNightVisitIndex);
         List<UUID> players = visit.players();
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
 
         if (players.isEmpty()) {
@@ -467,7 +468,7 @@ public class VisitNavigation {
         // For multiple players, don't auto-teleport - they need to click the teleport links
     }
 
-    private static void handleStaticActionTeleport(RoleVisit visit, MinecraftClient client) {
+    private static void handleStaticActionTeleport(RoleVisit visit, Minecraft client) {
         // Check time of day for Dusk/Dawn activation
         boolean isNightTime = ClientState.currentNight > ClientState.currentDay;
         boolean isDayTime = ClientState.currentNight == ClientState.currentDay;
@@ -475,9 +476,9 @@ public class VisitNavigation {
         if (visit.staticAction() == NightOrder.StaticAction.DUSK) {
             // Dusk can only be activated during the day
             if (isNightTime) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_only_day")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dusk_only_day")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
                 return;
@@ -495,9 +496,9 @@ public class VisitNavigation {
         } else if (visit.staticAction() == NightOrder.StaticAction.DAWN) {
             // Dawn can only be activated during the night
             if (isDayTime) {
-                client.player.sendMessage(
-                    Text.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_only_night")
-                        .formatted(Formatting.RED),
+                client.player.displayClientMessage(
+                    Component.translatable("hud.blood-on-the-blocktower.night_order.nav.dawn_only_night")
+                        .withStyle(ChatFormatting.RED),
                     true
                 );
                 return;
@@ -639,13 +640,13 @@ public class VisitNavigation {
      * Prepends a red "Tell them lies" line to the visit's helper info when the Vortox icon is on
      * the visit, since the storyteller sees the true info and must give the player a false one.
      */
-    private static Text withVortoxLine(RoleVisit visit, Text extraInfo) {
+    private static Component withVortoxLine(RoleVisit visit, Component extraInfo) {
         boolean vortoxOnVisit = visit.iconReminders() != null && visit.iconReminders().stream()
                 .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.VORTOX
                         && r.text().equals(Reminders.VORTOX_EFFECT));
         if (!vortoxOnVisit) return extraInfo;
         // Unstyled root so the helper info keeps its own colors instead of inheriting red
-        MutableText result = Text.empty().append(Text.translatable("hud.blood-on-the-blocktower.night_order.nav.tell_them_lies").formatted(Formatting.RED));
+        MutableComponent result = Component.empty().append(Component.translatable("hud.blood-on-the-blocktower.night_order.nav.tell_them_lies").withStyle(ChatFormatting.RED));
         return extraInfo == null ? result : result.append("\n").append(extraInfo);
     }
 }

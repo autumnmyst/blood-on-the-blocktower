@@ -4,10 +4,9 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.WorldSavePath;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.world.level.storage.LevelResource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -197,7 +196,7 @@ public class ServerConfig {
 
     /** Loads the starting server's world-scoped config, creating or migrating it as needed. */
     public static void load(MinecraftServer server) {
-        configFile = server.getSavePath(WorldSavePath.ROOT).resolve("botb_server.json");
+        configFile = server.getWorldPath(LevelResource.ROOT).resolve("botb_server.json");
         resetToDefaults();
 
         if (Files.exists(configFile)) {

@@ -5,16 +5,16 @@ import com.autumnwind.botb.config.WhisperSettingsManager;
 import com.autumnwind.botb.networking.WhisperEffectS2CPayload;
 import com.autumnwind.botb.voicechat.VoiceChatServerCompat;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.message.SignedMessage;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.PlayerChatMessage;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.MessageCommand;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.commands.MsgCommand;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -54,7 +54,7 @@ import java.util.UUID;
  * <p>Whispers from console / command blocks (where {@code source.getPlayer()} is null)
  * pass through untouched.
  */
-@Mixin(MessageCommand.class)
+@Mixin(MsgCommand.class)
 public class MessageCommandMixin {
 
     /** Pale lavender for connecting/narrator text, distinct from the bright magenta {@code LIGHT_PURPLE} prefix. */
@@ -63,35 +63,35 @@ public class MessageCommandMixin {
     /** Single Random for character shuffling + pitch jitter, purely cosmetic, so no need for ThreadLocal. */
     private static final Random RNG = new Random();
 
-    @Inject(method = "execute", at = @At("HEAD"), cancellable = true)
-    private static void botb_monitorWhisper(ServerCommandSource source,
-                                             Collection<ServerPlayerEntity> targets,
-                                             SignedMessage message,
+    @Inject(method = "sendMessage", at = @At("HEAD"), cancellable = true)
+    private static void botb_monitorWhisper(CommandSourceStack source,
+                                             Collection<ServerPlayer> targets,
+                                             PlayerChatMessage message,
                                              CallbackInfo ci) {
-        ServerPlayerEntity sender = source.getPlayer();
+        ServerPlayer sender = source.getPlayer();
         if (sender == null) return;
 
         MinecraftServer server = source.getServer();
         if (server == null) return;
 
-        boolean senderIsOp = sender.hasPermissionLevel(2);
+        boolean senderIsOp = sender.hasPermissions(2);
         WhisperSettings settings = WhisperSettingsManager.get();
 
         // Validate every non-op→non-op pair. First failure cancels the whole whisper.
         // See class doc for rationale.
-        for (ServerPlayerEntity target : targets) {
+        for (ServerPlayer target : targets) {
             if (target == null) continue;
-            if (target.getUuid().equals(sender.getUuid())) continue;
+            if (target.getUUID().equals(sender.getUUID())) continue;
 
-            boolean targetIsOp = target.hasPermissionLevel(2);
+            boolean targetIsOp = target.hasPermissions(2);
             if (senderIsOp || targetIsOp) continue;
 
-            Text denial = checkPlayerToPlayerWhisper(sender, target, settings);
+            Component denial = checkPlayerToPlayerWhisper(sender, target, settings);
             if (denial != null) {
                 // Always chat (false), never actionbar, since denial reasons are worth
                 // logging in the player's chat history rather than flashing past as
                 // a transient HUD popup.
-                sender.sendMessage(denial, false);
+                sender.displayClientMessage(denial, false);
                 ci.cancel();
                 return;
             }
@@ -100,9 +100,9 @@ public class MessageCommandMixin {
         // All checks passed, so vanilla will deliver next. Side effects (public notice,
         // visual/audio effect, op mirror) run for each delivered target.
         String senderName = sender.getName().getString();
-        for (ServerPlayerEntity target : targets) {
+        for (ServerPlayer target : targets) {
             if (target == null) continue;
-            if (target.getUuid().equals(sender.getUuid())) continue;
+            if (target.getUUID().equals(sender.getUUID())) continue;
             runWhisperSideEffects(server, sender, senderIsOp, senderName, target, message, settings);
         }
     }
@@ -111,31 +111,31 @@ public class MessageCommandMixin {
      * Returns null if the whisper should be delivered, or a player-facing reason
      * Text if it should be cancelled. Only called for non-op → non-op pairs.
      */
-    private static Text checkPlayerToPlayerWhisper(ServerPlayerEntity sender,
-                                                     ServerPlayerEntity target,
+    private static Component checkPlayerToPlayerWhisper(ServerPlayer sender,
+                                                     ServerPlayer target,
                                                      WhisperSettings settings) {
         if (!settings.allowWhispering()) {
-            return Text.translatable("message.blood-on-the-blocktower.whisper.only_storyteller").formatted(Formatting.RED);
+            return Component.translatable("message.blood-on-the-blocktower.whisper.only_storyteller").withStyle(ChatFormatting.RED);
         }
 
-        Text tooFarAway = Text.translatable("message.blood-on-the-blocktower.whisper.too_far_away", target.getName().getString())
-                .formatted(Formatting.RED);
+        Component tooFarAway = Component.translatable("message.blood-on-the-blocktower.whisper.too_far_away", target.getName().getString())
+                .withStyle(ChatFormatting.RED);
 
         if (settings.vcEnforced() && !sameVoiceChatGroupState(sender, target)) {
             return tooFarAway;
         }
 
         if (!settings.rangeUnlimited()) {
-            ServerWorld senderWorld = sender.getServerWorld();
-            ServerWorld targetWorld = target.getServerWorld();
+            ServerLevel senderWorld = sender.serverLevel();
+            ServerLevel targetWorld = target.serverLevel();
             // With a finite range set, cross-dimension whispers are blocked even if the
             // straight-line distance would be in range, since different worlds aren't audible
             // from one another.
             if (senderWorld == null || targetWorld == null
-                    || !senderWorld.getRegistryKey().equals(targetWorld.getRegistryKey())) {
+                    || !senderWorld.dimension().equals(targetWorld.dimension())) {
                 return tooFarAway;
             }
-            double distSq = sender.squaredDistanceTo(target);
+            double distSq = sender.distanceToSqr(target);
             double rangeSq = settings.range() * settings.range();
             if (distSq > rangeSq) {
                 return tooFarAway;
@@ -159,9 +159,9 @@ public class MessageCommandMixin {
      * <p>Range restrictions still apply on top of this, and being ungrouped doesn't grant
      * unlimited whisper range when one is set.
      */
-    private static boolean sameVoiceChatGroupState(ServerPlayerEntity a, ServerPlayerEntity b) {
-        UUID ga = VoiceChatServerCompat.getGroupId(a.getUuid());
-        UUID gb = VoiceChatServerCompat.getGroupId(b.getUuid());
+    private static boolean sameVoiceChatGroupState(ServerPlayer a, ServerPlayer b) {
+        UUID ga = VoiceChatServerCompat.getGroupId(a.getUUID());
+        UUID gb = VoiceChatServerCompat.getGroupId(b.getUUID());
         if (ga == null && gb == null) return true;
         if (ga == null || gb == null) return false;
         return ga.equals(gb);
@@ -179,8 +179,8 @@ public class MessageCommandMixin {
      * the same group state. So the only listeners who can fail are <em>third-party
      * onlookers</em>.
      */
-    private static boolean audioEligibleForListener(ServerPlayerEntity listener,
-                                                      ServerPlayerEntity sender,
+    private static boolean audioEligibleForListener(ServerPlayer listener,
+                                                      ServerPlayer sender,
                                                       WhisperSettings settings) {
         if (settings.vcEnforced() && !sameVoiceChatGroupState(listener, sender)) {
             return false;
@@ -194,25 +194,25 @@ public class MessageCommandMixin {
      * the gating layer has cleared the whisper for delivery.
      */
     private static void runWhisperSideEffects(MinecraftServer server,
-                                                ServerPlayerEntity sender,
+                                                ServerPlayer sender,
                                                 boolean senderIsOp,
                                                 String senderName,
-                                                ServerPlayerEntity target,
-                                                SignedMessage message,
+                                                ServerPlayer target,
+                                                PlayerChatMessage message,
                                                 WhisperSettings settings) {
-        boolean targetIsOp = target.hasPermissionLevel(2);
+        boolean targetIsOp = target.hasPermissions(2);
         String targetName = target.getName().getString();
 
         // Public notice only when both parties are non-operators AND broadcast is on.
         // Whispers involving an operator (storyteller↔player or op↔op) don't get
         // announced publicly, since those are normal storyteller communication channels.
         if (!senderIsOp && !targetIsOp && settings.broadcast()) {
-            MutableText publicMsg = Text.translatable("message.blood-on-the-blocktower.whisper.is_whispering_to",
-                            Text.literal(senderName).styled(s -> s.withColor(Formatting.YELLOW).withItalic(false)),
-                            Text.literal(targetName).styled(s -> s.withColor(Formatting.YELLOW).withItalic(false)))
-                    .styled(s -> s.withColor(PALE_PURPLE).withItalic(true));
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-                p.sendMessage(publicMsg, false);
+            MutableComponent publicMsg = Component.translatable("message.blood-on-the-blocktower.whisper.is_whispering_to",
+                            Component.literal(senderName).withStyle(s -> s.withColor(ChatFormatting.YELLOW).withItalic(false)),
+                            Component.literal(targetName).withStyle(s -> s.withColor(ChatFormatting.YELLOW).withItalic(false)))
+                    .withStyle(s -> s.withColor(PALE_PURPLE).withItalic(true));
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                p.displayClientMessage(publicMsg, false);
             }
         }
 
@@ -231,11 +231,11 @@ public class MessageCommandMixin {
             // gated per-recipient by the VC-group rule, and physical distance is left
             // to vanilla's spatial attenuation, so a player too far away to hear
             // the source naturally hears nothing without us doing range math.
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 boolean audioForP = audioOn && audioEligibleForListener(p, sender, settings);
                 WhisperEffectS2CPayload effect = new WhisperEffectS2CPayload(
-                        sender.getUuid(),
-                        target.getUuid(),
+                        sender.getUUID(),
+                        target.getUUID(),
                         visualOrd,
                         audioForP,
                         pitch
@@ -248,18 +248,18 @@ public class MessageCommandMixin {
         // sender or recipient (they already have the message via vanilla whisper
         // delivery). Bright yellow names, gray connectors, content unstyled so it
         // reads as the actual whisper.
-        MutableText opMsg = Text.empty()
-                .append(Text.translatable("message.blood-on-the-blocktower.whisper.op_prefix").formatted(Formatting.LIGHT_PURPLE))
-                .append(Text.literal(senderName).formatted(Formatting.YELLOW))
-                .append(Text.literal(" → ").formatted(Formatting.GRAY))
-                .append(Text.literal(targetName).formatted(Formatting.YELLOW))
-                .append(Text.literal(": ").formatted(Formatting.GRAY))
-                .append(message.getContent().copy());
-        for (ServerPlayerEntity op : server.getPlayerManager().getPlayerList()) {
-            if (!op.hasPermissionLevel(2)) continue;
-            if (op.getUuid().equals(sender.getUuid())) continue;
-            if (op.getUuid().equals(target.getUuid())) continue;
-            op.sendMessage(opMsg, false);
+        MutableComponent opMsg = Component.empty()
+                .append(Component.translatable("message.blood-on-the-blocktower.whisper.op_prefix").withStyle(ChatFormatting.LIGHT_PURPLE))
+                .append(Component.literal(senderName).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(" → ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(targetName).withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                .append(message.decoratedContent().copy());
+        for (ServerPlayer op : server.getPlayerList().getPlayers()) {
+            if (!op.hasPermissions(2)) continue;
+            if (op.getUUID().equals(sender.getUUID())) continue;
+            if (op.getUUID().equals(target.getUUID())) continue;
+            op.displayClientMessage(opMsg, false);
         }
     }
 

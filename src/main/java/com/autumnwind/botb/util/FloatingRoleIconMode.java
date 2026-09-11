@@ -1,6 +1,6 @@
 package com.autumnwind.botb.util;
 
-import net.minecraft.util.Language;
+import net.minecraft.locale.Language;
 
 public enum FloatingRoleIconMode {
     OFF,
@@ -16,7 +16,7 @@ public enum FloatingRoleIconMode {
     }
 
     public String displayName() {
-        return Language.getInstance().get(switch (this) {
+        return Language.getInstance().getOrDefault(switch (this) {
             case OFF -> "gui.blood-on-the-blocktower.settings.off";
             case ALWAYS -> "gui.blood-on-the-blocktower.settings.role_icons.always";
             case AFTER_END -> "gui.blood-on-the-blocktower.settings.role_icons.game_end";

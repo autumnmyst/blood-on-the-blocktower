@@ -7,8 +7,8 @@ import com.autumnwind.botb.util.Reminder;
 import com.autumnwind.botb.world.TeamManager;
 import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffects;
 
 /** Server-bound packet handlers: Ending the game and the final reveal. */
 final class GameEndHandlers {
@@ -17,7 +17,7 @@ final class GameEndHandlers {
 
     static void register() {
         ModPackets.registerGuarded(EndGameC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 boolean goodWins = payload.goodWins();
 
                 // Get grimoire data from storyteller's payload (true roles, not fake drunk roles)
@@ -27,7 +27,7 @@ final class GameEndHandlers {
                 List<String> demonBluffs = payload.demonBluffs();
 
                 // Send grimoire data and animation to ALL players FIRST (including storyteller and observers)
-                for (ServerPlayerEntity player : context.server().getPlayerManager().getPlayerList()) {
+                for (ServerPlayer player : context.server().getPlayerList().getPlayers()) {
                     // Send grimoire data (full grimoire with true roles)
                     // NOTE: This only updates StorytellerState for animation display, NOT ClientState
                     // isTargetedSend = false because this is a broadcast to all players
@@ -47,9 +47,9 @@ final class GameEndHandlers {
                 // Dead players stop being invisible so everyone can see who died, while their
                 // death status stays. The respawn handler checks this flag before re-applying.
                 ServerState.gameEnded = true;
-                for (ServerPlayerEntity online : context.server().getPlayerManager().getPlayerList()) {
-                    if (ServerState.PLAYER_DEATH_STATUS.getOrDefault(online.getUuid(), false)) {
-                        online.removeStatusEffect(StatusEffects.INVISIBILITY);
+                for (ServerPlayer online : context.server().getPlayerList().getPlayers()) {
+                    if (ServerState.PLAYER_DEATH_STATUS.getOrDefault(online.getUUID(), false)) {
+                        online.removeEffect(MobEffects.INVISIBILITY);
                     }
                 }
 
@@ -76,7 +76,7 @@ final class GameEndHandlers {
                             // Send actual roles to each player (reveals Drunk, Marionette, Lunatic, Ogre, etc.)
                             // Use silent = true to prevent role receive sound during game end
                             allRoles.forEach((uuid, assignment) -> {
-                                ServerPlayerEntity player = context.server().getPlayerManager().getPlayer(uuid);
+                                ServerPlayer player = context.server().getPlayerList().getPlayer(uuid);
                                 if (player != null) {
                                     ServerPlayNetworking.send(player, SendRoleS2CPayload.ofAssignment(assignment, activePlayerCount, travelerCount, true));
                                 }

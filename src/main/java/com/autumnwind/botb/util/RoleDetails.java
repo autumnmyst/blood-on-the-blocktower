@@ -1,9 +1,8 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.util.Language;
-
 import java.util.Map;
+import net.minecraft.locale.Language;
 
 /** Almanac text per role. The text is in the lang file, only the icon artist is kept here. */
 public class RoleDetails {
@@ -23,7 +22,7 @@ public class RoleDetails {
         }
 
         private String text(String part) {
-            return Language.getInstance().get("role." + BloodOnTheBlocktower.MOD_ID + "." + role.getId() + "." + part);
+            return Language.getInstance().getOrDefault("role." + BloodOnTheBlocktower.MOD_ID + "." + role.getId() + "." + part);
         }
     }
 

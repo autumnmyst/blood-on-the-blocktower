@@ -22,10 +22,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.HitResult;
 import com.autumnwind.botb.config.CustomRoleLibrary;
 import com.autumnwind.botb.config.GrimoirePersistence;
 import com.autumnwind.botb.config.RandomBanList;
@@ -35,7 +36,6 @@ import com.autumnwind.botb.hud.WhisperEffectManager;
 import com.autumnwind.botb.networking.RequestScriptC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
-import net.minecraft.util.hit.HitResult;
 
 public class BloodOnTheBlocktowerClient implements ClientModInitializer {
     @Override
@@ -73,7 +73,7 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
         RandomBanList.load();
 
         HudRenderCallback.EVENT.register((drawContext, tickDelta) -> {
-            MinecraftClient client = MinecraftClient.getInstance();
+            Minecraft client = Minecraft.getInstance();
             if (client.player == null) {
                 return;
             }
@@ -82,12 +82,12 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
             VoiceChatSidebar.render(drawContext, client);
 
             // Render Quick Role View if key is held down
-            if (KeyInputHandler.quickRoleViewKey.isPressed()) {
+            if (KeyInputHandler.quickRoleViewKey.isDown()) {
                 AssignRolesQuickHUD.render(drawContext, client);
                 return; // Skip other HUD rendering when quick view is active
             }
 
-            if (ClientState.isNightHudVisible && client.player.hasPermissionLevel(2)) {
+            if (ClientState.isNightHudVisible && client.player.hasPermissions(2)) {
                 NightOrderHudManager.render(drawContext, client);
             }
 
@@ -134,46 +134,46 @@ public class BloodOnTheBlocktowerClient implements ClientModInitializer {
         // reach the server, so the client turns it into the skip command. Block clicks go through
         // the server-side attack callback instead.
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
-            if (!player.getMainHandStack().isOf(ModItems.SETUP_STICK)) return false;
-            if (client.crosshairTarget == null || client.crosshairTarget.getType() != HitResult.Type.MISS) return false;
-            if (player.isSneaking() && clickCount != 0) { // a click, not a held button
-                player.networkHandler.sendCommand("botb setup skip");
+            if (!player.getMainHandItem().is(ModItems.SETUP_STICK)) return false;
+            if (client.hitResult == null || client.hitResult.getType() != HitResult.Type.MISS) return false;
+            if (player.isShiftKeyDown() && clickCount != 0) { // a click, not a held button
+                player.connection.sendCommand("botb setup skip");
             }
             return true; // never treat a stick swing at the air as an attack
         });
 
         // Register item use callback for Script and Grimoire items
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            if (!world.isClient()) {
-                return TypedActionResult.pass(ItemStack.EMPTY);
+            if (!world.isClientSide()) {
+                return InteractionResultHolder.pass(ItemStack.EMPTY);
             }
 
-            var stack = player.getStackInHand(hand);
+            var stack = player.getItemInHand(hand);
             if (stack.isEmpty()) {
-                return TypedActionResult.pass(ItemStack.EMPTY);
+                return InteractionResultHolder.pass(ItemStack.EMPTY);
             }
 
-            MinecraftClient client = MinecraftClient.getInstance();
+            Minecraft client = Minecraft.getInstance();
 
             // Script item opens Script Reference screen (only if a script is assigned)
-            if (stack.isOf(ModItems.SCRIPT)) {
+            if (stack.is(ModItems.SCRIPT)) {
                 // Check if a script is assigned
                 if (ClientState.currentScript == null) {
                     // Show overlay message that no script is assigned
-                    client.inGameHud.setOverlayMessage(Text.translatable("message.blood-on-the-blocktower.client.no_script_assigned_overlay"), false);
-                    return TypedActionResult.success(stack);
+                    client.gui.setOverlayMessage(Component.translatable("message.blood-on-the-blocktower.client.no_script_assigned_overlay"), false);
+                    return InteractionResultHolder.success(stack);
                 }
-                client.send(() -> client.setScreen(new ScriptReferenceScreen(Text.translatable("message.blood-on-the-blocktower.client.title_script_reference"))));
-                return TypedActionResult.success(stack);
+                client.tell(() -> client.setScreen(new ScriptReferenceScreen(Component.translatable("message.blood-on-the-blocktower.client.title_script_reference"))));
+                return InteractionResultHolder.success(stack);
             }
 
             // Grimoire item opens Assign Roles screen
-            if (stack.isOf(ModItems.GRIMOIRE)) {
-                client.send(() -> client.setScreen(new AssignRolesScreen(Text.translatable("message.blood-on-the-blocktower.client.title_grimoire"))));
-                return TypedActionResult.success(stack);
+            if (stack.is(ModItems.GRIMOIRE)) {
+                client.tell(() -> client.setScreen(new AssignRolesScreen(Component.translatable("message.blood-on-the-blocktower.client.title_grimoire"))));
+                return InteractionResultHolder.success(stack);
             }
 
-            return TypedActionResult.pass(stack);
+            return InteractionResultHolder.pass(stack);
         });
     }
 }

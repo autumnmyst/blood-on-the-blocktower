@@ -10,7 +10,7 @@ import com.autumnwind.botb.util.RoleType;
 import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 /** Works out each player's madnesses from the grimoire and sends them their own. */
 public final class MadnessSync {
@@ -31,7 +31,7 @@ public final class MadnessSync {
             UUID playerUuid = entry.getKey();
             List<Madness> madnesses = entry.getValue();
 
-            ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+            ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
             if (player != null) {
                 // Filter out Mutant madness (not sent to players)
                 List<Madness> filteredMadnesses = madnesses.stream()
@@ -43,8 +43,8 @@ public final class MadnessSync {
         }
 
         // Send empty madness list to players who don't have any madnesses
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            if (!playerMadnesses.containsKey(player.getUuid())) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (!playerMadnesses.containsKey(player.getUUID())) {
                 ServerPlayNetworking.send(player, new SendMadnessS2CPayload(Collections.emptyList()));
             }
         }
@@ -55,7 +55,7 @@ public final class MadnessSync {
                                              UUID targetPlayer,
                                              Map<UUID, List<Reminder>> remindersMap,
                                              Map<UUID, PendingRoleAssignment> pendingRoles) {
-        ServerPlayerEntity player = server.getPlayerManager().getPlayer(targetPlayer);
+        ServerPlayer player = server.getPlayerList().getPlayer(targetPlayer);
         if (player == null) {
             return;
         }

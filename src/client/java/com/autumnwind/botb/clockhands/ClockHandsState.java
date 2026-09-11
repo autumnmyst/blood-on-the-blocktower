@@ -2,12 +2,11 @@ package com.autumnwind.botb.clockhands;
 
 import com.autumnwind.botb.networking.ClockHandsStateS2CPayload;
 import com.autumnwind.botb.states.ClientState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
 import java.util.UUID;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Client-side state manager for clock hands animations.
@@ -57,8 +56,8 @@ public class ClockHandsState {
         int newMode = payload.mode();
         BlockPos newClockCenter = payload.clockCenter();
         float newScale = payload.scale();
-        Vec3d hourTargetPos = payload.hourHandTargetPos();
-        Vec3d minuteTargetPos = payload.minuteHandTargetPos();
+        Vec3 hourTargetPos = payload.hourHandTargetPos();
+        Vec3 minuteTargetPos = payload.minuteHandTargetPos();
         boolean shouldFadeIn = payload.fadeIn();
         boolean shouldSwivel = payload.swivel();
 
@@ -279,8 +278,8 @@ public class ClockHandsState {
      * Called each tick during NOMINATION or EXILE mode to track moving players.
      */
     private static void updateTargetAnglesFromPlayers() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null) return;
 
         double centerX = clockCenter.getX() + 0.5;
         double centerZ = clockCenter.getZ() + 0.5;
@@ -291,7 +290,7 @@ public class ClockHandsState {
             if (!ClientState.exileSupportInProgress) {
                 UUID exileTargetUuid = ClientState.currentExileTarget;
                 if (exileTargetUuid != null && minuteHandVisible) {
-                    AbstractClientPlayerEntity target = findPlayerByUuid(client, exileTargetUuid);
+                    AbstractClientPlayer target = findPlayerByUuid(client, exileTargetUuid);
                     if (target != null) {
                         minuteHandTargetAngle = ClockHandsAnimator.calculateAngle(centerX, centerZ,
                                 target.getX(), target.getZ());
@@ -302,7 +301,7 @@ public class ClockHandsState {
             // For nomination: track nominator (hour hand) and nominee (minute hand)
             UUID nominatorUuid = ClientState.currentNominator;
             if (nominatorUuid != null && hourHandVisible) {
-                AbstractClientPlayerEntity nominator = findPlayerByUuid(client, nominatorUuid);
+                AbstractClientPlayer nominator = findPlayerByUuid(client, nominatorUuid);
                 if (nominator != null) {
                     hourHandTargetAngle = ClockHandsAnimator.calculateAngle(centerX, centerZ,
                             nominator.getX(), nominator.getZ());
@@ -311,7 +310,7 @@ public class ClockHandsState {
 
             UUID nomineeUuid = ClientState.currentNominee;
             if (nomineeUuid != null && minuteHandVisible) {
-                AbstractClientPlayerEntity nominee = findPlayerByUuid(client, nomineeUuid);
+                AbstractClientPlayer nominee = findPlayerByUuid(client, nomineeUuid);
                 if (nominee != null) {
                     minuteHandTargetAngle = ClockHandsAnimator.calculateAngle(centerX, centerZ,
                             nominee.getX(), nominee.getZ());
@@ -323,10 +322,10 @@ public class ClockHandsState {
     /**
      * Finds a player entity by UUID in the client world.
      */
-    private static AbstractClientPlayerEntity findPlayerByUuid(MinecraftClient client, UUID uuid) {
-        if (client.world == null) return null;
-        for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
-            if (player.getUuid().equals(uuid)) {
+    private static AbstractClientPlayer findPlayerByUuid(Minecraft client, UUID uuid) {
+        if (client.level == null) return null;
+        for (AbstractClientPlayer player : client.level.players()) {
+            if (player.getUUID().equals(uuid)) {
                 return player;
             }
         }

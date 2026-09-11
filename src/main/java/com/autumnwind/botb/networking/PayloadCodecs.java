@@ -3,16 +3,15 @@ package com.autumnwind.botb.networking;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Reminder;
 import com.autumnwind.botb.util.Role;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.Uuids;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 /**
  * Shared packet codecs for networking payloads.
@@ -33,10 +32,10 @@ public final class PayloadCodecs {
      */
     private static final int MAX_ENTRIES = 1024;
 
-    public static final PacketCodec<RegistryByteBuf, Map<UUID, PendingRoleAssignment>> ROLE_MAP_CODEC =
-            PacketCodecs.map(
+    public static final StreamCodec<RegistryFriendlyByteBuf, Map<UUID, PendingRoleAssignment>> ROLE_MAP_CODEC =
+            ByteBufCodecs.map(
                     HashMap::new,
-                    Uuids.PACKET_CODEC,
+                    UUIDUtil.STREAM_CODEC,
                     PendingRoleAssignment.PACKET_CODEC,
                     MAX_ENTRIES
             );
@@ -44,38 +43,38 @@ public final class PayloadCodecs {
     /**
      * Codec for Map<UUID, Integer> - used for seat numbers
      */
-    public static final PacketCodec<RegistryByteBuf, Map<UUID, Integer>> SEAT_MAP_CODEC =
-            PacketCodecs.map(
+    public static final StreamCodec<RegistryFriendlyByteBuf, Map<UUID, Integer>> SEAT_MAP_CODEC =
+            ByteBufCodecs.map(
                     HashMap::new,
-                    Uuids.PACKET_CODEC,
-                    PacketCodecs.VAR_INT,
+                    UUIDUtil.STREAM_CODEC,
+                    ByteBufCodecs.VAR_INT,
                     MAX_ENTRIES
             );
 
     /**
      * Codec for Map<UUID, Boolean> - used for death status
      */
-    public static final PacketCodec<RegistryByteBuf, Map<UUID, Boolean>> DEATH_MAP_CODEC =
-            PacketCodecs.map(
+    public static final StreamCodec<RegistryFriendlyByteBuf, Map<UUID, Boolean>> DEATH_MAP_CODEC =
+            ByteBufCodecs.map(
                     HashMap::new,
-                    Uuids.PACKET_CODEC,
-                    PacketCodecs.BOOL,
+                    UUIDUtil.STREAM_CODEC,
+                    ByteBufCodecs.BOOL,
                     MAX_ENTRIES
             );
 
     /**
      * Codec for List<Reminder> - used as part of reminder maps
      */
-    public static final PacketCodec<RegistryByteBuf, List<Reminder>> REMINDER_LIST_CODEC =
-            Reminder.PACKET_CODEC.collect(PacketCodecs.toList(MAX_ENTRIES));
+    public static final StreamCodec<RegistryFriendlyByteBuf, List<Reminder>> REMINDER_LIST_CODEC =
+            Reminder.PACKET_CODEC.apply(ByteBufCodecs.list(MAX_ENTRIES));
 
     /**
      * Codec for Map<UUID, List<Reminder>> - used for player reminders
      */
-    public static final PacketCodec<RegistryByteBuf, Map<UUID, List<Reminder>>> REMINDER_MAP_CODEC =
-            PacketCodecs.map(
+    public static final StreamCodec<RegistryFriendlyByteBuf, Map<UUID, List<Reminder>>> REMINDER_MAP_CODEC =
+            ByteBufCodecs.map(
                     HashMap::new,
-                    Uuids.PACKET_CODEC,
+                    UUIDUtil.STREAM_CODEC,
                     REMINDER_LIST_CODEC,
                     MAX_ENTRIES
             );
@@ -98,14 +97,14 @@ public final class PayloadCodecs {
      *               - "custom:id" = custom role with given ID
      *               - anything else = official role name
      */
-    public static void encodeBluffs(RegistryByteBuf buf, List<String> bluffs) {
+    public static void encodeBluffs(RegistryFriendlyByteBuf buf, List<String> bluffs) {
         buf.writeVarInt(bluffs.size());
         for (String bluff : bluffs) {
             if (bluff == null || bluff.isEmpty()) {
                 buf.writeByte(BLUFF_EMPTY);
             } else if (bluff.startsWith("custom:")) {
                 buf.writeByte(BLUFF_CUSTOM);
-                PacketCodecs.STRING.encode(buf, bluff.substring(7)); // Strip "custom:" prefix
+                ByteBufCodecs.STRING_UTF8.encode(buf, bluff.substring(7)); // Strip "custom:" prefix
             } else {
                 buf.writeByte(BLUFF_OFFICIAL);
                 // Find the role by name and write its ordinal
@@ -132,7 +131,7 @@ public final class PayloadCodecs {
     /** A demon gets three bluffs; the cap only stops a crafted count from pre-sizing a huge list. */
     private static final int MAX_BLUFFS = 16;
 
-    public static List<String> decodeBluffs(RegistryByteBuf buf) {
+    public static List<String> decodeBluffs(RegistryFriendlyByteBuf buf) {
         int count = buf.readVarInt();
         if (count < 0 || count > MAX_BLUFFS) {
             throw new io.netty.handler.codec.DecoderException("Bluff count out of range: " + count);
@@ -149,7 +148,7 @@ public final class PayloadCodecs {
                     bluffs.add(role == Role.NO_ROLE ? "" : role.name());
                 }
                 case BLUFF_CUSTOM -> {
-                    String customId = PacketCodecs.STRING.decode(buf);
+                    String customId = ByteBufCodecs.STRING_UTF8.decode(buf);
                     bluffs.add("custom:" + customId);
                 }
                 default -> bluffs.add(""); // Unknown type, treat as empty

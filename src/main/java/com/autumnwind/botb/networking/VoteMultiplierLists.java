@@ -1,12 +1,11 @@
 package com.autumnwind.botb.networking;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.Uuids;
-
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 /**
  * Reminder-based vote multiplier lists sent from client to server.
@@ -21,10 +20,10 @@ public record VoteMultiplierLists(List<UUID> ugHatPlayers,
                                    List<UUID> bureaucrat3VotePlayers,
                                    List<UUID> thiefNegativeVotePlayers) {
 
-    public static final PacketCodec<RegistryByteBuf, VoteMultiplierLists> CODEC = PacketCodec.tuple(
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), VoteMultiplierLists::ugHatPlayers,
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), VoteMultiplierLists::bureaucrat3VotePlayers,
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), VoteMultiplierLists::thiefNegativeVotePlayers,
+    public static final StreamCodec<RegistryFriendlyByteBuf, VoteMultiplierLists> CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), VoteMultiplierLists::ugHatPlayers,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), VoteMultiplierLists::bureaucrat3VotePlayers,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), VoteMultiplierLists::thiefNegativeVotePlayers,
             VoteMultiplierLists::new
     );
 

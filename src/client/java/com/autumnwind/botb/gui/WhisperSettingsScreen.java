@@ -4,16 +4,16 @@ import com.autumnwind.botb.config.WhisperSettings;
 import com.autumnwind.botb.networking.UpdateWhisperSettingsC2SPayload;
 import com.autumnwind.botb.states.ClientWhisperSettings;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.screen.narration.NarrationPart;
-import net.minecraft.client.gui.widget.PressableWidget;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractButton;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 /**
  * Whisper rules editor (storyteller) and viewer (player). Same screen used in both
@@ -50,10 +50,10 @@ public class WhisperSettingsScreen extends Screen {
     private String rangeText;
     private boolean vcEnforced;
 
-    private TextFieldWidget rangeField;
+    private EditBox rangeField;
 
     public WhisperSettingsScreen(Screen parent, boolean editable) {
-        super(Text.translatable(editable
+        super(Component.translatable(editable
                 ? "gui.blood-on-the-blocktower.whisper_settings.title"
                 : "gui.blood-on-the-blocktower.whisper_settings.title_view"));
         this.parent = parent;
@@ -85,7 +85,7 @@ public class WhisperSettingsScreen extends Screen {
             this.rangeText = settings.rangeUnlimited() ? "" : trimDouble(settings.range());
             this.vcEnforced = settings.vcEnforced();
             // Re-init to refresh button labels.
-            if (this.client != null) this.client.setScreen(this);
+            if (this.minecraft != null) this.minecraft.setScreen(this);
         }
     }
 
@@ -108,89 +108,89 @@ public class WhisperSettingsScreen extends Screen {
         int y = 40;
 
         // 1. Allow whispering
-        addRow(y, leftX, controlX, controlW, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.allow_whispering"),
-                onOff(allow).formatted(allow ? Formatting.GREEN : Formatting.RED),
+        addRow(y, leftX, controlX, controlW, Component.translatable("gui.blood-on-the-blocktower.whisper_settings.allow_whispering"),
+                onOff(allow).withStyle(allow ? ChatFormatting.GREEN : ChatFormatting.RED),
                 editable, b -> { allow = !allow; refresh(); });
         y += rowH;
 
         // 2. Broadcast
-        addRow(y, leftX, controlX, controlW, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.broadcast_whispers"),
-                onOff(broadcast).formatted(broadcast ? Formatting.GREEN : Formatting.RED),
+        addRow(y, leftX, controlX, controlW, Component.translatable("gui.blood-on-the-blocktower.whisper_settings.broadcast_whispers"),
+                onOff(broadcast).withStyle(broadcast ? ChatFormatting.GREEN : ChatFormatting.RED),
                 editable, b -> { broadcast = !broadcast; refresh(); });
         y += rowH;
 
         // 3. Visual
-        addRow(y, leftX, controlX, controlW, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.visual_effect"),
-                Text.translatable(visual.translationKey()).formatted(colorFor(visual)),
+        addRow(y, leftX, controlX, controlW, Component.translatable("gui.blood-on-the-blocktower.whisper_settings.visual_effect"),
+                Component.translatable(visual.translationKey()).withStyle(colorFor(visual)),
                 editable, b -> { visual = visual.cycle(); refresh(); });
         y += rowH;
 
         // 4. Audio
-        addRow(y, leftX, controlX, controlW, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.audio_cue"),
-                onOff(audio).formatted(audio ? Formatting.GREEN : Formatting.RED),
+        addRow(y, leftX, controlX, controlW, Component.translatable("gui.blood-on-the-blocktower.whisper_settings.audio_cue"),
+                onOff(audio).withStyle(audio ? ChatFormatting.GREEN : ChatFormatting.RED),
                 editable, b -> { audio = !audio; refresh(); });
         y += rowH;
 
         // 5. Range, a text field with placeholder. Empty → unlimited.
-        this.addDrawableChild(new LabelWidget(leftX, y, labelW, rowH - 2, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.whisper_range")));
-        rangeField = new TextFieldWidget(this.textRenderer, controlX, y, controlW, rowH - 2,
-                Text.literal(""));
+        this.addRenderableWidget(new LabelWidget(leftX, y, labelW, rowH - 2, Component.translatable("gui.blood-on-the-blocktower.whisper_settings.whisper_range")));
+        rangeField = new EditBox(this.font, controlX, y, controlW, rowH - 2,
+                Component.literal(""));
         rangeField.setMaxLength(10);
-        rangeField.setText(rangeText);
-        rangeField.setPlaceholder(Text.translatable("gui.blood-on-the-blocktower.whisper_settings.range_unlimited").formatted(Formatting.DARK_GRAY));
+        rangeField.setValue(rangeText);
+        rangeField.setHint(Component.translatable("gui.blood-on-the-blocktower.whisper_settings.range_unlimited").withStyle(ChatFormatting.DARK_GRAY));
         rangeField.setEditable(editable);
-        rangeField.setChangedListener(v -> rangeText = v);
-        this.addDrawableChild(rangeField);
+        rangeField.setResponder(v -> rangeText = v);
+        this.addRenderableWidget(rangeField);
         y += rowH;
 
         // 6. VC enforced
-        addRow(y, leftX, controlX, controlW, Text.translatable("gui.blood-on-the-blocktower.whisper_settings.vc_enforced"),
-                onOff(vcEnforced).formatted(vcEnforced ? Formatting.GREEN : Formatting.RED),
+        addRow(y, leftX, controlX, controlW, Component.translatable("gui.blood-on-the-blocktower.whisper_settings.vc_enforced"),
+                onOff(vcEnforced).withStyle(vcEnforced ? ChatFormatting.GREEN : ChatFormatting.RED),
                 editable, b -> { vcEnforced = !vcEnforced; refresh(); });
         y += rowH + 8;
 
         // Bottom: Save (storyteller) + Cancel/Back
         int bottomY = this.height - 30;
         if (editable) {
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.translatable("gui.blood-on-the-blocktower.whisper_settings.save").formatted(Formatting.GREEN),
+            this.addRenderableWidget(Button.builder(
+                    Component.translatable("gui.blood-on-the-blocktower.whisper_settings.save").withStyle(ChatFormatting.GREEN),
                     b -> save()
-            ).dimensions(this.width / 2 - 65, bottomY, 60, 20).build());
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.translatable("gui.blood-on-the-blocktower.whisper_settings.cancel").formatted(Formatting.YELLOW),
-                    b -> close()
-            ).dimensions(this.width / 2 + 5, bottomY, 60, 20).build());
+            ).bounds(this.width / 2 - 65, bottomY, 60, 20).build());
+            this.addRenderableWidget(Button.builder(
+                    Component.translatable("gui.blood-on-the-blocktower.whisper_settings.cancel").withStyle(ChatFormatting.YELLOW),
+                    b -> onClose()
+            ).bounds(this.width / 2 + 5, bottomY, 60, 20).build());
         } else {
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.translatable("gui.blood-on-the-blocktower.whisper_settings.back").formatted(Formatting.YELLOW),
-                    b -> close()
-            ).dimensions(this.width / 2 - 30, bottomY, 60, 20).build());
+            this.addRenderableWidget(Button.builder(
+                    Component.translatable("gui.blood-on-the-blocktower.whisper_settings.back").withStyle(ChatFormatting.YELLOW),
+                    b -> onClose()
+            ).bounds(this.width / 2 - 30, bottomY, 60, 20).build());
         }
     }
 
     private void refresh() {
-        if (this.client != null) this.client.setScreen(this);
+        if (this.minecraft != null) this.minecraft.setScreen(this);
     }
 
-    private static MutableText onOff(boolean on) {
-        return Text.translatable(on
+    private static MutableComponent onOff(boolean on) {
+        return Component.translatable(on
                 ? "gui.blood-on-the-blocktower.whisper_settings.on"
                 : "gui.blood-on-the-blocktower.whisper_settings.off");
     }
 
     private void addRow(int y, int leftX, int controlX, int controlW,
-                         Text labelText, Text valueText,
-                         boolean enabled, ButtonWidget.PressAction onPress) {
-        this.addDrawableChild(new LabelWidget(leftX, y, controlX - leftX - 4, 18, labelText));
-        ButtonWidget btn = ButtonWidget.builder(valueText, onPress)
-                .dimensions(controlX, y, controlW, 18)
+                         Component labelText, Component valueText,
+                         boolean enabled, Button.OnPress onPress) {
+        this.addRenderableWidget(new LabelWidget(leftX, y, controlX - leftX - 4, 18, labelText));
+        Button btn = Button.builder(valueText, onPress)
+                .bounds(controlX, y, controlW, 18)
                 .build();
         btn.active = enabled;
-        this.addDrawableChild(btn);
+        this.addRenderableWidget(btn);
     }
 
-    private static Formatting colorFor(WhisperSettings.VisualMode m) {
-        return m == WhisperSettings.VisualMode.OFF ? Formatting.RED : Formatting.GREEN;
+    private static ChatFormatting colorFor(WhisperSettings.VisualMode m) {
+        return m == WhisperSettings.VisualMode.OFF ? ChatFormatting.RED : ChatFormatting.GREEN;
     }
 
     private void save() {
@@ -212,22 +212,22 @@ public class WhisperSettingsScreen extends Screen {
         ClientPlayNetworking.send(new UpdateWhisperSettingsC2SPayload(updated));
         // Server will broadcast a sync, so close immediately so the user sees the parent
         // screen rather than waiting for the round-trip.
-        close();
+        onClose();
     }
 
     @Override
-    public void close() {
-        if (this.client != null) this.client.setScreen(parent);
+    public void onClose() {
+        if (this.minecraft != null) this.minecraft.setScreen(parent);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 12, 0xFFFFFF);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 12, 0xFFFFFF);
         if (!editable) {
-            context.drawCenteredTextWithShadow(
-                    this.textRenderer,
-                    Text.translatable("gui.blood-on-the-blocktower.whisper_settings.set_by_storyteller").formatted(Formatting.GRAY, Formatting.ITALIC),
+            context.drawCenteredString(
+                    this.font,
+                    Component.translatable("gui.blood-on-the-blocktower.whisper_settings.set_by_storyteller").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC),
                     this.width / 2, this.height - 50, 0xFFFFFF);
         }
     }
@@ -236,10 +236,10 @@ public class WhisperSettingsScreen extends Screen {
      * Tiny static-text widget so labels share the same render-loop layer as the
      * other controls. Inline rather than spinning up a whole helper file.
      */
-    private class LabelWidget extends PressableWidget {
-        private final Text text;
+    private class LabelWidget extends AbstractButton {
+        private final Component text;
 
-        LabelWidget(int x, int y, int width, int height, Text text) {
+        LabelWidget(int x, int y, int width, int height, Component text) {
             super(x, y, width, height, text);
             this.text = text;
             this.active = false;
@@ -249,20 +249,20 @@ public class WhisperSettingsScreen extends Screen {
         public void onPress() {}
 
         @Override
-        protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
             int color = (editable ? 0xFFFFFF : 0xAAAAAA);
-            context.drawTextWithShadow(
-                    WhisperSettingsScreen.this.textRenderer,
+            context.drawString(
+                    WhisperSettingsScreen.this.font,
                     text,
                     this.getX(),
-                    this.getY() + (this.getHeight() - WhisperSettingsScreen.this.textRenderer.fontHeight) / 2,
+                    this.getY() + (this.getHeight() - WhisperSettingsScreen.this.font.lineHeight) / 2,
                     color
             );
         }
 
         @Override
-        protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-            builder.put(NarrationPart.TITLE, text);
+        protected void updateWidgetNarration(NarrationElementOutput builder) {
+            builder.add(NarratedElementType.TITLE, text);
         }
     }
 }

@@ -5,7 +5,7 @@ import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 import de.maxhenkel.voicechat.api.events.SoundPacketEvent;
 import de.maxhenkel.voicechat.api.events.StaticSoundPacketEvent;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Voice chat plugin to prevent spectator players from being heard by non-spectator players in group chats.
@@ -43,9 +43,9 @@ public class SpectatorVoicechatPlugin implements VoicechatPlugin {
         Object senderObj = senderConnection.getPlayer().getPlayer();
         Object receiverObj = receiverConnection.getPlayer().getPlayer();
 
-        // Check if both are ServerPlayerEntity instances
-        if (senderObj instanceof ServerPlayerEntity sender &&
-            receiverObj instanceof ServerPlayerEntity receiver) {
+        // Check if both are ServerPlayer instances
+        if (senderObj instanceof ServerPlayer sender &&
+            receiverObj instanceof ServerPlayer receiver) {
 
             // Cancel if sender is spectator and receiver is not
             // This prevents non-spectators from hearing spectators in group chat

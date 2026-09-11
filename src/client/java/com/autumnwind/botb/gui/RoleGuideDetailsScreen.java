@@ -4,17 +4,17 @@ import com.autumnwind.botb.event.KeyInputHandler;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleGuides;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 
 /** One role's guide: centered icon, name, team and ability, then a scrollable how-to-run box. */
 public class RoleGuideDetailsScreen extends Screen {
@@ -29,7 +29,7 @@ public class RoleGuideDetailsScreen extends Screen {
     private final int index;
 
     public RoleGuideDetailsScreen(Role role, Screen parent, List<Role> roleList) {
-        super(Text.literal(role.getDisplayName()));
+        super(Component.literal(role.getDisplayName()));
         this.role = role;
         this.parent = parent;
         this.roleList = roleList;
@@ -44,38 +44,38 @@ public class RoleGuideDetailsScreen extends Screen {
         int spacing = 5;
         int backButtonX = this.width / 2 - backButtonWidth / 2;
 
-        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.back"), button -> this.client.setScreen(this.parent))
-                .dimensions(backButtonX, buttonY, backButtonWidth, 20)
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), button -> this.minecraft.setScreen(this.parent))
+                .bounds(backButtonX, buttonY, backButtonWidth, 20)
                 .build());
         if (index > 0) {
-            this.addDrawableChild(ButtonWidget.builder(Text.literal("<"), button -> open(index - 1))
-                    .dimensions(backButtonX - arrowButtonWidth - spacing, buttonY, arrowButtonWidth, 20)
+            this.addRenderableWidget(Button.builder(Component.literal("<"), button -> open(index - 1))
+                    .bounds(backButtonX - arrowButtonWidth - spacing, buttonY, arrowButtonWidth, 20)
                     .build());
         }
         if (index >= 0 && index < roleList.size() - 1) {
-            this.addDrawableChild(ButtonWidget.builder(Text.literal(">"), button -> open(index + 1))
-                    .dimensions(backButtonX + backButtonWidth + spacing, buttonY, arrowButtonWidth, 20)
+            this.addRenderableWidget(Button.builder(Component.literal(">"), button -> open(index + 1))
+                    .bounds(backButtonX + backButtonWidth + spacing, buttonY, arrowButtonWidth, 20)
                     .build());
         }
 
         int listY = headerHeight() + 10;
         int listWidth = this.width - SIDE_MARGIN * 2;
         int listHeight = buttonY - listY - 8;
-        GuideListWidget listWidget = new GuideListWidget(this.client, listWidth, listHeight, listY);
+        GuideListWidget listWidget = new GuideListWidget(this.minecraft, listWidth, listHeight, listY);
         listWidget.setX(SIDE_MARGIN);
-        this.addDrawableChild(listWidget);
+        this.addRenderableWidget(listWidget);
     }
 
     private void open(int newIndex) {
-        this.client.setScreen(new RoleGuideDetailsScreen(roleList.get(newIndex), parent, roleList));
+        this.minecraft.setScreen(new RoleGuideDetailsScreen(roleList.get(newIndex), parent, roleList));
     }
 
     /** Y just below the ability text; the header is drawn in render with the same measurements. */
     private int headerHeight() {
         int y = TOP_MARGIN + ICON_SIZE + 5;
-        y += this.textRenderer.fontHeight + 2;
-        y += this.textRenderer.fontHeight + 10;
-        y += this.textRenderer.getWrappedLinesHeight(abilityString(), this.width - SIDE_MARGIN * 2);
+        y += this.font.lineHeight + 2;
+        y += this.font.lineHeight + 10;
+        y += this.font.wordWrapHeight(abilityString(), this.width - SIDE_MARGIN * 2);
         return y;
     }
 
@@ -84,29 +84,29 @@ public class RoleGuideDetailsScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
         int currentY = TOP_MARGIN;
-        context.drawTexture(role.getIcon(), (this.width - ICON_SIZE) / 2, currentY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        context.blit(role.getIcon(), (this.width - ICON_SIZE) / 2, currentY, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         currentY += ICON_SIZE + 5;
 
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(role.getDisplayName()).formatted(Formatting.BOLD), this.width / 2, currentY, 0xFFFFFF);
-        currentY += this.textRenderer.fontHeight + 2;
+        context.drawCenteredString(this.font, Component.literal(role.getDisplayName()).withStyle(ChatFormatting.BOLD), this.width / 2, currentY, 0xFFFFFF);
+        currentY += this.font.lineHeight + 2;
 
-        context.drawCenteredTextWithShadow(this.textRenderer, Text.literal(role.getType().getDisplayName()).formatted(Formatting.ITALIC), this.width / 2, currentY, role.getType().getColor());
-        currentY += this.textRenderer.fontHeight + 10;
+        context.drawCenteredString(this.font, Component.literal(role.getType().getDisplayName()).withStyle(ChatFormatting.ITALIC), this.width / 2, currentY, role.getType().getColor());
+        currentY += this.font.lineHeight + 10;
 
-        for (OrderedText line : this.textRenderer.wrapLines(Text.literal(abilityString()), this.width - SIDE_MARGIN * 2)) {
-            context.drawText(this.textRenderer, line, (this.width - this.textRenderer.getWidth(line)) / 2, currentY, 0xFFFFFF, true);
-            currentY += this.textRenderer.fontHeight;
+        for (FormattedCharSequence line : this.font.split(Component.literal(abilityString()), this.width - SIDE_MARGIN * 2)) {
+            context.drawString(this.font, line, (this.width - this.font.width(line)) / 2, currentY, 0xFFFFFF, true);
+            currentY += this.font.lineHeight;
         }
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_E || KeyInputHandler.openMyRoleDetailsKey.matchesKey(keyCode, scanCode)) {
-            this.client.setScreen(this.parent);
+        if (keyCode == GLFW.GLFW_KEY_E || KeyInputHandler.openMyRoleDetailsKey.matches(keyCode, scanCode)) {
+            this.minecraft.setScreen(this.parent);
             return true;
         }
         if (keyCode == GLFW.GLFW_KEY_RIGHT && index >= 0 && index < roleList.size() - 1) {
@@ -120,18 +120,18 @@ public class RoleGuideDetailsScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    private class GuideListWidget extends ElementListWidget<DocumentEntry> {
-        public GuideListWidget(MinecraftClient client, int width, int height, int y) {
-            super(client, width, height, y, client.textRenderer.fontHeight + 1);
+    private class GuideListWidget extends ContainerObjectSelectionList<DocumentEntry> {
+        public GuideListWidget(Minecraft client, int width, int height, int y) {
+            super(client, width, height, y, client.font.lineHeight + 1);
             int textWidth = this.getRowWidth() - 10;
 
-            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.role_guide_details.how_to_run").formatted(Formatting.GOLD)));
+            this.addEntry(DocumentEntry.title(font, Component.translatable("gui.blood-on-the-blocktower.role_guide_details.how_to_run").withStyle(ChatFormatting.GOLD)));
             boolean first = true;
             for (String paragraph : RoleGuides.get(role).split("\n")) {
                 if (!first) this.addEntry(DocumentEntry.spacer());
                 first = false;
-                for (OrderedText line : textRenderer.wrapLines(Text.literal(paragraph), textWidth)) {
-                    this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
+                for (FormattedCharSequence line : font.split(Component.literal(paragraph), textWidth)) {
+                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFF));
                 }
             }
         }
@@ -142,7 +142,7 @@ public class RoleGuideDetailsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarX() {
+        protected int getScrollbarPosition() {
             return this.getX() + this.width - 6;
         }
     }

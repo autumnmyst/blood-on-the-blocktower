@@ -4,13 +4,12 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Reminder;
 import com.autumnwind.botb.util.Script;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.*;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * S2C payload for syncing grimoire state from server to other storytellers.
@@ -24,13 +23,13 @@ public record SyncGrimoireS2CPayload(
         Set<UUID> markedPlayers,
         List<String> demonBluffs, // String format: "" = empty, "ROLE_NAME" = official, "custom:id" = custom
         int setupOutsiderCount
-) implements CustomPayload {
-    public static final CustomPayload.Id<SyncGrimoireS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "sync_grimoire_s2c"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<SyncGrimoireS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_grimoire_s2c"));
 
-    public static final PacketCodec<RegistryByteBuf, SyncGrimoireS2CPayload> CODEC = new PacketCodec<>() {
+    public static final StreamCodec<RegistryFriendlyByteBuf, SyncGrimoireS2CPayload> CODEC = new StreamCodec<>() {
         @Override
-        public SyncGrimoireS2CPayload decode(RegistryByteBuf buf) {
+        public SyncGrimoireS2CPayload decode(RegistryFriendlyByteBuf buf) {
             Map<UUID, PendingRoleAssignment> roles = PayloadCodecs.ROLE_MAP_CODEC.decode(buf);
             Map<UUID, Integer> seatNumbers = PayloadCodecs.SEAT_MAP_CODEC.decode(buf);
             Map<UUID, List<Reminder>> reminders = PayloadCodecs.REMINDER_MAP_CODEC.decode(buf);
@@ -43,7 +42,7 @@ public record SyncGrimoireS2CPayload(
             int markedCount = buf.readVarInt();
             Set<UUID> markedPlayers = new HashSet<>();
             for (int i = 0; i < markedCount; i++) {
-                markedPlayers.add(Uuids.PACKET_CODEC.decode(buf));
+                markedPlayers.add(UUIDUtil.STREAM_CODEC.decode(buf));
             }
 
             // Read demon bluffs (supports both official and custom roles)
@@ -55,7 +54,7 @@ public record SyncGrimoireS2CPayload(
         }
 
         @Override
-        public void encode(RegistryByteBuf buf, SyncGrimoireS2CPayload payload) {
+        public void encode(RegistryFriendlyByteBuf buf, SyncGrimoireS2CPayload payload) {
             PayloadCodecs.ROLE_MAP_CODEC.encode(buf, payload.roles);
             PayloadCodecs.SEAT_MAP_CODEC.encode(buf, payload.seatNumbers);
             PayloadCodecs.REMINDER_MAP_CODEC.encode(buf, payload.reminders);
@@ -67,7 +66,7 @@ public record SyncGrimoireS2CPayload(
             // Write marked players set
             buf.writeVarInt(payload.markedPlayers.size());
             for (UUID uuid : payload.markedPlayers) {
-                Uuids.PACKET_CODEC.encode(buf, uuid);
+                UUIDUtil.STREAM_CODEC.encode(buf, uuid);
             }
 
             // Write demon bluffs (supports both official and custom roles)
@@ -78,7 +77,7 @@ public record SyncGrimoireS2CPayload(
     };
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

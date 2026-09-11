@@ -1,9 +1,8 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.util.Language;
-
 import java.util.Locale;
+import net.minecraft.locale.Language;
 
 public enum RoleType {
     TOWNSFOLK(true, 0xFF00AAFF),
@@ -27,17 +26,17 @@ public enum RoleType {
 
     /** The type name from the lang file, in caps. */
     public String getDisplayName() {
-        return Language.getInstance().get(nameKey);
+        return Language.getInstance().getOrDefault(nameKey);
     }
 
     /** The one or two letter abbreviation from the lang file, as used for badges. */
     public String getShortName() {
-        return Language.getInstance().get(nameKey + ".short");
+        return Language.getInstance().getOrDefault(nameKey + ".short");
     }
 
     /** The plural type name from the lang file, as used for section headers. */
     public String getPluralName() {
-        return Language.getInstance().get(nameKey + ".plural");
+        return Language.getInstance().getOrDefault(nameKey + ".plural");
     }
 
     public boolean isDefaultGood() {

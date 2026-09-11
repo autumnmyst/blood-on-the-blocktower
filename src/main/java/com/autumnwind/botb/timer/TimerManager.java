@@ -3,12 +3,11 @@ package com.autumnwind.botb.timer;
 import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.networking.TimerStateS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.boss.BossBar;
-import net.minecraft.entity.boss.ServerBossBar;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-
+import net.minecraft.server.level.ServerBossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.BossEvent;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,7 +15,7 @@ import java.util.TimerTask;
  * Server-side manager for the storyteller timer with boss bar display
  */
 public class TimerManager {
-    private static ServerBossBar bossBar = null;
+    private static ServerBossEvent bossBar = null;
     private static Timer updateTimer = null;
     private static double remainingTime = 0.0; // Track precise time as double
     private static int totalSeconds = 0;
@@ -40,18 +39,18 @@ public class TimerManager {
 
         // Set initial time to dawn if syncing
         if (syncDaylight) {
-            server.getOverworld().setTimeOfDay(ServerConfig.TIME_DAWN);
+            server.overworld().setDayTime(ServerConfig.TIME_DAWN);
         }
 
-        bossBar = new ServerBossBar(
+        bossBar = new ServerBossEvent(
                 formatTimerText((int) Math.ceil(remainingTime)),
-                BossBar.Color.GREEN,
-                BossBar.Style.PROGRESS
+                BossEvent.BossBarColor.GREEN,
+                BossEvent.BossBarOverlay.PROGRESS
         );
-        bossBar.setPercent(1.0f);
+        bossBar.setProgress(1.0f);
 
         // Add all players to boss bar
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             bossBar.addPlayer(player);
         }
 
@@ -104,7 +103,7 @@ public class TimerManager {
         }
 
         if (bossBar != null) {
-            bossBar.clearPlayers();
+            bossBar.removeAllPlayers();
             bossBar = null;
         }
 
@@ -134,9 +133,9 @@ public class TimerManager {
         if (remainingTime <= 0) {
             // Timer finished
             remainingTime = 0.0;
-            bossBar.setPercent(0.0f);
+            bossBar.setProgress(0.0f);
             bossBar.setName(formatTimerText(0));
-            bossBar.setColor(BossBar.Color.RED);
+            bossBar.setColor(BossEvent.BossBarColor.RED);
             stopTimer(server);
             return;
         }
@@ -144,17 +143,17 @@ public class TimerManager {
         // Update boss bar
         int displaySeconds = (int) Math.ceil(remainingTime);
         float progress = (float) remainingTime / totalSeconds;
-        bossBar.setPercent(Math.max(0.0f, Math.min(1.0f, progress)));
+        bossBar.setProgress(Math.max(0.0f, Math.min(1.0f, progress)));
         bossBar.setName(formatTimerText(displaySeconds));
 
         // Update color based on progress (green -> yellow -> red)
-        BossBar.Color color;
+        BossEvent.BossBarColor color;
         if (progress > 0.5f) {
-            color = BossBar.Color.GREEN;
+            color = BossEvent.BossBarColor.GREEN;
         } else if (progress > 0.25f) {
-            color = BossBar.Color.YELLOW;
+            color = BossEvent.BossBarColor.YELLOW;
         } else {
-            color = BossBar.Color.RED;
+            color = BossEvent.BossBarColor.RED;
         }
         bossBar.setColor(color);
 
@@ -166,7 +165,7 @@ public class TimerManager {
             long dawnTime = ServerConfig.TIME_DAWN;
             long eveningTime = ServerConfig.TIME_EVENING;
             long targetTime = dawnTime + (long) ((eveningTime - dawnTime) * timerProgress);
-            server.getOverworld().setTimeOfDay(targetTime);
+            server.overworld().setDayTime(targetTime);
         }
 
         // Broadcast state update periodically (every ~100ms, which is 2 ticks at 50ms)
@@ -176,10 +175,10 @@ public class TimerManager {
     /**
      * Formats timer text as min:sec
      */
-    private static Text formatTimerText(int seconds) {
+    private static Component formatTimerText(int seconds) {
         int minutes = seconds / 60;
         int secs = seconds % 60;
-        return Text.literal(String.format("%d:%02d", minutes, secs));
+        return Component.literal(String.format("%d:%02d", minutes, secs));
     }
 
     /**
@@ -195,7 +194,7 @@ public class TimerManager {
                 totalSeconds
         );
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
@@ -203,7 +202,7 @@ public class TimerManager {
     /**
      * Adds a player to the boss bar when they join
      */
-    public static void addPlayer(ServerPlayerEntity player) {
+    public static void addPlayer(ServerPlayer player) {
         if (bossBar != null) {
             bossBar.addPlayer(player);
         }
@@ -212,7 +211,7 @@ public class TimerManager {
     /**
      * Removes a player from the boss bar when they leave
      */
-    public static void removePlayer(ServerPlayerEntity player) {
+    public static void removePlayer(ServerPlayer player) {
         if (bossBar != null) {
             bossBar.removePlayer(player);
         }

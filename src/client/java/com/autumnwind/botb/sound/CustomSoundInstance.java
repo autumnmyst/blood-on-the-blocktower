@@ -1,15 +1,15 @@
 package com.autumnwind.botb.sound;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.client.sound.AbstractSoundInstance;
-import net.minecraft.client.sound.Sound;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.client.sound.SoundManager;
-import net.minecraft.client.sound.WeightedSoundSet;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.floatprovider.ConstantFloatProvider;
+import net.minecraft.client.resources.sounds.AbstractSoundInstance;
+import net.minecraft.client.resources.sounds.Sound;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.client.sounds.WeighedSoundEvents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.valueproviders.ConstantFloat;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,36 +23,36 @@ public class CustomSoundInstance extends AbstractSoundInstance {
 
     /** @param customPath a path under {@code sounds/} without the extension, or null for the event's own sounds */
     public CustomSoundInstance(SoundEvent event, @Nullable String customPath, float volume, boolean repeat) {
-        super(event, SoundCategory.MASTER, SoundInstance.createRandom());
+        super(event, SoundSource.MASTER, SoundInstance.createUnseededRandom());
         this.customPath = customPath;
         this.volume = volume;
         this.pitch = 1.0f;
-        this.repeat = repeat;
-        this.repeatDelay = 0;
+        this.looping = repeat;
+        this.delay = 0;
         this.relative = true;
     }
 
     @Override
-    public WeightedSoundSet getSoundSet(SoundManager soundManager) {
+    public WeighedSoundEvents resolve(SoundManager soundManager) {
         if (customPath == null) {
-            return super.getSoundSet(soundManager);
+            return super.resolve(soundManager);
         }
-        WeightedSoundSet set = new WeightedSoundSet(this.id, null);
+        WeighedSoundEvents set = new WeighedSoundEvents(this.location, null);
         // Music is streamed rather than fully loaded, the way vanilla handles long tracks
-        set.add(new Sound(Identifier.of(BloodOnTheBlocktower.MOD_ID, customPath),
-                ConstantFloatProvider.create(1.0f), ConstantFloatProvider.create(1.0f), 1,
-                Sound.RegistrationType.FILE, repeat, false, 16));
+        set.addSound(new Sound(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, customPath),
+                ConstantFloat.of(1.0f), ConstantFloat.of(1.0f), 1,
+                Sound.Type.FILE, looping, false, 16));
         this.sound = set.getSound(this.random);
         return set;
     }
 
     @Override
-    public boolean shouldAlwaysPlay() {
+    public boolean canStartSilent() {
         return true;
     }
 
     @Override
-    public boolean canPlay() {
+    public boolean canPlaySound() {
         return true;
     }
 }

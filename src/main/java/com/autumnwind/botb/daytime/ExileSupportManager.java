@@ -4,22 +4,20 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.networking.*;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeverBlock;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import java.util.*;
-import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.util.math.Vec3d;
-import com.autumnwind.botb.networking.StateBroadcaster;
 
 /**
  * Manages the exile support voting process.
@@ -67,8 +65,8 @@ public class ExileSupportManager {
         setAllExileSupportIndicators(server, supportOrder, deadPlayers);
 
         // Keep clock hands in exile mode pointing at target
-        ServerPlayerEntity targetPlayer = server.getPlayerManager().getPlayer(target);
-        Vec3d targetPos = targetPlayer != null ? targetPlayer.getPos() : null;
+        ServerPlayer targetPlayer = server.getPlayerList().getPlayer(target);
+        Vec3 targetPos = targetPlayer != null ? targetPlayer.position() : null;
         StateBroadcaster.broadcastClockHandsState(
                 server,
                 ClockHandsStateS2CPayload.MODE_EXILE,
@@ -100,13 +98,13 @@ public class ExileSupportManager {
      */
     private static void onSupportLocked(MinecraftServer server, UUID supporter, int seat, boolean supportValue) {
         // Update clock hand to point at current supporter
-        ServerPlayerEntity supporterPlayer = server.getPlayerManager().getPlayer(supporter);
+        ServerPlayer supporterPlayer = server.getPlayerList().getPlayer(supporter);
         if (supporterPlayer != null) {
             StateBroadcaster.broadcastClockHandsState(
                     server,
                     ClockHandsStateS2CPayload.MODE_EXILE,
                     null,
-                    supporterPlayer.getPos(),
+                    supporterPlayer.position(),
                     false,
                     false
             );
@@ -126,48 +124,48 @@ public class ExileSupportManager {
 
         // Get target name
         UUID target = DaytimeState.getCurrentExileTarget();
-        ServerPlayerEntity targetPlayer = server.getPlayerManager().getPlayer(target);
-        String targetName = targetPlayer != null ? targetPlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        ServerPlayer targetPlayer = server.getPlayerList().getPlayer(target);
+        String targetName = targetPlayer != null ? targetPlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Build result message
-        Text resultText;
+        Component resultText;
         if (exilePassed) {
-            resultText = Text.translatable("message.blood-on-the-blocktower.daytime.exile_passed")
-                    .styled(style -> style.withColor(0x9932CC)) // Purple
-                    .append(Text.literal(" - ").formatted(Formatting.WHITE))
-                    .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)))
-                    .append(Text.translatable("message.blood-on-the-blocktower.daytime.supports_count", supportCount).formatted(Formatting.GRAY));
+            resultText = Component.translatable("message.blood-on-the-blocktower.daytime.exile_passed")
+                    .withStyle(style -> style.withColor(0x9932CC)) // Purple
+                    .append(Component.literal(" - ").withStyle(ChatFormatting.WHITE))
+                    .append(Component.literal(targetName).withStyle(style -> style.withColor(0x9932CC)))
+                    .append(Component.translatable("message.blood-on-the-blocktower.daytime.supports_count", supportCount).withStyle(ChatFormatting.GRAY));
         } else {
-            resultText = Text.translatable("message.blood-on-the-blocktower.daytime.exile_failed")
-                    .formatted(Formatting.GRAY)
-                    .append(Text.literal(" - ").formatted(Formatting.WHITE))
-                    .append(Text.literal(targetName).styled(style -> style.withColor(0x9932CC)))
-                    .append(Text.translatable("message.blood-on-the-blocktower.daytime.supports_count", supportCount).formatted(Formatting.GRAY));
+            resultText = Component.translatable("message.blood-on-the-blocktower.daytime.exile_failed")
+                    .withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(" - ").withStyle(ChatFormatting.WHITE))
+                    .append(Component.literal(targetName).withStyle(style -> style.withColor(0x9932CC)))
+                    .append(Component.translatable("message.blood-on-the-blocktower.daytime.supports_count", supportCount).withStyle(ChatFormatting.GRAY));
         }
 
         // Build title/subtitle for display
-        Text titleText;
-        Text subtitleText;
+        Component titleText;
+        Component subtitleText;
         String soundType;
 
         if (exilePassed) {
-            titleText = Text.literal(targetName).styled(style -> style.withColor(0x9932CC)); // Purple
-            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.exiled").styled(style -> style.withColor(0x9932CC));
+            titleText = Component.literal(targetName).withStyle(style -> style.withColor(0x9932CC)); // Purple
+            subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.exiled").withStyle(style -> style.withColor(0x9932CC));
             soundType = PlaySoundS2CPayload.MARKED;
         } else {
-            titleText = Text.translatable("message.blood-on-the-blocktower.daytime.exile_failed").formatted(Formatting.GRAY);
-            subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.not_enough_support", targetName).formatted(Formatting.GRAY);
+            titleText = Component.translatable("message.blood-on-the-blocktower.daytime.exile_failed").withStyle(ChatFormatting.GRAY);
+            subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.not_enough_support", targetName).withStyle(ChatFormatting.GRAY);
             soundType = PlaySoundS2CPayload.NOT_ENOUGH_VOTES;
         }
 
         // Send result to all players
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             // Send chat message
-            player.sendMessage(resultText, false);
+            player.displayClientMessage(resultText, false);
 
             // Send title and subtitle
-            player.networkHandler.sendPacket(new TitleS2CPacket(titleText));
-            player.networkHandler.sendPacket(new SubtitleS2CPacket(subtitleText));
+            player.connection.send(new ClientboundSetTitleTextPacket(titleText));
+            player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
 
             // Send sound
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(soundType));
@@ -206,7 +204,7 @@ public class ExileSupportManager {
      * Also resets levers to off state, like after a vote is counted.
      */
     private static void saveAndRemoveGhostUsedBlocks(MinecraftServer server, Set<UUID> deadPlayers) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
         Set<Integer> seatsWithGhostBlocks = new HashSet<>();
         Block ghostUsedBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
 
@@ -219,19 +217,19 @@ public class ExileSupportManager {
             BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
             if (indicatorPos == null) continue;
 
-            BlockPos belowIndicator = indicatorPos.down();
+            BlockPos belowIndicator = indicatorPos.below();
             BlockState blockState = world.getBlockState(belowIndicator);
 
             if (blockState.getBlock().equals(ghostUsedBlock)) {
                 seatsWithGhostBlocks.add(seat);
                 // Remove the ghost used block (set to AIR)
-                world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+                world.setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
 
                 // Also set the main indicator to the normal OFF state
                 // (for Voudon-blocked players, their main indicator may be AIR)
                 Block offBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
                 if (offBlock != null) {
-                    world.setBlockState(indicatorPos, offBlock.getDefaultState());
+                    world.setBlockAndUpdate(indicatorPos, offBlock.defaultBlockState());
                 }
 
                 // Reset the lever to off state (like after a vote is counted)
@@ -239,8 +237,8 @@ public class ExileSupportManager {
                 if (switchPos != null) {
                     BlockState leverState = world.getBlockState(switchPos);
                     if (leverState.getBlock() instanceof LeverBlock) {
-                        if (leverState.get(LeverBlock.POWERED)) {
-                            world.setBlockState(switchPos, leverState.with(LeverBlock.POWERED, false));
+                        if (leverState.getValue(LeverBlock.POWERED)) {
+                            world.setBlockAndUpdate(switchPos, leverState.setValue(LeverBlock.POWERED, false));
                         }
                     }
                 }
@@ -320,7 +318,7 @@ public class ExileSupportManager {
      * @param supportOrder The support order list
      */
     private static void resetAllExileSupportIndicators(MinecraftServer server, List<UUID> supportOrder) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
         Block offBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
         Block ghostOffBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_OFF);
 
@@ -363,7 +361,7 @@ public class ExileSupportManager {
             }
 
             if (indicatorBlock != null) {
-                world.setBlockState(indicatorPos, indicatorBlock.getDefaultState());
+                world.setBlockAndUpdate(indicatorPos, indicatorBlock.defaultBlockState());
             }
         }
     }
@@ -375,7 +373,7 @@ public class ExileSupportManager {
      * @param supportOrder The support order list
      */
     private static void initializeExileSupportVotes(MinecraftServer server, List<UUID> supportOrder) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         for (UUID player : supportOrder) {
             Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(player);
@@ -385,7 +383,7 @@ public class ExileSupportManager {
             if (switchPos == null) continue;
 
             BlockState leverState = world.getBlockState(switchPos);
-            boolean isOn = leverState.getBlock() instanceof LeverBlock && leverState.get(LeverBlock.POWERED);
+            boolean isOn = leverState.getBlock() instanceof LeverBlock && leverState.getValue(LeverBlock.POWERED);
 
             DaytimeState.setExileSupportVote(player, isOn);
         }
@@ -399,7 +397,7 @@ public class ExileSupportManager {
      * @param deadPlayers Set of dead player UUIDs
      */
     private static void setAllExileSupportIndicators(MinecraftServer server, List<UUID> supportOrder, Set<UUID> deadPlayers) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         for (UUID player : supportOrder) {
             Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(player);
@@ -412,14 +410,14 @@ public class ExileSupportManager {
             if (switchPos == null) continue;
 
             BlockState leverState = world.getBlockState(switchPos);
-            boolean isOn = leverState.getBlock() instanceof LeverBlock && leverState.get(LeverBlock.POWERED);
+            boolean isOn = leverState.getBlock() instanceof LeverBlock && leverState.getValue(LeverBlock.POWERED);
 
             // Use exile support indicator blocks
             String blockName = isOn ? ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_ON
                                    : ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_OFF;
             Block block = ElectionManager.getBlockFromString(blockName);
             if (block != null) {
-                world.setBlockState(indicatorPos, block.getDefaultState());
+                world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
             }
         }
     }
@@ -449,8 +447,8 @@ public class ExileSupportManager {
         // Get current lever states for exile support
         Map<UUID, Boolean> leverStates = DaytimeState.getExileSupportVotes();
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID playerUuid = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerUuid = player.getUUID();
 
             // Calculate when this player's vote locks
             int playerPosition = supportOrder.indexOf(playerUuid) + 1;
@@ -499,7 +497,7 @@ public class ExileSupportManager {
         ElectionState.endElection();
 
         // Stop sounds
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.VOTE_MUSIC_STOP));
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.CLOCK_TICKING_STOP));
         }

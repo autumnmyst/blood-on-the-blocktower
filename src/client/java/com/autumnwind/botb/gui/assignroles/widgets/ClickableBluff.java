@@ -2,7 +2,7 @@ package com.autumnwind.botb.gui.assignroles.widgets;
 
 import com.autumnwind.botb.util.RoleType;
 import com.autumnwind.botb.util.ScriptRole;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import com.autumnwind.botb.util.Role;
 
@@ -29,7 +29,7 @@ public class ClickableBluff {
      * Get the icon for this bluff.
      * Returns NO_ROLE icon for empty bluff slots.
      */
-    public Identifier getIcon() {
+    public ResourceLocation getIcon() {
         return scriptRole != null ? scriptRole.getIcon() : Role.NO_ROLE.getIcon();
     }
 

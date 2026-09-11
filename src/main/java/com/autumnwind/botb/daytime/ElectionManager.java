@@ -4,17 +4,16 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.networking.*;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeverBlock;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import java.util.*;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -85,11 +84,11 @@ public class ElectionManager {
         if (blockName == null || blockName.isEmpty()) {
             return null;
         }
-        Identifier id = Identifier.tryParse(blockName);
+        ResourceLocation id = ResourceLocation.tryParse(blockName);
         if (id == null) {
             return null;
         }
-        return Registries.BLOCK.get(id);
+        return BuiltInRegistries.BLOCK.get(id);
     }
 
     /**
@@ -142,15 +141,15 @@ public class ElectionManager {
             BlockPos seatPos = ServerConfig.TOWN_SQUARE_SEATS.get(seat);
             if (seatPos == null) continue;
 
-            ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+            ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
             if (player != null) {
-                player.teleport(
-                        server.getOverworld(),
+                player.teleportTo(
+                        server.overworld(),
                         seatPos.getX() + 0.5,
                         seatPos.getY(),
                         seatPos.getZ() + 0.5,
-                        player.getYaw(),
-                        player.getPitch()
+                        player.getYRot(),
+                        player.getXRot()
                 );
             }
         }
@@ -171,7 +170,7 @@ public class ElectionManager {
             BlockPos seatPos = ServerConfig.TOWN_SQUARE_SEATS.get(seat);
             if (seatPos == null) continue;
 
-            ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+            ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
             if (player != null) {
                 double targetX = seatPos.getX() + 0.5;
                 double targetZ = seatPos.getZ() + 0.5;
@@ -180,13 +179,13 @@ public class ElectionManager {
 
                 // If player has moved too far, teleport them back
                 if (Math.abs(currentX - targetX) > 0.5 || Math.abs(currentZ - targetZ) > 0.5) {
-                    player.teleport(
-                            server.getOverworld(),
+                    player.teleportTo(
+                            server.overworld(),
                             targetX,
                             seatPos.getY(),
                             targetZ,
-                            player.getYaw(),
-                            player.getPitch()
+                            player.getYRot(),
+                            player.getXRot()
                     );
                 }
             }
@@ -207,9 +206,9 @@ public class ElectionManager {
         BlockPos switchPos = ServerConfig.SEAT_SWITCH_POSITIONS.get(seat);
         if (switchPos == null) return null;
 
-        World world = server.getOverworld();
+        Level world = server.overworld();
         BlockState state = world.getBlockState(switchPos);
-        return state.getBlock() instanceof LeverBlock && state.get(LeverBlock.POWERED);
+        return state.getBlock() instanceof LeverBlock && state.getValue(LeverBlock.POWERED);
     }
 
     /**
@@ -221,7 +220,7 @@ public class ElectionManager {
      */
     public static Map<UUID, Boolean> readAllLeverStates(MinecraftServer server, List<UUID> order) {
         Map<UUID, Boolean> leverStates = new HashMap<>();
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         for (UUID player : order) {
             Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(player);
@@ -231,7 +230,7 @@ public class ElectionManager {
             if (switchPos == null) continue;
 
             BlockState state = world.getBlockState(switchPos);
-            boolean isOn = state.getBlock() instanceof LeverBlock && state.get(LeverBlock.POWERED);
+            boolean isOn = state.getBlock() instanceof LeverBlock && state.getValue(LeverBlock.POWERED);
             leverStates.put(player, isOn);
         }
 
@@ -253,7 +252,7 @@ public class ElectionManager {
         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
         if (indicatorPos == null) return;
 
-        World world = server.getOverworld();
+        Level world = server.overworld();
         Block block;
 
         if (isDead && config.getIndicatorBlockGhostOn() != null) {
@@ -272,21 +271,21 @@ public class ElectionManager {
         }
 
         if (block != null) {
-            world.setBlockState(indicatorPos, block.getDefaultState());
+            world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
 
             // Clear a stray block from the slot below: under heavy lag the repaint can
             // land before the piston has pushed the sunken indicator back up, and the
             // piston would then shove both blocks up, exposing the stale vote state.
-            BlockPos below = indicatorPos.down();
+            BlockPos below = indicatorPos.below();
             BlockState belowState = world.getBlockState(below);
             if (!belowState.isAir()
-                    && !belowState.isOf(Blocks.PISTON_HEAD)
-                    && !belowState.isOf(Blocks.MOVING_PISTON)) {
+                    && !belowState.is(Blocks.PISTON_HEAD)
+                    && !belowState.is(Blocks.MOVING_PISTON)) {
                 Block ghostUsedBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
                 Block unseatedBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_UNSEATED);
-                if ((ghostUsedBlock == null || !belowState.isOf(ghostUsedBlock))
-                        && (unseatedBlock == null || !belowState.isOf(unseatedBlock))) {
-                    world.setBlockState(below, Blocks.AIR.getDefaultState());
+                if ((ghostUsedBlock == null || !belowState.is(ghostUsedBlock))
+                        && (unseatedBlock == null || !belowState.is(unseatedBlock))) {
+                    world.setBlockAndUpdate(below, Blocks.AIR.defaultBlockState());
                 }
             }
         }
@@ -342,7 +341,7 @@ public class ElectionManager {
      */
     public static BlockPos getPistonPowerPos(int seat) {
         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
-        return indicatorPos == null ? null : indicatorPos.down(3);
+        return indicatorPos == null ? null : indicatorPos.below(3);
     }
 
     /**
@@ -352,8 +351,8 @@ public class ElectionManager {
     public static void setPistonPowerBlock(MinecraftServer server, int seat, boolean powered) {
         BlockPos powerPos = getPistonPowerPos(seat);
         if (powerPos == null) return;
-        server.getOverworld().setBlockState(powerPos,
-                (powered ? Blocks.REDSTONE_BLOCK : Blocks.AIR).getDefaultState());
+        server.overworld().setBlockAndUpdate(powerPos,
+                (powered ? Blocks.REDSTONE_BLOCK : Blocks.AIR).defaultBlockState());
     }
 
     /**
@@ -391,7 +390,7 @@ public class ElectionManager {
      * @param order The election order
      */
     public static void resetAllLevers(MinecraftServer server, List<UUID> order) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
         for (UUID playerUuid : order) {
             Integer seat = ServerState.PLAYER_SEAT_NUMBERS.get(playerUuid);
             if (seat == null) continue;
@@ -401,8 +400,8 @@ public class ElectionManager {
 
             BlockState currentState = world.getBlockState(switchPos);
             if (currentState.getBlock() instanceof LeverBlock) {
-                if (currentState.get(LeverBlock.POWERED)) {
-                    world.setBlockState(switchPos, currentState.with(LeverBlock.POWERED, false));
+                if (currentState.getValue(LeverBlock.POWERED)) {
+                    world.setBlockAndUpdate(switchPos, currentState.setValue(LeverBlock.POWERED, false));
                 }
             }
         }
@@ -430,7 +429,7 @@ public class ElectionManager {
         // Organ Grinder votes get their own music slot so a resource pack can score them differently
         boolean organGrinder = currentConfig != null && currentConfig.applyOrganGrinderMode() && DaytimeState.isOrganGrinderMode();
         String music = organGrinder ? PlaySoundS2CPayload.VOTE_MUSIC_ORGAN_GRINDER : PlaySoundS2CPayload.VOTE_MUSIC;
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.VOTE_START));
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(music));
         }
@@ -442,7 +441,7 @@ public class ElectionManager {
      * @param server The server instance
      */
     public static void sendClockTickingSound(MinecraftServer server) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.CLOCK_TICKING));
         }
     }
@@ -453,7 +452,7 @@ public class ElectionManager {
      * @param server The server instance
      */
     public static void sendStopSounds(MinecraftServer server) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.VOTE_MUSIC_STOP));
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.CLOCK_TICKING_STOP));
         }

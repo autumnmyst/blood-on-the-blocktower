@@ -1,11 +1,10 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.util.Language;
-
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.locale.Language;
 
 public class NightOrder {
 
@@ -103,7 +102,7 @@ public class NightOrder {
 
         /** The instruction text to show the Storyteller. */
         public String roleInstructions() {
-            return instructionKey != null && Language.getInstance().hasTranslation(instructionKey) ? Language.getInstance().get(instructionKey) : "";
+            return instructionKey != null && Language.getInstance().has(instructionKey) ? Language.getInstance().getOrDefault(instructionKey) : "";
         }
 
         // --- Helper accessors ---

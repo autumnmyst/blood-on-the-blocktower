@@ -1,15 +1,14 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.util.Language;
-
 import java.util.List;
+import net.minecraft.locale.Language;
 
 public class Jinxes {
 
     public record JinxInfo(Role role1, Role role2) {
         public String description() {
-            return Language.getInstance().get("jinx." + BloodOnTheBlocktower.MOD_ID + "." + role1.getId() + "." + role2.getId());
+            return Language.getInstance().getOrDefault("jinx." + BloodOnTheBlocktower.MOD_ID + "." + role1.getId() + "." + role2.getId());
         }
     }
 

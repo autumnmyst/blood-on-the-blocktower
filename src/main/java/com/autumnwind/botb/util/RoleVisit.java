@@ -1,13 +1,12 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Represents a single visit in the night order.
@@ -145,26 +144,26 @@ public record RoleVisit(
 
     // --- Display methods ---
 
-    public Text getName() {
+    public Component getName() {
         if (isRole()) {
-            return Text.literal(role.getDisplayName());
+            return Component.literal(role.getDisplayName());
         }
         if (isCustomRole()) {
-            return Text.literal(customRole.getDisplayName());
+            return Component.literal(customRole.getDisplayName());
         }
         if (staticAction != null) {
             return switch (staticAction) {
-                case DAWN -> Text.translatable("nightorder.blood-on-the-blocktower.static.dawn");
-                case NOMINATIONS -> Text.translatable("nightorder.blood-on-the-blocktower.static.nominations");
-                case DUSK -> Text.translatable("nightorder.blood-on-the-blocktower.static.dusk");
-                case MINION_INFO -> Text.translatable("nightorder.blood-on-the-blocktower.static.minion_info");
-                case DEMON_INFO -> Text.translatable("nightorder.blood-on-the-blocktower.static.demon_info");
+                case DAWN -> Component.translatable("nightorder.blood-on-the-blocktower.static.dawn");
+                case NOMINATIONS -> Component.translatable("nightorder.blood-on-the-blocktower.static.nominations");
+                case DUSK -> Component.translatable("nightorder.blood-on-the-blocktower.static.dusk");
+                case MINION_INFO -> Component.translatable("nightorder.blood-on-the-blocktower.static.minion_info");
+                case DEMON_INFO -> Component.translatable("nightorder.blood-on-the-blocktower.static.demon_info");
             };
         }
-        return Text.translatable("nightorder.blood-on-the-blocktower.static.unknown");
+        return Component.translatable("nightorder.blood-on-the-blocktower.static.unknown");
     }
 
-    public Identifier getIcon() {
+    public ResourceLocation getIcon() {
         if (isRole()) {
             return role.getIcon();
         }
@@ -177,11 +176,11 @@ public record RoleVisit(
 
         if (staticAction != null) {
             return switch (staticAction) {
-                case DAWN -> Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/dawn.png");
-                case NOMINATIONS -> Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/nominations.png");
-                case DUSK -> Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/dusk.png");
-                case MINION_INFO -> Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/minion_info.png");
-                case DEMON_INFO -> Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
+                case DAWN -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dawn.png");
+                case NOMINATIONS -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/nominations.png");
+                case DUSK -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/dusk.png");
+                case MINION_INFO -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/minion_info.png");
+                case DEMON_INFO -> ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/demon_info.png");
             };
         }
 

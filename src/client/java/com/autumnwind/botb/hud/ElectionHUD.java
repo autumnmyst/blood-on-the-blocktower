@@ -1,8 +1,8 @@
 package com.autumnwind.botb.hud;
 
 import com.autumnwind.botb.states.ClientState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 
 /**
  * Unified HUD for elections (votes and exile support).
@@ -21,7 +21,7 @@ public class ElectionHUD {
      * @param context The draw context
      * @param client The Minecraft client
      */
-    public static void render(DrawContext context, MinecraftClient client) {
+    public static void render(GuiGraphics context, Minecraft client) {
         if (!ClientState.hasActiveElection()) {
             return; // No active election
         }

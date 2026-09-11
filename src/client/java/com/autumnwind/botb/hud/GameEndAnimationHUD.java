@@ -5,20 +5,19 @@ import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleType;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
-
 import com.autumnwind.botb.hud.nightorderhud.RoleHelpers;
 import com.autumnwind.botb.util.CustomRole;
 import com.autumnwind.botb.util.Reminder;
 import com.autumnwind.botb.util.Script;
 import com.autumnwind.botb.util.ScriptRole;
 import java.util.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import com.autumnwind.botb.gui.GameEndHoldingScreen;
 import com.autumnwind.botb.util.AlignmentOverride;
 import com.autumnwind.botb.util.PlayerListUtil;
@@ -93,8 +92,8 @@ public class GameEndAnimationHUD {
         ClientState.gameEnding = false;
 
         // Close holding screen if it's open
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client != null && client.currentScreen instanceof GameEndHoldingScreen) {
+        Minecraft client = Minecraft.getInstance();
+        if (client != null && client.screen instanceof GameEndHoldingScreen) {
             client.setScreen(null);
         }
     }
@@ -102,7 +101,7 @@ public class GameEndAnimationHUD {
     /**
      * Renders the game end animation.
      */
-    public static void render(DrawContext context, MinecraftClient client) {
+    public static void render(GuiGraphics context, Minecraft client) {
         if (!isAnimating) {
             return;
         }
@@ -149,7 +148,7 @@ public class GameEndAnimationHUD {
         // Animation complete
         else {
             // Safety: ensure holding screen is closed if animation ends
-            if (client.currentScreen instanceof GameEndHoldingScreen) {
+            if (client.screen instanceof GameEndHoldingScreen) {
                 client.setScreen(null);
             }
 
@@ -158,17 +157,17 @@ public class GameEndAnimationHUD {
             return;
         }
 
-        int screenWidth = context.getScaledWindowWidth();
-        int screenHeight = context.getScaledWindowHeight();
+        int screenWidth = context.guiWidth();
+        int screenHeight = context.guiHeight();
 
         // Draw black background with high z-level to cover text with shadows
-        int blackColor = ColorHelper.Argb.getArgb((int) (blackAlpha * 255), 0, 0, 0);
+        int blackColor = FastColor.ARGB32.color((int) (blackAlpha * 255), 0, 0, 0);
 
         // Push matrices and translate to a higher z-level to ensure it renders above text
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 400); // High z-level to render above text layers
+        context.pose().pushPose();
+        context.pose().translate(0, 0, 400); // High z-level to render above text layers
         context.fill(0, 0, screenWidth, screenHeight, blackColor);
-        context.getMatrices().pop();
+        context.pose().popPose();
 
         // Phase 2+: Show title and content (after black screen delay)
         if (elapsed >= phase2End) {
@@ -206,10 +205,10 @@ public class GameEndAnimationHUD {
      * - Open holding screen when fully black (for all players including storyteller)
      * - Close holding screen when fade out begins
      */
-    private static void manageScreenTransitions(MinecraftClient client, long elapsed, int phase4End) {
+    private static void manageScreenTransitions(Minecraft client, long elapsed, int phase4End) {
         // 1. Close any open screen when animation starts (once)
         if (!hasClosedCurrentScreen && elapsed > 0) {
-            if (client.currentScreen != null) {
+            if (client.screen != null) {
                 client.execute(() -> client.setScreen(null));
             }
             hasClosedCurrentScreen = true;
@@ -223,7 +222,7 @@ public class GameEndAnimationHUD {
 
         // 3. Close holding screen when fade out begins (elapsed >= phase4End)
         if (!hasClosedHoldingScreen && elapsed >= phase4End) {
-            if (client.currentScreen instanceof GameEndHoldingScreen) {
+            if (client.screen instanceof GameEndHoldingScreen) {
                 client.execute(() -> client.setScreen(null));
             }
             hasClosedHoldingScreen = true;
@@ -234,8 +233,8 @@ public class GameEndAnimationHUD {
      * Whether the local player is on the winning team, judged by their true alignment from the
      * revealed grimoire. Anyone not in the grimoire, such as the storyteller, counts as winning.
      */
-    public static boolean localPlayerWon(MinecraftClient client, boolean goodWins) {
-        PendingRoleAssignment playerAssignment = StorytellerState.PENDING_ROLES.get(client.player.getUuid());
+    public static boolean localPlayerWon(Minecraft client, boolean goodWins) {
+        PendingRoleAssignment playerAssignment = StorytellerState.PENDING_ROLES.get(client.player.getUUID());
         if (playerAssignment == null) return true;
         return goodWins == playerAssignment.isFinalGood();
     }
@@ -243,7 +242,7 @@ public class GameEndAnimationHUD {
     /**
      * Renders the Victory/Defeat title and subtitle.
      */
-    private static void renderTitle(DrawContext context, MinecraftClient client, int screenWidth, int screenHeight,
+    private static void renderTitle(GuiGraphics context, Minecraft client, int screenWidth, int screenHeight,
                                      float alpha, boolean showTitle, boolean showSubtitle) {
         boolean playerWon = localPlayerWon(client, goodWins);
 
@@ -252,26 +251,26 @@ public class GameEndAnimationHUD {
         int subtitleY = titleY + 20;
 
         // Push to higher z-level so title renders above black screen
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 500);
+        context.pose().pushPose();
+        context.pose().translate(0, 0, 500);
 
         // Render title if it's time
         if (showTitle) {
-            Text titleText = Text.translatable(playerWon ? "hud.blood-on-the-blocktower.game_end.victory" : "hud.blood-on-the-blocktower.game_end.defeat")
-                    .styled(style -> style.withBold(true));
-            int titleColor = ColorHelper.Argb.getArgb((int) (alpha * 255), playerWon ? 0 : 255, playerWon ? 255 : 0, 0);
+            Component titleText = Component.translatable(playerWon ? "hud.blood-on-the-blocktower.game_end.victory" : "hud.blood-on-the-blocktower.game_end.defeat")
+                    .withStyle(style -> style.withBold(true));
+            int titleColor = FastColor.ARGB32.color((int) (alpha * 255), playerWon ? 0 : 255, playerWon ? 255 : 0, 0);
 
             // Render title (scaled 3x for larger text)
             float titleScale = 3.0f;
-            context.getMatrices().push();
-            context.getMatrices().scale(titleScale, titleScale, 1.0f);
+            context.pose().pushPose();
+            context.pose().scale(titleScale, titleScale, 1.0f);
             // Center horizontally: divide by 2 for center, then by scale
             int scaledX = (int) (screenWidth / (2 * titleScale));
             // Adjust Y to keep bottom in same position (move up by the additional height)
-            int textHeight = client.textRenderer.fontHeight;
+            int textHeight = client.font.lineHeight;
             int scaledY = (int) ((titleY - textHeight) / titleScale);
-            context.drawCenteredTextWithShadow(client.textRenderer, titleText, scaledX, scaledY, titleColor);
-            context.getMatrices().pop();
+            context.drawCenteredString(client.font, titleText, scaledX, scaledY, titleColor);
+            context.pose().popPose();
         }
 
         // Render subtitle if it's time (storytellers see subtitle too)
@@ -281,31 +280,31 @@ public class GameEndAnimationHUD {
             int minionRed = 0xFF5555;      // Minion red (RGB)
             int white = 0xFFFFFF;          // White (RGB)
 
-            Text subtitleText;
+            Component subtitleText;
             if (goodWins) {
                 // "The Good Team Wins" with "Good" in blue
-                subtitleText = Text.translatable("hud.blood-on-the-blocktower.game_end.team_wins",
-                                Text.translatable("hud.blood-on-the-blocktower.game_end.good").styled(style -> style.withColor(townsfolkBlue)))
-                        .styled(style -> style.withColor(white));
+                subtitleText = Component.translatable("hud.blood-on-the-blocktower.game_end.team_wins",
+                                Component.translatable("hud.blood-on-the-blocktower.game_end.good").withStyle(style -> style.withColor(townsfolkBlue)))
+                        .withStyle(style -> style.withColor(white));
             } else {
                 // "The Evil Team Wins" with "Evil" in red
-                subtitleText = Text.translatable("hud.blood-on-the-blocktower.game_end.team_wins",
-                                Text.translatable("hud.blood-on-the-blocktower.game_end.evil").styled(style -> style.withColor(minionRed)))
-                        .styled(style -> style.withColor(white));
+                subtitleText = Component.translatable("hud.blood-on-the-blocktower.game_end.team_wins",
+                                Component.translatable("hud.blood-on-the-blocktower.game_end.evil").withStyle(style -> style.withColor(minionRed)))
+                        .withStyle(style -> style.withColor(white));
             }
 
             // Apply alpha uniformly to all text via the color parameter
-            int subtitleColor = ColorHelper.Argb.getArgb((int) (alpha * 255), 255, 255, 255);
-            context.drawCenteredTextWithShadow(client.textRenderer, subtitleText, screenWidth / 2, subtitleY, subtitleColor);
+            int subtitleColor = FastColor.ARGB32.color((int) (alpha * 255), 255, 255, 255);
+            context.drawCenteredString(client.font, subtitleText, screenWidth / 2, subtitleY, subtitleColor);
         }
 
-        context.getMatrices().pop();
+        context.pose().popPose();
     }
 
     /**
      * Renders player entries (head, name, role) in rows.
      */
-    private static void renderPlayerEntries(DrawContext context, MinecraftClient client, int screenWidth, int screenHeight,
+    private static void renderPlayerEntries(GuiGraphics context, Minecraft client, int screenWidth, int screenHeight,
                                             List<PlayerData> players, int timeSinceStart, float globalAlpha) {
         int entriesStartY = screenHeight / 2 - 60;  // Raised higher to prevent second row cutoff
         int entryWidth = 60;
@@ -373,13 +372,13 @@ public class GameEndAnimationHUD {
     /**
      * Renders a single player entry (head, name, role, and associated roles).
      */
-    private static void renderPlayerEntry(DrawContext context, MinecraftClient client, PlayerData player,
+    private static void renderPlayerEntry(GuiGraphics context, Minecraft client, PlayerData player,
                                           int x, int y, float alpha) {
         int alphaInt = (int) (alpha * 255);
 
         // Push to higher z-level so player entries render above black screen
-        context.getMatrices().push();
-        context.getMatrices().translate(0, 0, 500);
+        context.pose().pushPose();
+        context.pose().translate(0, 0, 500);
 
         // Render player head with alpha blending
         int headX = x + (60 - HEAD_ICON_SIZE) / 2;
@@ -391,10 +390,10 @@ public class GameEndAnimationHUD {
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
 
             // Draw head base layer
-            context.drawTexture(player.skinTexture, headX, headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE,
+            context.blit(player.skinTexture, headX, headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE,
                     8, 8, 8, 8, 64, 64);
             // Draw head overlay
-            context.drawTexture(player.skinTexture, headX, headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE,
+            context.blit(player.skinTexture, headX, headY, HEAD_ICON_SIZE, HEAD_ICON_SIZE,
                     40, 8, 8, 8, 64, 64);
 
             // Reset shader color
@@ -404,27 +403,27 @@ public class GameEndAnimationHUD {
 
         // Render player name
         int nameY = headY + HEAD_ICON_SIZE + 2;
-        int nameColor = ColorHelper.Argb.getArgb(alphaInt, 255, 255, 255);
+        int nameColor = FastColor.ARGB32.color(alphaInt, 255, 255, 255);
         int nameX = x + 30; // Center of entry width
-        context.drawCenteredTextWithShadow(client.textRenderer, Text.literal(player.name), nameX, nameY, nameColor);
+        context.drawCenteredString(client.font, Component.literal(player.name), nameX, nameY, nameColor);
 
         // Render role icon with role type border
-        int roleY = nameY + client.textRenderer.fontHeight + 2;
+        int roleY = nameY + client.font.lineHeight + 2;
         int roleX = x + (60 - ROLE_ICON_SIZE) / 2;
 
         // Draw role type border
-        int borderColor = ColorHelper.Argb.getArgb(alphaInt,
-                ColorHelper.Argb.getRed(player.alignmentColor),
-                ColorHelper.Argb.getGreen(player.alignmentColor),
-                ColorHelper.Argb.getBlue(player.alignmentColor));
-        context.drawBorder(roleX - 1, roleY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
+        int borderColor = FastColor.ARGB32.color(alphaInt,
+                FastColor.ARGB32.red(player.alignmentColor),
+                FastColor.ARGB32.green(player.alignmentColor),
+                FastColor.ARGB32.blue(player.alignmentColor));
+        context.renderOutline(roleX - 1, roleY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
 
         // Draw role icon
         if (player.roleIcon != null) {
             // Apply alpha to texture rendering using RenderSystem
             com.mojang.blaze3d.systems.RenderSystem.enableBlend();
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
-            context.drawTexture(player.roleIcon, roleX, roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE,
+            context.blit(player.roleIcon, roleX, roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE,
                     ROLE_ICON_SIZE, ROLE_ICON_SIZE);
             com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             com.mojang.blaze3d.systems.RenderSystem.disableBlend();
@@ -436,12 +435,12 @@ public class GameEndAnimationHUD {
             int associatedX = x + (60 - ASSOCIATED_ICON_SIZE) / 2;
 
             for (Reminder reminder : player.associatedRoles) {
-                Identifier associatedIcon = reminder.getIcon();
+                ResourceLocation associatedIcon = reminder.getIcon();
 
                 // Draw associated role icon with alpha
                 com.mojang.blaze3d.systems.RenderSystem.enableBlend();
                 com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, alpha);
-                context.drawTexture(associatedIcon, associatedX, associatedY, 0, 0,
+                context.blit(associatedIcon, associatedX, associatedY, 0, 0,
                         ASSOCIATED_ICON_SIZE, ASSOCIATED_ICON_SIZE, ASSOCIATED_ICON_SIZE, ASSOCIATED_ICON_SIZE);
                 com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
                 com.mojang.blaze3d.systems.RenderSystem.disableBlend();
@@ -450,11 +449,11 @@ public class GameEndAnimationHUD {
                 Script script = ClientState.currentScript;
                 int associatedColor = reminder.getAlignmentColor(script);
                 if (associatedColor != RoleType.NONE.getColor()) {
-                    int associatedBorderColor = ColorHelper.Argb.getArgb(alphaInt,
-                            ColorHelper.Argb.getRed(associatedColor),
-                            ColorHelper.Argb.getGreen(associatedColor),
-                            ColorHelper.Argb.getBlue(associatedColor));
-                    context.drawBorder(associatedX - 1, associatedY - 1,
+                    int associatedBorderColor = FastColor.ARGB32.color(alphaInt,
+                            FastColor.ARGB32.red(associatedColor),
+                            FastColor.ARGB32.green(associatedColor),
+                            FastColor.ARGB32.blue(associatedColor));
+                    context.renderOutline(associatedX - 1, associatedY - 1,
                             ASSOCIATED_ICON_SIZE + 2, ASSOCIATED_ICON_SIZE + 2, associatedBorderColor);
                 }
 
@@ -462,7 +461,7 @@ public class GameEndAnimationHUD {
             }
         }
 
-        context.getMatrices().pop();
+        context.pose().popPose();
     }
 
     /**
@@ -470,7 +469,7 @@ public class GameEndAnimationHUD {
      */
     private static List<PlayerData> getPlayerDataSorted() {
         List<PlayerData> players = new ArrayList<>();
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // Get all players from StorytellerState
         for (Map.Entry<UUID, PendingRoleAssignment> entry : StorytellerState.PENDING_ROLES.entrySet()) {
@@ -483,19 +482,19 @@ public class GameEndAnimationHUD {
             }
 
             // Get player name and skin
-            String playerName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-            Identifier skinTexture = null;
+            String playerName = Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+            ResourceLocation skinTexture = null;
 
-            AbstractClientPlayerEntity playerEntity = (AbstractClientPlayerEntity) client.world.getPlayerByUuid(playerUuid);
+            AbstractClientPlayer playerEntity = (AbstractClientPlayer) client.level.getPlayerByUUID(playerUuid);
             if (playerEntity != null) {
                 playerName = playerEntity.getName().getString();
-                skinTexture = playerEntity.getSkinTextures().texture();
+                skinTexture = playerEntity.getSkin().texture();
             } else {
                 // Try to get from player list (prefer custom display name over raw profile)
-                PlayerListEntry playerListEntry = client.getNetworkHandler().getPlayerListEntry(playerUuid);
+                PlayerInfo playerListEntry = client.getConnection().getPlayerInfo(playerUuid);
                 if (playerListEntry != null) {
                     playerName = PlayerListUtil.resolveDisplayName(playerListEntry, client, playerUuid);
-                    skinTexture = playerListEntry.getSkinTextures().texture();
+                    skinTexture = playerListEntry.getSkin().texture();
                 }
             }
 
@@ -505,7 +504,7 @@ public class GameEndAnimationHUD {
 
             // Get role type, icon, and color (handling custom roles)
             RoleType roleType;
-            Identifier roleIcon;
+            ResourceLocation roleIcon;
             int borderColor;
 
             if (assignment.isCustomRole() && assignment.customRole().isPresent()) {
@@ -587,13 +586,13 @@ public class GameEndAnimationHUD {
         int seatNumber;
         Role role;
         boolean isGood;
-        Identifier roleIcon;
-        Identifier skinTexture;
+        ResourceLocation roleIcon;
+        ResourceLocation skinTexture;
         int alignmentColor;
         List<Reminder> associatedRoles;
 
         PlayerData(UUID uuid, String name, int seatNumber, Role role, boolean isGood,
-                   Identifier roleIcon, Identifier skinTexture, int alignmentColor, List<Reminder> associatedRoles) {
+                   ResourceLocation roleIcon, ResourceLocation skinTexture, int alignmentColor, List<Reminder> associatedRoles) {
             this.uuid = uuid;
             this.name = name;
             this.seatNumber = seatNumber;

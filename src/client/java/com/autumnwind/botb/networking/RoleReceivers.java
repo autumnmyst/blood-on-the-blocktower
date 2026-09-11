@@ -26,8 +26,8 @@ final class RoleReceivers {
 
             // Refresh AssignRolesScreen if currently open (so local grimoire updates)
             context.client().execute(() -> {
-                if (context.client().currentScreen instanceof AssignRolesScreen) {
-                    context.client().setScreen(context.client().currentScreen);
+                if (context.client().screen instanceof AssignRolesScreen) {
+                    context.client().setScreen(context.client().screen);
                 }
             });
         });
@@ -39,7 +39,7 @@ final class RoleReceivers {
                 PendingRoleAssignment assignment = payload.assignment();
 
                 // Skip if this is our own role (we already got it via SendRoleS2CPayload)
-                if (context.client().player != null && travelerUuid.equals(context.client().player.getUuid())) {
+                if (context.client().player != null && travelerUuid.equals(context.client().player.getUUID())) {
                     return;
                 }
 
@@ -60,8 +60,8 @@ final class RoleReceivers {
                 }
 
                 // Refresh AssignRolesScreen if currently open (so local grimoire updates)
-                if (context.client().currentScreen instanceof AssignRolesScreen) {
-                    context.client().setScreen(context.client().currentScreen);
+                if (context.client().screen instanceof AssignRolesScreen) {
+                    context.client().setScreen(context.client().screen);
                 }
             });
         });
@@ -72,15 +72,15 @@ final class RoleReceivers {
 
             // Also update StorytellerState for operators (grimoire seat locations)
             context.client().execute(() -> {
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissionLevel(2);
+                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
                 if (isOperator) {
                     // Update pending seat numbers to match
                     StorytellerState.PENDING_SEAT_NUMBERS.clear();
                     StorytellerState.PENDING_SEAT_NUMBERS.putAll(payload.seatNumbers());
 
                     // Refresh AssignRolesScreen if currently open
-                    if (context.client().currentScreen instanceof AssignRolesScreen) {
-                        context.client().setScreen(context.client().currentScreen);
+                    if (context.client().screen instanceof AssignRolesScreen) {
+                        context.client().setScreen(context.client().screen);
                     }
                 }
             });
@@ -92,7 +92,7 @@ final class RoleReceivers {
                 Map<UUID, Boolean> previousDeathStatus = new HashMap<>(ClientState.playerDeathStatus);
                 ClientState.playerDeathStatus = payload.deadPlayers();
 
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissionLevel(2);
+                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
                 boolean anyDeathChange = false;
 
                 // When a player dies or is revived, update their canNominate status
@@ -167,7 +167,7 @@ final class RoleReceivers {
 
                     // Play role receive sound - Role Receive category
                     float madnessVolume = ClientState.BASE_VOLUME_ROLE_RECEIVE * ClientState.volumeRoleReceive;
-                    if (context.client().player != null && context.client().world != null && madnessVolume > 0) {
+                    if (context.client().player != null && context.client().level != null && madnessVolume > 0) {
                         CustomSounds.playOneShot(context.client(), CustomSounds.madnessReceiveCandidates(ClientState.myAssignment),
                                 ModSounds.ROLE_RECEIVE, madnessVolume);
                     }

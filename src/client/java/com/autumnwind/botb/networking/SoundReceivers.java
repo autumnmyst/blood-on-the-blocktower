@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundEvent;
 
 /**
  * Client-bound packet receivers for sounds. One-shot sounds come from a table of sound,
@@ -48,8 +48,8 @@ final class SoundReceivers {
     static void register() {
         ClientPlayNetworking.registerGlobalReceiver(PlaySoundS2CPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
-                MinecraftClient client = context.client();
-                if (client.player == null || client.world == null) return;
+                Minecraft client = context.client();
+                if (client.player == null || client.level == null) return;
                 String type = payload.soundType();
 
                 switch (type) {
@@ -83,7 +83,7 @@ final class SoundReceivers {
     }
 
     /** Stops the running loop if any, then starts a new one when the volume is audible. */
-    private static SoundInstance restartLoop(MinecraftClient client, SoundInstance running, List<String> customCandidates,
+    private static SoundInstance restartLoop(Minecraft client, SoundInstance running, List<String> customCandidates,
                                              SoundEvent sound, float volume) {
         stopLoop(client, running);
         if (volume <= 0) return null;
@@ -92,7 +92,7 @@ final class SoundReceivers {
         return loop;
     }
 
-    private static SoundInstance stopLoop(MinecraftClient client, SoundInstance running) {
+    private static SoundInstance stopLoop(Minecraft client, SoundInstance running) {
         if (running != null) client.getSoundManager().stop(running);
         return null;
     }

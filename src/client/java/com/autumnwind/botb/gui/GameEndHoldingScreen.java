@@ -1,9 +1,9 @@
 package com.autumnwind.botb.gui;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -13,32 +13,32 @@ import org.lwjgl.glfw.GLFW;
 public class GameEndHoldingScreen extends Screen {
 
     public GameEndHoldingScreen() {
-        super(Text.empty());
+        super(Component.empty());
     }
 
     @Override
     protected void init() {
         super.init();
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // Lock and hide the mouse cursor using GLFW
         GLFW.glfwSetInputMode(
-            client.getWindow().getHandle(),
+            client.getWindow().getWindow(),
             GLFW.GLFW_CURSOR,
             GLFW.GLFW_CURSOR_DISABLED
         );
 
         // Hide HUD like F1 key (hides hotbar, items, hands)
-        client.options.hudHidden = true;
+        client.options.hideGui = true;
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         // Don't render anything - the animation overlay handles all visuals
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false; // Don't pause the game - let animation continue
     }
 
@@ -50,16 +50,16 @@ public class GameEndHoldingScreen extends Screen {
     @Override
     public void removed() {
         super.removed();
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
 
         // Restore normal mouse cursor when screen closes
         GLFW.glfwSetInputMode(
-            client.getWindow().getHandle(),
+            client.getWindow().getWindow(),
             GLFW.GLFW_CURSOR,
             GLFW.GLFW_CURSOR_NORMAL
         );
 
         // Restore HUD visibility
-        client.options.hudHidden = false;
+        client.options.hideGui = false;
     }
 }

@@ -17,12 +17,12 @@ import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.util.ServerCommands;
 import com.autumnwind.botb.world.TeamManager;
@@ -43,9 +43,9 @@ public final class PlayerEvents {
             if (ServerPlayNetworking.canSend(handler.getPlayer(), ModVersionS2CPayload.ID)) {
                 ServerPlayNetworking.send(handler.getPlayer(), new ModVersionS2CPayload(BloodOnTheBlocktower.version()));
             } else {
-                handler.getPlayer().sendMessage(Text.translatable("message.blood-on-the-blocktower.command.version_mismatch").formatted(Formatting.RED)
-                        .append(Text.translatable("message.blood-on-the-blocktower.command.version_mismatch_server", BloodOnTheBlocktower.version()).formatted(Formatting.YELLOW))
-                        .append(Text.translatable("message.blood-on-the-blocktower.command.version_mismatch_features").formatted(Formatting.GRAY)), false);
+                handler.getPlayer().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch").withStyle(ChatFormatting.RED)
+                        .append(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch_server", BloodOnTheBlocktower.version()).withStyle(ChatFormatting.YELLOW))
+                        .append(Component.translatable("message.blood-on-the-blocktower.command.version_mismatch_features").withStyle(ChatFormatting.GRAY)), false);
             }
 
             TimerManager.addPlayer(handler.getPlayer());
@@ -56,26 +56,26 @@ public final class PlayerEvents {
             //   - Else → botb_player (default, for nametag hiding)
             // Falls back to botb_player when the targeted team object doesn't exist on the scoreboard yet.
             Scoreboard scoreboard = server.getScoreboard();
-            Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+            PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
             if (playerTeam == null) {
-                playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
-                playerTeam.setColor(Formatting.WHITE);
+                playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
+                playerTeam.setColor(ChatFormatting.WHITE);
             }
 
-            UUID joinUuid = handler.getPlayer().getUuid();
-            Team target = playerTeam;
+            UUID joinUuid = handler.getPlayer().getUUID();
+            PlayerTeam target = playerTeam;
             if (joinUuid.equals(DaytimeState.getMarkedForExecution())) {
-                Team mfeTeam = scoreboard.getTeam(TeamManager.MFE_TEAM);
+                PlayerTeam mfeTeam = scoreboard.getPlayerTeam(TeamManager.MFE_TEAM);
                 if (mfeTeam != null) target = mfeTeam;
             } else if (DaytimeState.hasActiveExile()
                     && joinUuid.equals(DaytimeState.getCurrentExileTarget())) {
-                Team travelerTeam = scoreboard.getTeam(TeamManager.TRAVELER_TEAM);
+                PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
                 if (travelerTeam != null) target = travelerTeam;
             }
 
             String name = handler.getPlayer().getGameProfile().getName();
-            if (scoreboard.getScoreHolderTeam(name) != target) {
-                scoreboard.addScoreHolderToTeam(name, target);
+            if (scoreboard.getPlayersTeam(name) != target) {
+                scoreboard.addPlayerToTeam(name, target);
             }
 
             // Custom names (/botb setName) live in CustomNames, which the name mixins read, so
@@ -102,7 +102,7 @@ public final class PlayerEvents {
         // Register player respawn event to reapply invisibility
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
             // Reapply invisibility if player is still dead in game
-            UUID playerUuid = newPlayer.getUuid();
+            UUID playerUuid = newPlayer.getUUID();
             boolean isDead = ServerState.PLAYER_DEATH_STATUS.getOrDefault(playerUuid, false);
             if (isDead && !ServerState.gameEnded) {
                 String invisibilityCommand = "effect give @s invisibility infinite 0 true";
@@ -112,8 +112,8 @@ public final class PlayerEvents {
 
         // Register block use event for the setup stick and lever tracking
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-            ActionResult stickResult = SetupStick.onUseBlock(player, world, hand, hitResult);
-            if (stickResult != ActionResult.PASS) {
+            InteractionResult stickResult = SetupStick.onUseBlock(player, world, hand, hitResult);
+            if (stickResult != InteractionResult.PASS) {
                 return stickResult;
             }
             BlockPos pos = hitResult.getBlockPos();

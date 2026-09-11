@@ -5,25 +5,24 @@ import com.autumnwind.botb.networking.ClockHandsStateS2CPayload;
 import com.autumnwind.botb.networking.PlaySoundS2CPayload;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeverBlock;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import java.util.*;
-import net.minecraft.registry.Registries;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.util.Identifier;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.world.TeamManager;
 
@@ -90,8 +89,8 @@ public class ExileManager {
         DaytimeState.setCanBeExiled(traveler, false);
 
         // Get player entities
-        ServerPlayerEntity callerPlayer = server.getPlayerManager().getPlayer(caller);
-        ServerPlayerEntity travelerPlayer = server.getPlayerManager().getPlayer(traveler);
+        ServerPlayer callerPlayer = server.getPlayerList().getPlayer(caller);
+        ServerPlayer travelerPlayer = server.getPlayerList().getPlayer(traveler);
 
         // Add traveler to botb_traveler team for purple glow color, then apply glowing effect
         if (travelerPlayer != null) {
@@ -99,22 +98,22 @@ public class ExileManager {
             String playerName = travelerPlayer.getGameProfile().getName();
 
             // Remove from botb_player team if on it
-            Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
-            if (playerTeam != null && scoreboard.getScoreHolderTeam(playerName) == playerTeam) {
-                scoreboard.removeScoreHolderFromTeam(playerName, playerTeam);
+            PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
+            if (playerTeam != null && scoreboard.getPlayersTeam(playerName) == playerTeam) {
+                scoreboard.removePlayerFromTeam(playerName, playerTeam);
             }
 
             // Add to botb_traveler team for purple glow
-            Team travelerTeam = scoreboard.getTeam(TeamManager.TRAVELER_TEAM);
+            PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
             if (travelerTeam == null) {
-                travelerTeam = scoreboard.addTeam(TeamManager.TRAVELER_TEAM);
-                travelerTeam.setColor(Formatting.LIGHT_PURPLE);
+                travelerTeam = scoreboard.addPlayerTeam(TeamManager.TRAVELER_TEAM);
+                travelerTeam.setColor(ChatFormatting.LIGHT_PURPLE);
             }
-            scoreboard.addScoreHolderToTeam(playerName, travelerTeam);
+            scoreboard.addPlayerToTeam(playerName, travelerTeam);
 
             // Apply glowing effect
-            travelerPlayer.addStatusEffect(new StatusEffectInstance(
-                    StatusEffects.GLOWING,
+            travelerPlayer.addEffect(new MobEffectInstance(
+                    MobEffects.GLOWING,
                     Integer.MAX_VALUE,
                     0,
                     false,
@@ -124,31 +123,31 @@ public class ExileManager {
         }
 
         // Get player names
-        String callerName = callerPlayer != null ? callerPlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-        String travelerName = travelerPlayer != null ? travelerPlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String callerName = callerPlayer != null ? callerPlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        String travelerName = travelerPlayer != null ? travelerPlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Calculate support required - at least half of ALL players (not just alive)
         int supportRequired = (int) Math.ceil(totalPlayerCount / 2.0);
 
         // Build message - use purple for exile (traveler color)
-        Text titleText = Text.translatable("message.blood-on-the-blocktower.daytime.calls_for_exile",
-                Text.literal(callerName).styled(style -> style.withColor(0x9932CC)), // Purple (traveler/exile color)
-                Text.literal(travelerName).styled(style -> style.withColor(0x9932CC))) // Purple
-                .formatted(Formatting.WHITE);
+        Component titleText = Component.translatable("message.blood-on-the-blocktower.daytime.calls_for_exile",
+                Component.literal(callerName).withStyle(style -> style.withColor(0x9932CC)), // Purple (traveler/exile color)
+                Component.literal(travelerName).withStyle(style -> style.withColor(0x9932CC))) // Purple
+                .withStyle(ChatFormatting.WHITE);
 
-        Text subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.support_required", supportRequired)
-                .formatted(Formatting.GRAY);
+        Component subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.support_required", supportRequired)
+                .withStyle(ChatFormatting.GRAY);
 
         // Send title and chat message to all players
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            player.sendMessage(titleText.copy().append(" ").append(subtitleText), false);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            player.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
 
             // Exiles share the nomination sound.
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(PlaySoundS2CPayload.NOMINATION));
         }
 
         // Broadcast clock hands state - show exile mode (minute hand only, pointing at traveler)
-        Vec3d travelerPos = travelerPlayer != null ? travelerPlayer.getPos() : null;
+        Vec3 travelerPos = travelerPlayer != null ? travelerPlayer.position() : null;
         StateBroadcaster.broadcastClockHandsState(
                 server,
                 ClockHandsStateS2CPayload.MODE_EXILE,
@@ -177,7 +176,7 @@ public class ExileManager {
      * Called at the start of an exile call.
      */
     public static void setAllExileIndicators(MinecraftServer server) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         for (Map.Entry<UUID, Integer> entry : ServerState.PLAYER_SEAT_NUMBERS.entrySet()) {
             Integer seat = entry.getValue();
@@ -191,15 +190,15 @@ public class ExileManager {
 
             BlockState leverState = world.getBlockState(switchPos);
             boolean isOn = leverState.getBlock() instanceof LeverBlock
-                    && leverState.get(LeverBlock.POWERED);
+                    && leverState.getValue(LeverBlock.POWERED);
 
             // Use exile indicator blocks
             String blockName = isOn ? ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_ON
                                    : ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_OFF;
-            Block block = Registries.BLOCK.get(
-                    Identifier.tryParse(blockName));
+            Block block = BuiltInRegistries.BLOCK.get(
+                    ResourceLocation.tryParse(blockName));
             if (block != null) {
-                world.setBlockState(indicatorPos, block.getDefaultState());
+                world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
             }
         }
     }
@@ -209,17 +208,17 @@ public class ExileManager {
      * Called when a lever is flipped during an active exile call.
      */
     public static void updateExileIndicator(MinecraftServer server, int seat, boolean isOn) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
         if (indicatorPos == null) return;
 
         String blockName = isOn ? ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_ON
                                : ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_OFF;
-        Block block = Registries.BLOCK.get(
-                Identifier.tryParse(blockName));
+        Block block = BuiltInRegistries.BLOCK.get(
+                ResourceLocation.tryParse(blockName));
         if (block != null) {
-            world.setBlockState(indicatorPos, block.getDefaultState());
+            world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
         }
     }
 
@@ -228,7 +227,7 @@ public class ExileManager {
      * Called when an exile call is reset (before support runs).
      */
     public static void resetAllExileIndicators(MinecraftServer server) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
         Block offBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
         Block ghostOffBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_OFF);
 
@@ -260,7 +259,7 @@ public class ExileManager {
             // In Voudon mode dead players (and the Voudon) vote like alive ones
             Block block = (isDead && !voudonModeActive) ? ghostOffBlock : offBlock;
             if (block != null) {
-                world.setBlockState(indicatorPos, block.getDefaultState());
+                world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
             }
         }
     }
@@ -305,25 +304,25 @@ public class ExileManager {
 
         // Remove glowing effect and move traveler back to botb_player team
         if (traveler != null) {
-            ServerPlayerEntity travelerPlayer = server.getPlayerManager().getPlayer(traveler);
+            ServerPlayer travelerPlayer = server.getPlayerList().getPlayer(traveler);
             if (travelerPlayer != null) {
-                travelerPlayer.removeStatusEffect(StatusEffects.GLOWING);
+                travelerPlayer.removeEffect(MobEffects.GLOWING);
 
                 // Remove from botb_traveler team and add back to botb_player team
                 Scoreboard scoreboard = server.getScoreboard();
                 String playerName = travelerPlayer.getGameProfile().getName();
 
-                Team travelerTeam = scoreboard.getTeam(TeamManager.TRAVELER_TEAM);
-                if (travelerTeam != null && scoreboard.getScoreHolderTeam(playerName) == travelerTeam) {
-                    scoreboard.removeScoreHolderFromTeam(playerName, travelerTeam);
+                PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
+                if (travelerTeam != null && scoreboard.getPlayersTeam(playerName) == travelerTeam) {
+                    scoreboard.removePlayerFromTeam(playerName, travelerTeam);
                 }
 
-                Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+                PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
                 if (playerTeam == null) {
-                    playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
-                    playerTeam.setColor(Formatting.WHITE);
+                    playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
+                    playerTeam.setColor(ChatFormatting.WHITE);
                 }
-                scoreboard.addScoreHolderToTeam(playerName, playerTeam);
+                scoreboard.addPlayerToTeam(playerName, playerTeam);
             }
         }
 
@@ -360,7 +359,7 @@ public class ExileManager {
      * Also resets levers to off state.
      */
     private static void saveAndRemoveGhostUsedBlocks(MinecraftServer server) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
         Set<Integer> seatsWithGhostBlocks = new HashSet<>();
         Block ghostUsedBlock = ElectionManager.getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
 
@@ -373,18 +372,18 @@ public class ExileManager {
             BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
             if (indicatorPos == null) continue;
 
-            BlockPos belowIndicator = indicatorPos.down();
+            BlockPos belowIndicator = indicatorPos.below();
             BlockState blockState = world.getBlockState(belowIndicator);
 
             if (blockState.getBlock().equals(ghostUsedBlock)) {
                 seatsWithGhostBlocks.add(seat);
                 // Remove the ghost used block (set to AIR)
-                world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+                world.setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
 
                 // Also set the main indicator to the exile OFF state
                 Block offBlock = ElectionManager.getBlockFromString(ServerConfig.EXILE_SUPPORT_INDICATOR_BLOCK_OFF);
                 if (offBlock != null) {
-                    world.setBlockState(indicatorPos, offBlock.getDefaultState());
+                    world.setBlockAndUpdate(indicatorPos, offBlock.defaultBlockState());
                 }
 
                 // Reset the lever to off state
@@ -392,8 +391,8 @@ public class ExileManager {
                 if (switchPos != null) {
                     BlockState leverState = world.getBlockState(switchPos);
                     if (leverState.getBlock() instanceof LeverBlock) {
-                        if (leverState.get(LeverBlock.POWERED)) {
-                            world.setBlockState(switchPos, leverState.with(LeverBlock.POWERED, false));
+                        if (leverState.getValue(LeverBlock.POWERED)) {
+                            world.setBlockAndUpdate(switchPos, leverState.setValue(LeverBlock.POWERED, false));
                         }
                     }
                 }

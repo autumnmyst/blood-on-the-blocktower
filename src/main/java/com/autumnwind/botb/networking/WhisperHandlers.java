@@ -12,7 +12,7 @@ final class WhisperHandlers {
 
     static void register() {
         ModPackets.registerGuarded(UpdateWhisperSettingsC2SPayload.ID, (payload, context) -> {
-            if (!context.player().hasPermissionLevel(2)) {
+            if (!context.player().hasPermissions(2)) {
                 return;
             }
             WhisperSettingsManager.set(payload.settings());

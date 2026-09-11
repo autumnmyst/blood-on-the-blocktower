@@ -1,26 +1,26 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client-to-Server payload for running an exile support vote.
  * No special modes apply - all players vote normally without consuming ghost votes.
  */
-public record RunExileSupportC2SPayload() implements CustomPayload {
-    public static final CustomPayload.Id<RunExileSupportC2SPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "run_exile_support"));
+public record RunExileSupportC2SPayload() implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<RunExileSupportC2SPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "run_exile_support"));
 
-    public static final PacketCodec<RegistryByteBuf, RunExileSupportC2SPayload> CODEC = PacketCodec.of(
+    public static final StreamCodec<RegistryFriendlyByteBuf, RunExileSupportC2SPayload> CODEC = StreamCodec.ofMember(
             (payload, buf) -> {},  // Nothing to write
             buf -> new RunExileSupportC2SPayload()
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

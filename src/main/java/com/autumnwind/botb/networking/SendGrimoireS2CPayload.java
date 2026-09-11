@@ -3,14 +3,13 @@ package com.autumnwind.botb.networking;
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Reminder;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * S2C payload to send the complete grimoire (all roles and reminders) to players.
@@ -30,13 +29,13 @@ public record SendGrimoireS2CPayload(
         Map<UUID, List<Reminder>> reminders,
         List<String> demonBluffs,
         boolean isTargetedSend
-) implements CustomPayload {
-    public static final Identifier SEND_GRIMOIRE_ID = Identifier.of(BloodOnTheBlocktower.MOD_ID, "send_grimoire");
-    public static final CustomPayload.Id<SendGrimoireS2CPayload> ID = new CustomPayload.Id<>(SEND_GRIMOIRE_ID);
+) implements CustomPacketPayload {
+    public static final ResourceLocation SEND_GRIMOIRE_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_grimoire");
+    public static final CustomPacketPayload.Type<SendGrimoireS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_GRIMOIRE_ID);
 
-    public static final PacketCodec<RegistryByteBuf, SendGrimoireS2CPayload> CODEC = new PacketCodec<>() {
+    public static final StreamCodec<RegistryFriendlyByteBuf, SendGrimoireS2CPayload> CODEC = new StreamCodec<>() {
         @Override
-        public SendGrimoireS2CPayload decode(RegistryByteBuf buf) {
+        public SendGrimoireS2CPayload decode(RegistryFriendlyByteBuf buf) {
             Map<UUID, PendingRoleAssignment> roles = PayloadCodecs.ROLE_MAP_CODEC.decode(buf);
             Map<UUID, Integer> seatNumbers = PayloadCodecs.SEAT_MAP_CODEC.decode(buf);
             Map<UUID, List<Reminder>> reminders = PayloadCodecs.REMINDER_MAP_CODEC.decode(buf);
@@ -50,7 +49,7 @@ public record SendGrimoireS2CPayload(
         }
 
         @Override
-        public void encode(RegistryByteBuf buf, SendGrimoireS2CPayload payload) {
+        public void encode(RegistryFriendlyByteBuf buf, SendGrimoireS2CPayload payload) {
             PayloadCodecs.ROLE_MAP_CODEC.encode(buf, payload.roles);
             PayloadCodecs.SEAT_MAP_CODEC.encode(buf, payload.seatNumbers);
             PayloadCodecs.REMINDER_MAP_CODEC.encode(buf, payload.reminders);
@@ -63,7 +62,7 @@ public record SendGrimoireS2CPayload(
     };
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

@@ -24,7 +24,7 @@ final class NightOrderReceivers {
             // Game start: snapshot the outsider count for the Xaan
             if (gameStarting) {
                 context.client().execute(() -> {
-                    if (context.client().player != null && context.client().player.hasPermissionLevel(2)) {
+                    if (context.client().player != null && context.client().player.hasPermissions(2)) {
                         StorytellerState.setupOutsiderCount = RoleHelpers.countAssignedOutsiders();
                         StorytellerState.syncGrimoire();
                     }
@@ -51,7 +51,7 @@ final class NightOrderReceivers {
         ClientPlayNetworking.registerGlobalReceiver(SyncNightVisitS2CPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 // Only process for operators
-                if (context.client().player == null || !context.client().player.hasPermissionLevel(2)) {
+                if (context.client().player == null || !context.client().player.hasPermissions(2)) {
                     return;
                 }
 

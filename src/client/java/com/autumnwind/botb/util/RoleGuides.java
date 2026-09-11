@@ -1,13 +1,12 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.util.Language;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.locale.Language;
 
 /**
  * How to run every role the mod special-cases. Only roles listed here appear in the Role
@@ -134,6 +133,6 @@ public final class RoleGuides {
     }
 
     public static String get(Role role) {
-        return Language.getInstance().get("guide." + BloodOnTheBlocktower.MOD_ID + "." + role.getId());
+        return Language.getInstance().getOrDefault("guide." + BloodOnTheBlocktower.MOD_ID + "." + role.getId());
     }
 }

@@ -1,8 +1,8 @@
 package com.autumnwind.botb.mixin.client;
 
 import com.autumnwind.botb.gui.TitleArt;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.LogoDrawer;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.LogoRenderer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * "Java Edition" banner and the Minceraft easter egg go with it, because one call draws the
  * whole logo block.
  */
-@Mixin(LogoDrawer.class)
+@Mixin(LogoRenderer.class)
 public class TitleLogoMixin {
 
     /**
@@ -33,18 +33,18 @@ public class TitleLogoMixin {
 
     @Shadow
     @Final
-    private boolean ignoreAlpha;
+    private boolean keepLogoThroughFade;
 
     @Inject(
-            method = "draw(Lnet/minecraft/client/gui/DrawContext;IFI)V",
+            method = "renderLogo(Lnet/minecraft/client/gui/GuiGraphics;IFI)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void drawBotbTitle(DrawContext context, int screenWidth, float alpha, int y, CallbackInfo ci) {
+    private void drawBotbTitle(GuiGraphics context, int screenWidth, float alpha, int y, CallbackInfo ci) {
         // Vanilla tints the logo by the fade alpha, so the title fades in with the panorama.
-        context.setShaderColor(1.0F, 1.0F, 1.0F, this.ignoreAlpha ? 1.0F : alpha);
+        context.setColor(1.0F, 1.0F, 1.0F, this.keepLogoThroughFade ? 1.0F : alpha);
         TitleArt.drawCentered(context, screenWidth / 2, y + Y_OFFSET, DRAW_WIDTH);
-        context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        context.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         ci.cancel();
     }
 }

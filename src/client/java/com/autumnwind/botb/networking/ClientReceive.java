@@ -4,7 +4,7 @@ import com.autumnwind.botb.util.AlmanacParser;
 import com.autumnwind.botb.util.ReminderCatalog;
 import com.autumnwind.botb.util.Script;
 import com.autumnwind.botb.util.UrlTextureLoaderImpl;
-import net.minecraft.client.sound.SoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
 
 public class ClientReceive {
 

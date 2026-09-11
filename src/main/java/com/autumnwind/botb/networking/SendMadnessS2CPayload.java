@@ -3,34 +3,33 @@ package com.autumnwind.botb.networking;
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.util.Madness;
 import com.autumnwind.botb.util.Role;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Payload for sending madness data to a player.
  * Contains a list of active madnesses for that player.
  */
-public record SendMadnessS2CPayload(List<Madness> madnesses) implements CustomPayload {
-    public static final Identifier SEND_MADNESS_ID = Identifier.of(BloodOnTheBlocktower.MOD_ID, "send_madness");
-    public static final CustomPayload.Id<SendMadnessS2CPayload> ID = new CustomPayload.Id<>(SEND_MADNESS_ID);
+public record SendMadnessS2CPayload(List<Madness> madnesses) implements CustomPacketPayload {
+    public static final ResourceLocation SEND_MADNESS_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_madness");
+    public static final CustomPacketPayload.Type<SendMadnessS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_MADNESS_ID);
 
     // Custom codec for Madness list
-    public static final PacketCodec<RegistryByteBuf, List<Madness>> MADNESS_LIST_CODEC = new PacketCodec<>() {
+    public static final StreamCodec<RegistryFriendlyByteBuf, List<Madness>> MADNESS_LIST_CODEC = new StreamCodec<>() {
         @Override
-        public List<Madness> decode(RegistryByteBuf buf) {
-            int size = PacketCodecs.VAR_INT.decode(buf);
+        public List<Madness> decode(RegistryFriendlyByteBuf buf) {
+            int size = ByteBufCodecs.VAR_INT.decode(buf);
             List<Madness> list = new ArrayList<>(size);
 
             for (int i = 0; i < size; i++) {
-                Madness.MadnessType type = buf.readEnumConstant(Madness.MadnessType.class);
+                Madness.MadnessType type = buf.readEnum(Madness.MadnessType.class);
 
                 Madness madness = switch (type) {
                     case PIXIE -> {
@@ -38,7 +37,7 @@ public record SendMadnessS2CPayload(List<Madness> madnesses) implements CustomPa
                         yield new Madness.PixieMadness(role);
                     }
                     case HARPY -> {
-                        UUID playerUuid = Uuids.PACKET_CODEC.decode(buf);
+                        UUID playerUuid = UUIDUtil.STREAM_CODEC.decode(buf);
                         yield new Madness.HarpyMadness(playerUuid);
                     }
                     case CERENOVUS -> {
@@ -55,15 +54,15 @@ public record SendMadnessS2CPayload(List<Madness> madnesses) implements CustomPa
         }
 
         @Override
-        public void encode(RegistryByteBuf buf, List<Madness> madnesses) {
-            PacketCodecs.VAR_INT.encode(buf, madnesses.size());
+        public void encode(RegistryFriendlyByteBuf buf, List<Madness> madnesses) {
+            ByteBufCodecs.VAR_INT.encode(buf, madnesses.size());
 
             for (Madness madness : madnesses) {
-                buf.writeEnumConstant(madness.getType());
+                buf.writeEnum(madness.getType());
 
                 switch (madness) {
                     case Madness.PixieMadness pixie -> Role.PACKET_CODEC.encode(buf, pixie.townsfolkRole());
-                    case Madness.HarpyMadness harpy -> Uuids.PACKET_CODEC.encode(buf, harpy.targetPlayerUuid());
+                    case Madness.HarpyMadness harpy -> UUIDUtil.STREAM_CODEC.encode(buf, harpy.targetPlayerUuid());
                     case Madness.CerenovusMadness cerenovus -> Role.PACKET_CODEC.encode(buf, cerenovus.madRole());
                     case Madness.MutantMadness mutant -> {} // No additional data
                 }
@@ -71,13 +70,13 @@ public record SendMadnessS2CPayload(List<Madness> madnesses) implements CustomPa
         }
     };
 
-    public static final PacketCodec<RegistryByteBuf, SendMadnessS2CPayload> CODEC = PacketCodec.tuple(
+    public static final StreamCodec<RegistryFriendlyByteBuf, SendMadnessS2CPayload> CODEC = StreamCodec.composite(
             MADNESS_LIST_CODEC, SendMadnessS2CPayload::madnesses,
             SendMadnessS2CPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

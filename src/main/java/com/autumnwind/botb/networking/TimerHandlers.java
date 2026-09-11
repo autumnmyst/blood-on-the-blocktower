@@ -11,7 +11,7 @@ final class TimerHandlers {
 
     static void register() {
         ModPackets.registerGuarded(TimerControlC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 switch (payload.action()) {
                     case START:
                         TimerManager.startTimer(context.server(), payload.durationSeconds(), payload.syncDaylight());

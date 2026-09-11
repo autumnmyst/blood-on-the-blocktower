@@ -1,10 +1,9 @@
 package com.autumnwind.botb.util;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-
 import java.util.Optional;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import java.util.List;
 
 /**
@@ -28,14 +27,14 @@ public record PendingRoleAssignment(
 
     // Packet codec to send this object over the network
     // For custom roles, we send the custom role ID and rely on the script to resolve it
-    public static final PacketCodec<RegistryByteBuf, PendingRoleAssignment> PACKET_CODEC = new PacketCodec<>() {
+    public static final StreamCodec<RegistryFriendlyByteBuf, PendingRoleAssignment> PACKET_CODEC = new StreamCodec<>() {
         @Override
-        public PendingRoleAssignment decode(RegistryByteBuf buf) {
-            boolean isCustom = PacketCodecs.BOOL.decode(buf);
+        public PendingRoleAssignment decode(RegistryFriendlyByteBuf buf) {
+            boolean isCustom = ByteBufCodecs.BOOL.decode(buf);
             AlignmentOverride override = AlignmentOverride.PACKET_CODEC.decode(buf);
 
             if (isCustom) {
-                String customRoleId = PacketCodecs.STRING.decode(buf);
+                String customRoleId = ByteBufCodecs.STRING_UTF8.decode(buf);
                 // Only the id crosses the wire, and the client resolves it against the current
                 // script, so a placeholder carries it until then.
                 return new PendingRoleAssignment(Role.NO_ROLE, Optional.empty(), override)
@@ -47,13 +46,13 @@ public record PendingRoleAssignment(
         }
 
         @Override
-        public void encode(RegistryByteBuf buf, PendingRoleAssignment assignment) {
+        public void encode(RegistryFriendlyByteBuf buf, PendingRoleAssignment assignment) {
             boolean isCustom = assignment.isCustomRole();
-            PacketCodecs.BOOL.encode(buf, isCustom);
+            ByteBufCodecs.BOOL.encode(buf, isCustom);
             AlignmentOverride.PACKET_CODEC.encode(buf, assignment.override());
 
             if (isCustom) {
-                PacketCodecs.STRING.encode(buf, assignment.customRole().get().id());
+                ByteBufCodecs.STRING_UTF8.encode(buf, assignment.customRole().get().id());
             } else {
                 Role.PACKET_CODEC.encode(buf, assignment.role());
             }

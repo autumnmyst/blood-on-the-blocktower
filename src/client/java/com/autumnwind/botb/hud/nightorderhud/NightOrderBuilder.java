@@ -4,13 +4,14 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.text.Text;
-
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.network.chat.Component;
 
 import static com.autumnwind.botb.hud.nightorderhud.AbilityChecker.*;
 import static com.autumnwind.botb.hud.nightorderhud.RoleHelpers.*;
+
+import com.autumnwind.botb.util.RoleVisit;
 
 // Note: Custom role support added - custom roles in night order are treated as mark-based on other nights
 
@@ -113,7 +114,7 @@ public class NightOrderBuilder {
                             Role.AL_HADIKHIA,
                             allSeatedPlayers,
                             true, // seat teleport
-                            Text.translatable(key("al_hadikhia_homebrew")).getString(),
+                            Component.translatable(key("al_hadikhia_homebrew")).getString(),
                             new ArrayList<>(alHadikhiaReminders),
                             Optional.empty(),
                             false, // not triggered
@@ -324,7 +325,7 @@ public class NightOrderBuilder {
                         Role.LEVIATHAN,
                         List.of(leviathanPlayer),
                         false, // no teleport
-                        Text.translatable(key("leviathan_win")).getString(),
+                        Component.translatable(key("leviathan_win")).getString(),
                         new ArrayList<>(leviathanReminders),
                         Optional.empty(),
                         false,
@@ -657,7 +658,7 @@ public class NightOrderBuilder {
                 if (!isFirstNight) {
                     String demonInstructions = getDemonInstructions(demonReminderOpt.get(), script);
                     if (!demonInstructions.isBlank()) {
-                        finalInstructions = finalInstructions + "\n" + Text.translatable(key("demon_instructions"), demonInstructions).getString();
+                        finalInstructions = finalInstructions + "\n" + Component.translatable(key("demon_instructions"), demonInstructions).getString();
                     }
                 }
             }
@@ -842,7 +843,7 @@ public class NightOrderBuilder {
                     if (!isFirstNight) {
                         String demonInstructions = getDemonInstructions(demonReminderOpt.get(), script);
                         if (!demonInstructions.isBlank()) {
-                            finalInstructions = finalInstructions + "\n" + Text.translatable(key("demon_instructions"), demonInstructions).getString();
+                            finalInstructions = finalInstructions + "\n" + Component.translatable(key("demon_instructions"), demonInstructions).getString();
                         }
                     }
                 }

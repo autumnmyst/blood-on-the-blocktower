@@ -57,7 +57,7 @@ final class GameEndReceivers {
                 GameEndAnimationHUD.startAnimation(payload.goodWins());
 
                 // Play game end sound, with the pack's victory or defeat track if it has one
-                if (context.client().player != null && context.client().world != null) {
+                if (context.client().player != null && context.client().level != null) {
                     boolean won = GameEndAnimationHUD.localPlayerWon(context.client(), payload.goodWins());
                     CustomSounds.playOneShot(context.client(), CustomSounds.gameEndCandidates(won), ModSounds.GAME_END, 1.0f);
                 }

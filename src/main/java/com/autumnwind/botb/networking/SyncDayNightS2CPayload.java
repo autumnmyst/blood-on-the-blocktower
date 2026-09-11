@@ -2,24 +2,24 @@ package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
-public record SyncDayNightS2CPayload(int night, int day, boolean executionToday) implements CustomPayload {
-    public static final CustomPayload.Id<SyncDayNightS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "sync_day_night"));
+public record SyncDayNightS2CPayload(int night, int day, boolean executionToday) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<SyncDayNightS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_day_night"));
 
-    public static final PacketCodec<ByteBuf, SyncDayNightS2CPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.VAR_INT, SyncDayNightS2CPayload::night,
-            PacketCodecs.VAR_INT, SyncDayNightS2CPayload::day,
-            PacketCodecs.BOOL, SyncDayNightS2CPayload::executionToday,
+    public static final StreamCodec<ByteBuf, SyncDayNightS2CPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, SyncDayNightS2CPayload::night,
+            ByteBufCodecs.VAR_INT, SyncDayNightS2CPayload::day,
+            ByteBufCodecs.BOOL, SyncDayNightS2CPayload::executionToday,
             SyncDayNightS2CPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

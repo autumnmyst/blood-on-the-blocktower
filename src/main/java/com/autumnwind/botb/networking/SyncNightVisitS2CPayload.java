@@ -2,26 +2,26 @@ package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * S2C payload to sync storytellers' night visit index to Dawn or Dusk.
  * Sent to all OTHER operators when one activates Dawn or Dusk, to keep them in sync.
  */
-public record SyncNightVisitS2CPayload(String visitType) implements CustomPayload {
-    public static final CustomPayload.Id<SyncNightVisitS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "sync_night_visit"));
+public record SyncNightVisitS2CPayload(String visitType) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<SyncNightVisitS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sync_night_visit"));
 
-    public static final PacketCodec<ByteBuf, SyncNightVisitS2CPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.STRING, SyncNightVisitS2CPayload::visitType,
+    public static final StreamCodec<ByteBuf, SyncNightVisitS2CPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8, SyncNightVisitS2CPayload::visitType,
             SyncNightVisitS2CPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 

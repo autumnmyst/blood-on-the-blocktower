@@ -9,10 +9,10 @@ import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.RoleType;
 import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 
 /** Sends game state to clients: full catch-up on join, and broadcasts when daytime, day/night, clock hands, whisper settings, custom names, or lobby counts change. */
 public final class StateBroadcaster {
@@ -23,7 +23,7 @@ public final class StateBroadcaster {
     public static void broadcastWhisperSettings(MinecraftServer server) {
         SyncWhisperSettingsS2CPayload pkt = new SyncWhisperSettingsS2CPayload(
                 WhisperSettingsManager.get());
-        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(p, pkt);
         }
     }
@@ -39,11 +39,11 @@ public final class StateBroadcaster {
      * <p>Fast-updating state is deliberately left out: vote progress and the timer both
      * re-broadcast on their own timers within ~100ms of joining.
      */
-    public static void sendCurrentStateTo(MinecraftServer server, ServerPlayerEntity player) {
+    public static void sendCurrentStateTo(MinecraftServer server, ServerPlayer player) {
         // Their own role, silently, because a rejoin must not replay the reveal animation and sound.
         // This is the doctored assignment the storyteller last sent, so it re-tells the same
         // story: a Drunk stays their Townsfolk, and under Tor the living stay NO_ROLE.
-        PendingRoleAssignment assignment = ServerState.PLAYER_ROLES.get(player.getUuid());
+        PendingRoleAssignment assignment = ServerState.PLAYER_ROLES.get(player.getUUID());
         if (assignment != null) {
             int travelerCount = (int) ServerState.PLAYER_ROLES.values().stream()
                     .map(a -> ServerState.currentScript != null ? a.resolveCustomRole(ServerState.currentScript) : a)
@@ -85,7 +85,7 @@ public final class StateBroadcaster {
      * live player positions rather than stored state, so they're looked up fresh. Fade-in and
      * swivel are off, since the animation belongs to the moment the nomination was made.
      */
-    public static void sendClockHandsTo(MinecraftServer server, ServerPlayerEntity player) {
+    public static void sendClockHandsTo(MinecraftServer server, ServerPlayer player) {
         int mode;
         UUID hourHandPlayer = null;
         UUID minuteHandPlayer = null;
@@ -121,11 +121,11 @@ public final class StateBroadcaster {
      * player is not registered there yet while their own join is being handled. Without it, a
      * reconnecting nominee is sent a null target and never sees the hand aimed at themselves.
      */
-    public static Vec3d positionOf(MinecraftServer server, ServerPlayerEntity receiver, UUID uuid) {
+    public static Vec3 positionOf(MinecraftServer server, ServerPlayer receiver, UUID uuid) {
         if (uuid == null) return null;
-        if (uuid.equals(receiver.getUuid())) return receiver.getPos();
-        ServerPlayerEntity target = server.getPlayerManager().getPlayer(uuid);
-        return target != null ? target.getPos() : null;
+        if (uuid.equals(receiver.getUUID())) return receiver.position();
+        ServerPlayer target = server.getPlayerList().getPlayer(uuid);
+        return target != null ? target.position() : null;
     }
 
     /**
@@ -133,7 +133,7 @@ public final class StateBroadcaster {
      */
     public static void broadcastDaytimeState(MinecraftServer server) {
         SyncDaytimeStateS2CPayload payload = buildDaytimeStatePayload();
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
@@ -173,7 +173,7 @@ public final class StateBroadcaster {
                 ServerState.executionToday
         );
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
@@ -190,8 +190,8 @@ public final class StateBroadcaster {
     public static void broadcastClockHandsState(
             MinecraftServer server,
             int mode,
-            Vec3d hourHandTargetPos,
-            Vec3d minuteHandTargetPos,
+            Vec3 hourHandTargetPos,
+            Vec3 minuteHandTargetPos,
             boolean fadeIn,
             boolean swivel
     ) {
@@ -205,7 +205,7 @@ public final class StateBroadcaster {
                 swivel
         );
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
@@ -215,16 +215,16 @@ public final class StateBroadcaster {
     private static int lastLobbyStorytellers = -1;
 
     public static LobbyCountsS2CPayload computeLobbyCounts(MinecraftServer server) {
-        List<ServerPlayerEntity> online = server.getPlayerManager().getPlayerList();
+        List<ServerPlayer> online = server.getPlayerList().getPlayers();
         int storytellers = 0;
-        for (ServerPlayerEntity p : online) {
-            if (p.hasPermissionLevel(2)) storytellers++;
+        for (ServerPlayer p : online) {
+            if (p.hasPermissions(2)) storytellers++;
         }
         return new LobbyCountsS2CPayload(online.size() - storytellers, storytellers);
     }
 
     /** Sends every custom player name to one client (on join). */
-    public static void sendCustomNamesTo(ServerPlayerEntity player) {
+    public static void sendCustomNamesTo(ServerPlayer player) {
         ServerPlayNetworking.send(player, new CustomNamesS2CPayload(new HashMap<>(CustomNames.all())));
     }
 
@@ -232,17 +232,17 @@ public final class StateBroadcaster {
      * Broadcasts the custom names after a change and refreshes the changed player's tab-list
      * entry, which vanilla only re-sends when told to.
      */
-    public static void syncCustomNames(MinecraftServer server, ServerPlayerEntity changed) {
+    public static void syncCustomNames(MinecraftServer server, ServerPlayer changed) {
         CustomNamesS2CPayload payload = new CustomNamesS2CPayload(new HashMap<>(CustomNames.all()));
-        for (ServerPlayerEntity online : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer online : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(online, payload);
         }
-        server.getPlayerManager().sendToAll(new PlayerListS2CPacket(
-                PlayerListS2CPacket.Action.UPDATE_DISPLAY_NAME, changed));
+        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(
+                ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, changed));
     }
 
     /** Sends current lobby counts to one player (used on join). */
-    public static void sendLobbyCountsTo(ServerPlayerEntity player) {
+    public static void sendLobbyCountsTo(ServerPlayer player) {
         MinecraftServer server = player.getServer();
         if (server == null) return;
         ServerPlayNetworking.send(player, computeLobbyCounts(server));
@@ -254,7 +254,7 @@ public final class StateBroadcaster {
         if (counts.players() == lastLobbyPlayers && counts.storytellers() == lastLobbyStorytellers) return;
         lastLobbyPlayers = counts.players();
         lastLobbyStorytellers = counts.storytellers();
-        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(p, counts);
         }
     }

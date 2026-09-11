@@ -1,21 +1,20 @@
 package com.autumnwind.botb.util;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.Language;
-import net.minecraft.util.function.ValueLists;
-
 import java.util.function.IntFunction;
+import net.minecraft.locale.Language;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.ByIdMap;
 
 public enum AlignmentOverride {
     DEFAULT("default"),
     FORCE_GOOD("good"),
     FORCE_BAD("bad");
 
-    public static final IntFunction<AlignmentOverride> ID_TO_VALUE = ValueLists.createIdToValueFunction(
-            AlignmentOverride::ordinal, values(), ValueLists.OutOfBoundsHandling.WRAP);
-    public static final PacketCodec<ByteBuf, AlignmentOverride> PACKET_CODEC = PacketCodecs.indexed(ID_TO_VALUE, AlignmentOverride::ordinal);
+    public static final IntFunction<AlignmentOverride> ID_TO_VALUE = ByIdMap.continuous(
+            AlignmentOverride::ordinal, values(), ByIdMap.OutOfBoundsStrategy.WRAP);
+    public static final StreamCodec<ByteBuf, AlignmentOverride> PACKET_CODEC = ByteBufCodecs.idMapper(ID_TO_VALUE, AlignmentOverride::ordinal);
 
     private final String nameKey;
 
@@ -24,7 +23,7 @@ public enum AlignmentOverride {
     }
 
     public String getDisplayName() {
-        return Language.getInstance().get(nameKey);
+        return Language.getInstance().getOrDefault(nameKey);
     }
 
     // Helper method to cycle through the options

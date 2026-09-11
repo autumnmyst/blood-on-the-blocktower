@@ -2,15 +2,19 @@ package com.autumnwind.botb.clockhands;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RotationAxis;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import com.autumnwind.botb.networking.ClockHandsStateS2CPayload;
 
@@ -19,12 +23,12 @@ import com.autumnwind.botb.networking.ClockHandsStateS2CPayload;
  */
 public class ClockHandsRenderer {
 
-    private static final Identifier HOUR_HAND_TEXTURE =
-            Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/objects/hour_hand.png");
-    private static final Identifier MINUTE_HAND_TEXTURE =
-            Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/objects/minute_hand.png");
-    private static final Identifier MINUTE_HAND_EXILE_TEXTURE =
-            Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/objects/minute_hand_exile.png");
+    private static final ResourceLocation HOUR_HAND_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/objects/hour_hand.png");
+    private static final ResourceLocation MINUTE_HAND_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/objects/minute_hand.png");
+    private static final ResourceLocation MINUTE_HAND_EXILE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/objects/minute_hand_exile.png");
 
     // Texture dimensions (pixels)
     private static final float HOUR_HAND_WIDTH_PX = 11.0f;
@@ -82,13 +86,13 @@ public class ClockHandsRenderer {
             return;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) {
             return;
         }
 
         // Get camera position for proper world-space rendering
-        Vec3d cameraPos = context.camera().getPos();
+        Vec3 cameraPos = context.camera().getPosition();
 
         // Calculate world position of clock center
         double worldX = clockCenter.getX() + 0.5 - cameraPos.x;
@@ -98,8 +102,8 @@ public class ClockHandsRenderer {
         float scale = ClockHandsState.getScale();
         float alpha = ClockHandsState.getFadeAlpha();
 
-        MatrixStack matrices = context.matrixStack();
-        VertexConsumerProvider vertexConsumers = context.consumers();
+        PoseStack matrices = context.matrixStack();
+        MultiBufferSource vertexConsumers = context.consumers();
 
         if (matrices == null || vertexConsumers == null) {
             return;
@@ -122,7 +126,7 @@ public class ClockHandsRenderer {
         // Use exile texture when in MODE_EXILE
         if (ClockHandsState.isMinuteHandVisible()) {
             float minuteAngle = ClockHandsState.getMinuteHandAngle();
-            Identifier minuteTexture = (ClockHandsState.getCurrentMode() == ClockHandsStateS2CPayload.MODE_EXILE)
+            ResourceLocation minuteTexture = (ClockHandsState.getCurrentMode() == ClockHandsStateS2CPayload.MODE_EXILE)
                     ? MINUTE_HAND_EXILE_TEXTURE
                     : MINUTE_HAND_TEXTURE;
             renderHand(matrices, vertexConsumers, minuteTexture,
@@ -137,11 +141,11 @@ public class ClockHandsRenderer {
     /**
      * Render a single clock hand.
      */
-    private static void renderHand(MatrixStack matrices, VertexConsumerProvider vertexConsumers,
-                                   Identifier texture, double x, double y, double z,
+    private static void renderHand(PoseStack matrices, MultiBufferSource vertexConsumers,
+                                   ResourceLocation texture, double x, double y, double z,
                                    float angle, float scale, float alpha,
                                    float handWidth, float handLength, float pivotOffset) {
-        matrices.push();
+        matrices.pushPose();
 
         // Translate to world position
         matrices.translate(x, y, z);
@@ -149,16 +153,16 @@ public class ClockHandsRenderer {
         // Rotate around Y axis to point at target
         // The hand model extends in +Z direction, and angle is measured from +Z axis
         // Positive rotation because POSITIVE_Y rotates counter-clockwise from above (matching atan2)
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotation(angle));
+        matrices.mulPose(Axis.YP.rotation(angle));
 
         // Scale
         matrices.scale(scale, 1.0f, scale);
 
         // Get the vertex consumer for the texture
-        RenderLayer renderLayer = RenderLayer.getEntityTranslucent(texture);
+        RenderType renderLayer = RenderType.entityTranslucent(texture);
         VertexConsumer buffer = vertexConsumers.getBuffer(renderLayer);
 
-        Matrix4f positionMatrix = matrices.peek().getPositionMatrix();
+        Matrix4f positionMatrix = matrices.last().pose();
 
         // The hand should point outward from center
         // We render it as a flat quad on the XZ plane
@@ -176,7 +180,7 @@ public class ClockHandsRenderer {
         // Bottom face (visible from below) - slightly below
         renderQuadBottom(buffer, positionMatrix, halfWidth, handLength, alpha, -0.002f, pivotOffset);
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     /**
@@ -185,7 +189,7 @@ public class ClockHandsRenderer {
     private static void renderQuadTop(VertexConsumer buffer, Matrix4f positionMatrix,
                                       float halfWidth, float length, float alpha, float yOffset, float pivotOffset) {
         int a = (int) (alpha * 255);
-        int light = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+        int light = LightTexture.FULL_BRIGHT;
 
         // Z coordinates shifted by pivot offset (hand extends from -pivotOffset to length-pivotOffset)
         float zStart = -pivotOffset;
@@ -193,36 +197,36 @@ public class ClockHandsRenderer {
 
         // Vertices in counter-clockwise order (when viewed from above)
         // Bottom-left
-        buffer.vertex(positionMatrix, -halfWidth, yOffset, zStart)
-                .color(255, 255, 255, a)
-                .texture(0, 1)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, 1, 0);
+        buffer.addVertex(positionMatrix, -halfWidth, yOffset, zStart)
+                .setColor(255, 255, 255, a)
+                .setUv(0, 1)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, 1, 0);
 
         // Bottom-right
-        buffer.vertex(positionMatrix, halfWidth, yOffset, zStart)
-                .color(255, 255, 255, a)
-                .texture(1, 1)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, 1, 0);
+        buffer.addVertex(positionMatrix, halfWidth, yOffset, zStart)
+                .setColor(255, 255, 255, a)
+                .setUv(1, 1)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, 1, 0);
 
         // Top-right
-        buffer.vertex(positionMatrix, halfWidth, yOffset, zEnd)
-                .color(255, 255, 255, a)
-                .texture(1, 0)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, 1, 0);
+        buffer.addVertex(positionMatrix, halfWidth, yOffset, zEnd)
+                .setColor(255, 255, 255, a)
+                .setUv(1, 0)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, 1, 0);
 
         // Top-left
-        buffer.vertex(positionMatrix, -halfWidth, yOffset, zEnd)
-                .color(255, 255, 255, a)
-                .texture(0, 0)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, 1, 0);
+        buffer.addVertex(positionMatrix, -halfWidth, yOffset, zEnd)
+                .setColor(255, 255, 255, a)
+                .setUv(0, 0)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, 1, 0);
     }
 
     /**
@@ -231,7 +235,7 @@ public class ClockHandsRenderer {
     private static void renderQuadBottom(VertexConsumer buffer, Matrix4f positionMatrix,
                                          float halfWidth, float length, float alpha, float yOffset, float pivotOffset) {
         int a = (int) (alpha * 255);
-        int light = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+        int light = LightTexture.FULL_BRIGHT;
 
         // Z coordinates shifted by pivot offset (hand extends from -pivotOffset to length-pivotOffset)
         float zStart = -pivotOffset;
@@ -239,35 +243,35 @@ public class ClockHandsRenderer {
 
         // Vertices in clockwise order (when viewed from above, so counter-clockwise from below)
         // Top-left
-        buffer.vertex(positionMatrix, -halfWidth, yOffset, zEnd)
-                .color(255, 255, 255, a)
-                .texture(0, 0)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, -1, 0);
+        buffer.addVertex(positionMatrix, -halfWidth, yOffset, zEnd)
+                .setColor(255, 255, 255, a)
+                .setUv(0, 0)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, -1, 0);
 
         // Top-right
-        buffer.vertex(positionMatrix, halfWidth, yOffset, zEnd)
-                .color(255, 255, 255, a)
-                .texture(1, 0)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, -1, 0);
+        buffer.addVertex(positionMatrix, halfWidth, yOffset, zEnd)
+                .setColor(255, 255, 255, a)
+                .setUv(1, 0)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, -1, 0);
 
         // Bottom-right
-        buffer.vertex(positionMatrix, halfWidth, yOffset, zStart)
-                .color(255, 255, 255, a)
-                .texture(1, 1)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, -1, 0);
+        buffer.addVertex(positionMatrix, halfWidth, yOffset, zStart)
+                .setColor(255, 255, 255, a)
+                .setUv(1, 1)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, -1, 0);
 
         // Bottom-left
-        buffer.vertex(positionMatrix, -halfWidth, yOffset, zStart)
-                .color(255, 255, 255, a)
-                .texture(0, 1)
-                .overlay(OverlayTexture.DEFAULT_UV)
-                .light(light)
-                .normal(0, -1, 0);
+        buffer.addVertex(positionMatrix, -halfWidth, yOffset, zStart)
+                .setColor(255, 255, 255, a)
+                .setUv(0, 1)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(0, -1, 0);
     }
 }

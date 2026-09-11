@@ -2,14 +2,13 @@ package com.autumnwind.botb.sound;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.util.PendingRoleAssignment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 
 /**
  * Resource pack sound overrides that fall back through a chain of file paths under
@@ -50,12 +49,12 @@ public final class CustomSounds {
     }
 
     /** Plays the first candidate a resource pack provides, else the built-in event. */
-    public static void playOneShot(MinecraftClient client, List<String> candidates, SoundEvent fallback, float volume) {
+    public static void playOneShot(Minecraft client, List<String> candidates, SoundEvent fallback, float volume) {
         client.getSoundManager().play(instance(client, candidates, fallback, volume, false));
     }
 
     /** A looping instance for the first candidate a resource pack provides, else the built-in event. */
-    public static SoundInstance loop(MinecraftClient client, List<String> candidates, SoundEvent fallback, float volume) {
+    public static SoundInstance loop(Minecraft client, List<String> candidates, SoundEvent fallback, float volume) {
         return instance(client, candidates, fallback, volume, true);
     }
 
@@ -63,13 +62,13 @@ public final class CustomSounds {
      * Each candidate is checked two ways under the same name: a sounds.json event, which gets
      * the vanilla features like weighted variants, then a bare file at {@code sounds/<name>.ogg}.
      */
-    private static SoundInstance instance(MinecraftClient client, List<String> candidates, SoundEvent fallback, float volume, boolean repeat) {
+    private static SoundInstance instance(Minecraft client, List<String> candidates, SoundEvent fallback, float volume, boolean repeat) {
         for (String candidate : candidates) {
-            Identifier name = Identifier.of(BloodOnTheBlocktower.MOD_ID, candidate);
-            if (client.getSoundManager().get(name) != null) {
-                return new CustomSoundInstance(SoundEvent.of(name), null, volume, repeat);
+            ResourceLocation name = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, candidate);
+            if (client.getSoundManager().getSoundEvent(name) != null) {
+                return new CustomSoundInstance(SoundEvent.createVariableRangeEvent(name), null, volume, repeat);
             }
-            Identifier file = Identifier.of(BloodOnTheBlocktower.MOD_ID, "sounds/" + candidate + ".ogg");
+            ResourceLocation file = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "sounds/" + candidate + ".ogg");
             if (client.getResourceManager().getResource(file).isPresent()) {
                 return new CustomSoundInstance(fallback, candidate, volume, repeat);
             }

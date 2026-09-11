@@ -5,23 +5,23 @@ import com.autumnwind.botb.hud.NightOrderHudManager;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Screen for selecting role-based associated reminders.
@@ -32,13 +32,13 @@ public class RoleReminderScreen extends Screen {
 
     private final UUID targetPlayerUUID;
     private final Screen parentScreen;
-    private TextFieldWidget searchField;
+    private EditBox searchField;
     private RoleGridWidget roleGridWidget;
     private List<ScriptRole> sourceRoles;
     private List<ScriptRole> filteredRoles;
     private double savedScrollAmount = 0.0;
 
-    public RoleReminderScreen(Text title, UUID targetPlayerUUID, Screen parentScreen) {
+    public RoleReminderScreen(Component title, UUID targetPlayerUUID, Screen parentScreen) {
         super(title);
         this.targetPlayerUUID = targetPlayerUUID;
         this.parentScreen = parentScreen;
@@ -69,21 +69,21 @@ public class RoleReminderScreen extends Screen {
         int startX = this.width / 2 - searchWidth / 2;
 
         // Search field
-        this.searchField = new TextFieldWidget(this.textRenderer, startX, topBarY, searchWidth, 20, Text.translatable("gui.blood-on-the-blocktower.role_reminder.search"));
-        this.searchField.setChangedListener(this::filterRoles);
-        this.addDrawableChild(this.searchField);
+        this.searchField = new EditBox(this.font, startX, topBarY, searchWidth, 20, Component.translatable("gui.blood-on-the-blocktower.role_reminder.search"));
+        this.searchField.setResponder(this::filterRoles);
+        this.addRenderableWidget(this.searchField);
 
         // Role grid widget
         int listTopY = topBarY + 20 + 10;
         int footerHeight = 40;
-        this.roleGridWidget = new RoleGridWidget(this.client, this.width, this.height - listTopY - footerHeight, listTopY);
+        this.roleGridWidget = new RoleGridWidget(this.minecraft, this.width, this.height - listTopY - footerHeight, listTopY);
         this.roleGridWidget.populateRoles(this.filteredRoles);
         this.roleGridWidget.setScrollAmount(this.savedScrollAmount);
-        this.addDrawableChild(this.roleGridWidget);
+        this.addRenderableWidget(this.roleGridWidget);
 
         // Done button
-        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), (button) -> this.client.setScreen(this.parentScreen))
-                .dimensions(this.width / 2 - 100, this.height - 28, 200, 20)
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.setScreen(this.parentScreen))
+                .bounds(this.width / 2 - 100, this.height - 28, 200, 20)
                 .build());
     }
 
@@ -118,7 +118,7 @@ public class RoleReminderScreen extends Screen {
                 .add(reminder);
 
         // Handle special reminder logic
-        if (client != null && client.player != null && client.player.hasPermissionLevel(2)) {
+        if (minecraft != null && minecraft.player != null && minecraft.player.hasPermissions(2)) {
             PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(targetPlayerUUID);
             Role assignedRole = (assignment != null) ? assignment.role() : Role.NO_ROLE;
 
@@ -214,7 +214,7 @@ public class RoleReminderScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.client.setScreen(this.parentScreen);
+        this.minecraft.setScreen(this.parentScreen);
     }
 
     private boolean hasOtherNightsAbility(Role role) {
@@ -231,26 +231,26 @@ public class RoleReminderScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFF);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openAssignGui.matchesKey(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openAssignGui.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.searchField.isFocused()) {
-            this.client.setScreen(this.parentScreen);
+            this.minecraft.setScreen(this.parentScreen);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     // Role grid widget - supports both official and custom roles via ScriptRole
-    private class RoleGridWidget extends ElementListWidget<RoleGridWidget.RoleGridEntry> {
+    private class RoleGridWidget extends ContainerObjectSelectionList<RoleGridWidget.RoleGridEntry> {
 
-        public RoleGridWidget(MinecraftClient client, int width, int height, int y) {
+        public RoleGridWidget(Minecraft client, int width, int height, int y) {
             super(client, width, height, y, 70); // 70px height for icon + text
         }
 
@@ -271,11 +271,11 @@ public class RoleReminderScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarX() {
-            return super.getScrollbarX() + 30;
+        protected int getScrollbarPosition() {
+            return super.getScrollbarPosition() + 30;
         }
 
-        public class RoleGridEntry extends ElementListWidget.Entry<RoleGridEntry> {
+        public class RoleGridEntry extends ContainerObjectSelectionList.Entry<RoleGridEntry> {
             private final List<ScriptRole> rolesInRow;
             private int entryY;
 
@@ -284,7 +284,7 @@ public class RoleReminderScreen extends Screen {
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 this.entryY = y;
                 int itemWidth = 75;
 
@@ -299,11 +299,11 @@ public class RoleReminderScreen extends Screen {
                             mouseY >= y + 5 && mouseY < y + 5 + borderWidth;
 
                     int borderColor = scriptRole.getTeam().getColor();
-                    Identifier icon = scriptRole.getIcon();
+                    ResourceLocation icon = scriptRole.getIcon();
 
                     // Draw icon
-                    context.drawBorder(borderX, y + 5, borderWidth, 40, borderColor);
-                    context.drawTexture(icon, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.blit(icon, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
 
                     int textCenterX = borderX + (borderWidth / 2);
                     String roleNameString = scriptRole.getDisplayName();
@@ -311,29 +311,29 @@ public class RoleReminderScreen extends Screen {
                     // Use wider margin for single words, narrower for multi-word names
                     int wrapWidth = roleNameString.contains(" ") ? itemWidth - 4 : itemWidth + 1;
 
-                    List<Text> textLines = client.textRenderer.getTextHandler()
-                            .wrapLines(roleNameString, wrapWidth, Style.EMPTY)
+                    List<Component> textLines = minecraft.font.getSplitter()
+                            .splitLines(roleNameString, wrapWidth, Style.EMPTY)
                             .stream()
-                            .map(line -> Text.literal(line.getString()))
+                            .map(line -> Component.literal(line.getString()))
                             .collect(Collectors.toList());
 
                     int startY = y + 50;
 
                     for (int j = 0; j < textLines.size(); j++) {
-                        Text line = textLines.get(j);
-                        int currentLineY = startY + (j * client.textRenderer.fontHeight);
-                        context.drawCenteredTextWithShadow(client.textRenderer, line, textCenterX, currentLineY, 0xFFFFFF);
+                        Component line = textLines.get(j);
+                        int currentLineY = startY + (j * minecraft.font.lineHeight);
+                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
                     }
 
                     // Show role description on hover
                     if (isMouseOver) {
                         int tooltipMaxWidth = 170;
-                        List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                                .wrapLines(AbilityText.of(scriptRole), tooltipMaxWidth, Style.EMPTY);
-                        List<Text> tooltipTextLines = wrappedLines.stream()
-                                .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
+                        List<FormattedText> wrappedLines = minecraft.font.getSplitter()
+                                .splitLines(AbilityText.of(scriptRole), tooltipMaxWidth, Style.EMPTY);
+                        List<Component> tooltipTextLines = wrappedLines.stream()
+                                .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.drawTooltip(client.textRenderer, tooltipTextLines, mouseX, mouseY);
+                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
@@ -355,7 +355,7 @@ public class RoleReminderScreen extends Screen {
                             // Shift+left_click opens role details screen (only for official roles)
                             if (Screen.hasShiftDown() && !selectedRole.isCustom()) {
                                 RoleReminderScreen.this.savedScrollAmount = RoleGridWidget.this.getScrollAmount();
-                                MinecraftClient.getInstance().setScreen(new CharacterDetailsScreen(selectedRole.asRole(), RoleReminderScreen.this));
+                                Minecraft.getInstance().setScreen(new CharacterDetailsScreen(selectedRole.asRole(), RoleReminderScreen.this));
                                 return true;
                             }
 
@@ -368,12 +368,12 @@ public class RoleReminderScreen extends Screen {
             }
 
             @Override
-            public List<? extends Element> children() {
+            public List<? extends GuiEventListener> children() {
                 return Collections.emptyList();
             }
 
             @Override
-            public List<? extends Selectable> selectableChildren() {
+            public List<? extends NarratableEntry> narratables() {
                 return Collections.emptyList();
             }
         }

@@ -5,36 +5,36 @@ import com.autumnwind.botb.hud.NightOrderHudManager;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
 import com.autumnwind.botb.hud.nightorderhud.RoleHelpers;
-import net.minecraft.util.Identifier;
 
 public class ReminderChooseScreen extends Screen {
 
-    private static final Text CUSTOM_REMINDER_PLACEHOLDER = Text.translatable("gui.blood-on-the-blocktower.reminder_choose.custom_reminder");
+    private static final Component CUSTOM_REMINDER_PLACEHOLDER = Component.translatable("gui.blood-on-the-blocktower.reminder_choose.custom_reminder");
 
     private final UUID targetPlayerUUID;
     private final Screen parentScreen;
-    private TextFieldWidget customTextField;
+    private EditBox customTextField;
     private ReminderGridWidget listWidget;
     private double savedScrollAmount = 0.0; // For restoring scroll position when returning from CharacterDetailsScreen
 
-    public ReminderChooseScreen(Text title, UUID targetPlayerUUID, Screen parentScreen) {
+    public ReminderChooseScreen(Component title, UUID targetPlayerUUID, Screen parentScreen) {
         super(title);
         this.targetPlayerUUID = targetPlayerUUID;
         this.parentScreen = parentScreen;
@@ -47,32 +47,32 @@ public class ReminderChooseScreen extends Screen {
         int topY = 30;
 
         // Custom Reminder Input
-        this.customTextField = new TextFieldWidget(this.textRenderer, startX, topY, 200, 20, CUSTOM_REMINDER_PLACEHOLDER);
-        this.addDrawableChild(this.customTextField);
+        this.customTextField = new EditBox(this.font, startX, topY, 200, 20, CUSTOM_REMINDER_PLACEHOLDER);
+        this.addRenderableWidget(this.customTextField);
 
         // "Save Custom" Button
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.translatable("gui.blood-on-the-blocktower.reminder_choose.save_custom").formatted(Formatting.GREEN),
+        this.addRenderableWidget(Button.builder(
+                Component.translatable("gui.blood-on-the-blocktower.reminder_choose.save_custom").withStyle(ChatFormatting.GREEN),
                 this::saveCustomReminder
-        ).dimensions(startX + 200 + 10, topY, 100, 20).build());
+        ).bounds(startX + 200 + 10, topY, 100, 20).build());
 
         // "Roles" Button opens role reminder selection screen
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.translatable("gui.blood-on-the-blocktower.reminder_choose.roles").formatted(Formatting.AQUA),
-                button -> this.client.setScreen(new RoleReminderScreen(Text.translatable("gui.blood-on-the-blocktower.reminder_choose.role_reminders_title"), this.targetPlayerUUID, this.parentScreen))
-        ).dimensions(startX + 200 + 10 + 100 + 10, topY, 50, 20).build());
+        this.addRenderableWidget(Button.builder(
+                Component.translatable("gui.blood-on-the-blocktower.reminder_choose.roles").withStyle(ChatFormatting.AQUA),
+                button -> this.minecraft.setScreen(new RoleReminderScreen(Component.translatable("gui.blood-on-the-blocktower.reminder_choose.role_reminders_title"), this.targetPlayerUUID, this.parentScreen))
+        ).bounds(startX + 200 + 10 + 100 + 10, topY, 50, 20).build());
 
         // Use the new ReminderGridWidget
         int listTopY = topY + 20 + 10;
         int footerHeight = 40;
-        this.listWidget = new ReminderGridWidget(this.client, this.width, this.height - listTopY - footerHeight, listTopY);
+        this.listWidget = new ReminderGridWidget(this.minecraft, this.width, this.height - listTopY - footerHeight, listTopY);
         this.listWidget.populateEntries(getValidReminderDefinitions()); // Populate with valid reminders
         this.listWidget.setScrollAmount(this.savedScrollAmount); // Restore scroll position
-        this.addDrawableChild(this.listWidget);
+        this.addRenderableWidget(this.listWidget);
 
         // "Done" Button
-        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), (button) -> this.client.setScreen(this.parentScreen))
-                .dimensions(this.width / 2 - 100, this.height - 28, 200, 20)
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.setScreen(this.parentScreen))
+                .bounds(this.width / 2 - 100, this.height - 28, 200, 20)
                 .build());
     }
 
@@ -119,7 +119,7 @@ public class ReminderChooseScreen extends Screen {
             }
         }
 
-        boolean isOperator = client != null && client.player != null && client.player.hasPermissionLevel(2);
+        boolean isOperator = minecraft != null && minecraft.player != null && minecraft.player.hasPermissions(2);
 
         // Get custom role IDs from script (including custom travelers)
         Set<String> scriptCustomRoleIds = new HashSet<>();
@@ -475,13 +475,13 @@ public class ReminderChooseScreen extends Screen {
         for (Map.Entry<UUID, PendingRoleAssignment> entry : StorytellerState.PENDING_ROLES.entrySet()) {
             UUID playerUuid = entry.getKey();
             // Get player name for the reminder text (supports distant players)
-            String playerName = Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-            if (client != null) {
-                var player = client.world != null ? client.world.getPlayerByUuid(playerUuid) : null;
+            String playerName = Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+            if (minecraft != null) {
+                var player = minecraft.level != null ? minecraft.level.getPlayerByUUID(playerUuid) : null;
                 if (player != null) {
                     playerName = player.getName().getString();
                 } else {
-                    PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayerOrCached(client, playerUuid);
+                    PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayerOrCached(minecraft, playerUuid);
                     if (info != null) playerName = info.name();
                 }
             }
@@ -528,8 +528,8 @@ public class ReminderChooseScreen extends Screen {
         }
     }
 
-    private void saveCustomReminder(ButtonWidget button) {
-        String text = this.customTextField.getText();
+    private void saveCustomReminder(Button button) {
+        String text = this.customTextField.getValue();
         if (text.isEmpty() || text.equals(CUSTOM_REMINDER_PLACEHOLDER.getString())) {
             return;
         }
@@ -567,7 +567,7 @@ public class ReminderChooseScreen extends Screen {
                 .computeIfAbsent(targetUUID, k -> new ArrayList<>())
                 .add(reminder);
 
-        if (client != null && client.player != null && client.player.hasPermissionLevel(2) &&
+        if (minecraft != null && minecraft.player != null && minecraft.player.hasPermissions(2) &&
                 isSpecialReminder(reminder) && reminder.role().isPresent()) {
 
             Role associatedRole = reminder.role().get();
@@ -685,7 +685,7 @@ public class ReminderChooseScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.client.setScreen(this.parentScreen);
+        this.minecraft.setScreen(this.parentScreen);
     }
 
     /**
@@ -751,9 +751,9 @@ public class ReminderChooseScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFF);
     }
 
     @Override
@@ -764,9 +764,9 @@ public class ReminderChooseScreen extends Screen {
             return true;
         }
         // Don't close screen if typing in text field
-        if ((KeyInputHandler.openAssignGui.matchesKey(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openAssignGui.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.customTextField.isFocused()) {
-            this.client.setScreen(this.parentScreen);
+            this.minecraft.setScreen(this.parentScreen);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -774,9 +774,9 @@ public class ReminderChooseScreen extends Screen {
 
 
     // This class is modeled after RoleCatalogListWidget from RoleCatalogScreen.java
-    private class ReminderGridWidget extends ElementListWidget<ReminderGridWidget.ReminderGridEntry> {
+    private class ReminderGridWidget extends ContainerObjectSelectionList<ReminderGridWidget.ReminderGridEntry> {
 
-        public ReminderGridWidget(MinecraftClient client, int width, int height, int y) {
+        public ReminderGridWidget(Minecraft client, int width, int height, int y) {
             super(client, width, height, y, 70); // 70px height for icon + text
         }
 
@@ -792,9 +792,9 @@ public class ReminderChooseScreen extends Screen {
         }
 
         @Override public int getRowWidth() { return 75 * 5; } // 75px width * 5 columns
-        @Override protected int getScrollbarX() { return super.getScrollbarX() + 30; }
+        @Override protected int getScrollbarPosition() { return super.getScrollbarPosition() + 30; }
 
-        public class ReminderGridEntry extends ElementListWidget.Entry<ReminderGridEntry> {
+        public class ReminderGridEntry extends ContainerObjectSelectionList.Entry<ReminderGridEntry> {
             private final List<ReminderCatalog.ReminderDefinition> defsInRow;
             private int entryY;
 
@@ -803,7 +803,7 @@ public class ReminderChooseScreen extends Screen {
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 this.entryY = y;
                 int itemWidth = 75; // Same as catalog
 
@@ -825,7 +825,7 @@ public class ReminderChooseScreen extends Screen {
 
                     // Determine border color and icon
                     int borderColor;
-                    Identifier iconTexture = null;
+                    ResourceLocation iconTexture = null;
 
                     if (isFabled) {
                         // Fabled reminder - get color and icon from fabled character
@@ -856,77 +856,77 @@ public class ReminderChooseScreen extends Screen {
                     }
 
                     // Draw Icon
-                    context.drawBorder(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
 
                     if (isPlayerReminder) {
                         // Render player head (handles disconnect fallback internally)
-                        PlayerListUtil.drawPlayerHead(context, client, def.playerUuid().get(), borderX + 1, y + 6, 38);
+                        PlayerListUtil.drawPlayerHead(context, minecraft, def.playerUuid().get(), borderX + 1, y + 6, 38);
                     } else if (isFabled && iconTexture != null) {
                         // Render fabled character icon
-                        context.drawTexture(iconTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(iconTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     } else if (isCustomRole && iconTexture != null) {
                         // Render custom role icon (includes custom role Good/Evil reminders)
-                        context.drawTexture(iconTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(iconTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     } else if (def.text().equals(Reminders.GOOD)) {
                         // Render Good alignment icon (only for global Good reminder with no associated role)
-                        context.drawTexture(Reminder.GOOD_ICON, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(Reminder.GOOD_ICON, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     } else if (def.text().equals(Reminders.EVIL)) {
                         // Render Evil alignment icon (only for global Evil reminder with no associated role)
-                        context.drawTexture(Reminder.EVIL_ICON, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(Reminder.EVIL_ICON, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     } else {
                         // Render official role icon
-                        context.drawTexture(role.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(role.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     }
 
                     int textCenterX = borderX + (borderWidth / 2);
 
-                    Text reminderText = def.displayText();
+                    Component reminderText = def.displayText();
 
                     // Use wider margin for single words, narrower for multi-word names
                     int wrapWidth = Reminders.isMultiWord(def.text()) ? itemWidth - 4 : itemWidth + 1;
 
-                    List<Text> textLines = client.textRenderer.getTextHandler()
-                            .wrapLines(reminderText, wrapWidth, Style.EMPTY)
+                    List<Component> textLines = minecraft.font.getSplitter()
+                            .splitLines(reminderText, wrapWidth, Style.EMPTY)
                             .stream()
-                            .map(line -> Text.literal(line.getString()))
+                            .map(line -> Component.literal(line.getString()))
                             .collect(Collectors.toList());
 
                     int startY = y + 50; // Y position for text
 
                     for (int j = 0; j < textLines.size(); j++) {
-                        Text line = textLines.get(j);
-                        int currentLineY = startY + (j * client.textRenderer.fontHeight);
-                        context.drawCenteredTextWithShadow(client.textRenderer, line, textCenterX, currentLineY, 0xFFFFFF);
+                        Component line = textLines.get(j);
+                        int currentLineY = startY + (j * minecraft.font.lineHeight);
+                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
                     }
 
                     // Show role description on hover (still useful)
                     if (isMouseOver) {
                         int tooltipMaxWidth = 170;
-                        Text description;
+                        Component description;
                         if (isFabled) {
                             ScriptRole fabledRole = ClientState.currentScript != null ?
                                     ClientState.currentScript.getFabledOrLoric(def.fabledId()).orElse(null) : null;
                             description = fabledRole != null
-                                    ? Text.literal(AbilityText.of(fabledRole))
-                                    : Text.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.fabled_character");
+                                    ? Component.literal(AbilityText.of(fabledRole))
+                                    : Component.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.fabled_character");
                         } else if (isCustomRole) {
                             CustomRole customRole = ClientState.currentScript != null ?
                                     ClientState.currentScript.getCustomRole(def.customRoleId()).orElse(null) : null;
                             description = customRole != null
-                                    ? Text.literal(customRole.ability())
-                                    : Text.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.custom_role");
+                                    ? Component.literal(customRole.ability())
+                                    : Component.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.custom_role");
                         } else if (role == Role.NO_ROLE) {
                             // Good/Evil alignment markers sit on the placeholder role
-                            description = Text.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.marks_alignment", def.text().toLowerCase(Locale.ROOT));
+                            description = Component.translatable("gui.blood-on-the-blocktower.reminder_choose.tooltip.marks_alignment", def.text().toLowerCase(Locale.ROOT));
                         } else {
-                            description = Text.literal(role.getDescription());
+                            description = Component.literal(role.getDescription());
                         }
-                        List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                                .wrapLines(description, tooltipMaxWidth, Style.EMPTY);
-                        List<Text> tooltipTextLines = wrappedLines.stream()
-                                .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
+                        List<FormattedText> wrappedLines = minecraft.font.getSplitter()
+                                .splitLines(description, tooltipMaxWidth, Style.EMPTY);
+                        List<Component> tooltipTextLines = wrappedLines.stream()
+                                .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.drawTooltip(client.textRenderer, tooltipTextLines, mouseX, mouseY);
+                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
@@ -948,7 +948,7 @@ public class ReminderChooseScreen extends Screen {
                             // Shift+left_click opens role details screen (only for official roles)
                             if (Screen.hasShiftDown() && !def.isCustomRole() && !def.isFabled() && def.role() != null) {
                                 ReminderChooseScreen.this.savedScrollAmount = ReminderGridWidget.this.getScrollAmount();
-                                MinecraftClient.getInstance().setScreen(new CharacterDetailsScreen(def.role(), ReminderChooseScreen.this));
+                                Minecraft.getInstance().setScreen(new CharacterDetailsScreen(def.role(), ReminderChooseScreen.this));
                                 return true;
                             }
 
@@ -976,8 +976,8 @@ public class ReminderChooseScreen extends Screen {
                 return false;
             }
 
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
     }
 }

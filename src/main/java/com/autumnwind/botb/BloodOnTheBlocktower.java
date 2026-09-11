@@ -61,7 +61,7 @@ public class BloodOnTheBlocktower implements ModInitializer {
 
         // Broadcast lobby player/storyteller counts when they change (joins, leaves, op changes)
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            if (server.getTicks() % 20 == 0) {
+            if (server.getTickCount() % 20 == 0) {
                 StateBroadcaster.syncLobbyCounts(server);
             }
         });

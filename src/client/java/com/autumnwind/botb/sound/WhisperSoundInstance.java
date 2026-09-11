@@ -1,10 +1,10 @@
 package com.autumnwind.botb.sound;
 
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.entity.Entity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 
 /**
  * Whisper audio cue with a 1s fade-in / 1s sustain / 1s fade-out envelope. Total
@@ -22,7 +22,7 @@ import net.minecraft.sound.SoundEvent;
  * {@code blood-on-the-blocktower:whisper} from its start. Adding multiple variants
  * to sounds.json is the supported way to get random per-play variety.
  */
-public class WhisperSoundInstance extends MovingSoundInstance {
+public class WhisperSoundInstance extends AbstractTickableSoundInstance {
     /** Tick counts for the fade envelope. 20 ticks per second. */
     private static final int FADE_IN_TICKS = 20;
     private static final int SUSTAIN_TICKS = 20;
@@ -44,18 +44,18 @@ public class WhisperSoundInstance extends MovingSoundInstance {
     public WhisperSoundInstance(SoundEvent sound, float baseVolume, float pitch, Entity follow) {
         // MASTER category so the user's "Players" volume slider doesn't accidentally
         // hide whispers, since they're a gameplay signal, not ambient player noise.
-        super(sound, SoundCategory.MASTER, SoundInstance.createRandom());
+        super(sound, SoundSource.MASTER, SoundInstance.createUnseededRandom());
         this.baseVolume = baseVolume;
         this.pitch = pitch;
         // Seeded full, see class doc. The envelope kicks in via getVolume() on tick 0.
         this.volume = baseVolume;
         this.follow = follow;
         this.relative = false;
-        this.repeat = false;
-        this.attenuationType = AttenuationType.LINEAR;
+        this.looping = false;
+        this.attenuation = SoundInstance.Attenuation.LINEAR;
         if (follow != null) {
             this.x = follow.getX();
-            this.y = follow.getY() + follow.getStandingEyeHeight();
+            this.y = follow.getY() + follow.getEyeHeight();
             this.z = follow.getZ();
         }
     }
@@ -64,13 +64,13 @@ public class WhisperSoundInstance extends MovingSoundInstance {
     public void tick() {
         age++;
         if (age >= TOTAL_TICKS) {
-            this.setDone();
+            this.stop();
             return;
         }
         // Keep the sound anchored to the sender as they move during playback.
         if (follow != null && follow.isAlive()) {
             this.x = follow.getX();
-            this.y = follow.getY() + follow.getStandingEyeHeight();
+            this.y = follow.getY() + follow.getEyeHeight();
             this.z = follow.getZ();
         }
     }
@@ -103,12 +103,12 @@ public class WhisperSoundInstance extends MovingSoundInstance {
      * The same pattern is used by {@code CustomSoundInstance} elsewhere in this mod.
      */
     @Override
-    public boolean shouldAlwaysPlay() {
+    public boolean canStartSilent() {
         return true;
     }
 
     @Override
-    public boolean canPlay() {
+    public boolean canPlaySound() {
         return true;
     }
 }

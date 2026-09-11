@@ -1,28 +1,27 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * S2C payload to broadcast death status to all players.
  */
-public record SendDeathStatusS2CPayload(Map<UUID, Boolean> deadPlayers) implements CustomPayload {
-    public static final Identifier SEND_DEATH_STATUS_ID = Identifier.of(BloodOnTheBlocktower.MOD_ID, "send_death_status");
-    public static final CustomPayload.Id<SendDeathStatusS2CPayload> ID = new CustomPayload.Id<>(SEND_DEATH_STATUS_ID);
+public record SendDeathStatusS2CPayload(Map<UUID, Boolean> deadPlayers) implements CustomPacketPayload {
+    public static final ResourceLocation SEND_DEATH_STATUS_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_death_status");
+    public static final CustomPacketPayload.Type<SendDeathStatusS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_DEATH_STATUS_ID);
 
-    public static final PacketCodec<RegistryByteBuf, SendDeathStatusS2CPayload> CODEC = PacketCodec.tuple(
+    public static final StreamCodec<RegistryFriendlyByteBuf, SendDeathStatusS2CPayload> CODEC = StreamCodec.composite(
             PayloadCodecs.DEATH_MAP_CODEC, SendDeathStatusS2CPayload::deadPlayers,
             SendDeathStatusS2CPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

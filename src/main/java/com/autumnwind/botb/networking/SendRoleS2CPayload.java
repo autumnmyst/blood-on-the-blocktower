@@ -3,26 +3,26 @@ package com.autumnwind.botb.networking;
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import com.autumnwind.botb.util.AlignmentOverride;
 
 /**
  * S2C payload for sending role assignments to players.
  * Supports both official roles and custom roles via PendingRoleAssignment.
  */
-public record SendRoleS2CPayload(PendingRoleAssignment assignment, int activePlayerCount, int travelerCount, boolean silent) implements CustomPayload {
-    public static final Identifier SEND_ROLE_ID = Identifier.of(BloodOnTheBlocktower.MOD_ID, "send_role");
-    public static final CustomPayload.Id<SendRoleS2CPayload> ID = new CustomPayload.Id<>(SEND_ROLE_ID);
+public record SendRoleS2CPayload(PendingRoleAssignment assignment, int activePlayerCount, int travelerCount, boolean silent) implements CustomPacketPayload {
+    public static final ResourceLocation SEND_ROLE_ID = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "send_role");
+    public static final CustomPacketPayload.Type<SendRoleS2CPayload> ID = new CustomPacketPayload.Type<>(SEND_ROLE_ID);
 
-    public static final PacketCodec<RegistryByteBuf, SendRoleS2CPayload> CODEC = PacketCodec.tuple(
+    public static final StreamCodec<RegistryFriendlyByteBuf, SendRoleS2CPayload> CODEC = StreamCodec.composite(
             PendingRoleAssignment.PACKET_CODEC, SendRoleS2CPayload::assignment,
-            PacketCodecs.VAR_INT, SendRoleS2CPayload::activePlayerCount,
-            PacketCodecs.VAR_INT, SendRoleS2CPayload::travelerCount,
-            PacketCodecs.BOOL, SendRoleS2CPayload::silent,
+            ByteBufCodecs.VAR_INT, SendRoleS2CPayload::activePlayerCount,
+            ByteBufCodecs.VAR_INT, SendRoleS2CPayload::travelerCount,
+            ByteBufCodecs.BOOL, SendRoleS2CPayload::silent,
             SendRoleS2CPayload::new
     );
 
@@ -47,7 +47,7 @@ public record SendRoleS2CPayload(PendingRoleAssignment assignment, int activePla
     }
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

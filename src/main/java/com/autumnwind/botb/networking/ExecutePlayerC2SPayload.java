@@ -1,15 +1,14 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client-to-Server payload for executing a player.
@@ -18,20 +17,20 @@ import java.util.UUID;
  *        so nominations should continue after execution with only Butcher able to nominate.
  * @param butcherUuid The UUID of the Butcher player (required if butcherAliveWithAbility is true)
  */
-public record ExecutePlayerC2SPayload(UUID player, boolean forced, boolean butcherAliveWithAbility, Optional<UUID> butcherUuid) implements CustomPayload {
-    public static final CustomPayload.Id<ExecutePlayerC2SPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "execute_player"));
+public record ExecutePlayerC2SPayload(UUID player, boolean forced, boolean butcherAliveWithAbility, Optional<UUID> butcherUuid) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<ExecutePlayerC2SPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "execute_player"));
 
-    public static final PacketCodec<RegistryByteBuf, ExecutePlayerC2SPayload> CODEC = PacketCodec.tuple(
-            Uuids.PACKET_CODEC, ExecutePlayerC2SPayload::player,
-            PacketCodecs.BOOL, ExecutePlayerC2SPayload::forced,
-            PacketCodecs.BOOL, ExecutePlayerC2SPayload::butcherAliveWithAbility,
-            Uuids.PACKET_CODEC.collect(PacketCodecs::optional), ExecutePlayerC2SPayload::butcherUuid,
+    public static final StreamCodec<RegistryFriendlyByteBuf, ExecutePlayerC2SPayload> CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, ExecutePlayerC2SPayload::player,
+            ByteBufCodecs.BOOL, ExecutePlayerC2SPayload::forced,
+            ByteBufCodecs.BOOL, ExecutePlayerC2SPayload::butcherAliveWithAbility,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), ExecutePlayerC2SPayload::butcherUuid,
             ExecutePlayerC2SPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

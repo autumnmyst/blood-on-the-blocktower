@@ -1,12 +1,14 @@
 package com.autumnwind.botb.states;
 
+import com.autumnwind.botb.util.FloatingRoleIconMode;
+import com.autumnwind.botb.util.PendingRoleAssignment;
+import com.autumnwind.botb.util.Role;
+import com.autumnwind.botb.util.Script;
 import com.autumnwind.botb.config.PlayerConfig;
 import com.autumnwind.botb.hud.RoleAssignmentAnimation;
 import com.autumnwind.botb.sound.CustomSounds;
 import com.autumnwind.botb.sound.ModSounds;
 import com.autumnwind.botb.util.*;
-import net.minecraft.client.MinecraftClient;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.client.Minecraft;
 
 public class ClientState {
     public static Role myRole = null;  // For backwards compatibility - use myAssignment for full info
@@ -166,8 +169,8 @@ public class ClientState {
         // Check if player is being assigned for the first time during SETUP phase
         boolean wasUnassigned = myAssignment == null && myRole == null;
         boolean isSetupPhase = currentNight == 0;
-        MinecraftClient mc = MinecraftClient.getInstance();
-        boolean isOperator = mc.player != null && mc.player.hasPermissionLevel(2);
+        Minecraft mc = Minecraft.getInstance();
+        boolean isOperator = mc.player != null && mc.player.hasPermissions(2);
 
         if (wasUnassigned && isSetupPhase && !isOperator) {
             StorytellerState.PENDING_ROLES.clear();
@@ -205,8 +208,8 @@ public class ClientState {
 
             float roleReceiveVolume = BASE_VOLUME_ROLE_RECEIVE * volumeRoleReceive;
             if (!gameEnding && !silent && roleReceiveVolume > 0) {
-                MinecraftClient client = MinecraftClient.getInstance();
-                if (client.player != null && client.world != null) {
+                Minecraft client = Minecraft.getInstance();
+                if (client.player != null && client.level != null) {
                     CustomSounds.playOneShot(client, CustomSounds.roleReceiveCandidates(resolvedAssignment),
                             ModSounds.ROLE_RECEIVE, roleReceiveVolume);
                 }
@@ -217,7 +220,7 @@ public class ClientState {
                 RoleAssignmentAnimation.startAnimation(resolvedAssignment);
             }
 
-            UUID selfUUID = MinecraftClient.getInstance().player.getUuid();
+            UUID selfUUID = Minecraft.getInstance().player.getUUID();
             if (selfUUID != null) {
                 StorytellerState.PENDING_ROLES.put(selfUUID, resolvedAssignment);
             }

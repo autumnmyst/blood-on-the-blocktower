@@ -1,30 +1,31 @@
 package com.autumnwind.botb.gui;
 
+import com.autumnwind.botb.util.AlignmentOverride;
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.event.KeyInputHandler;
 import com.autumnwind.botb.hud.NightOrderHudManager;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.TextColor;
 import com.autumnwind.botb.hud.nightorderhud.TriggerManager;
 
 public class RoleSelectionScreen extends Screen {
@@ -33,7 +34,7 @@ public class RoleSelectionScreen extends Screen {
     private final Screen parentScreen;
     private List<ScriptRole> filteredRoles;
     private AlignmentOverride alignmentOverride;
-    private TextFieldWidget searchField;
+    private EditBox searchField;
     private RoleListWidget roleListWidget;
     private List<ScriptRole> sourceRoles;
     private double savedScrollAmount = 0.0; // For restoring scroll position when returning from CharacterDetailsScreen
@@ -41,12 +42,12 @@ public class RoleSelectionScreen extends Screen {
     @Nullable
     private final Integer bluffIndex;
 
-    Identifier barrierTexture = Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
+    ResourceLocation barrierTexture = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/barrier.png");
 
     /**
      * Constructor for assigning a role to a PLAYER.
      */
-    public RoleSelectionScreen(Text title, UUID targetPlayerUUID, Screen parentScreen) {
+    public RoleSelectionScreen(Component title, UUID targetPlayerUUID, Screen parentScreen) {
         super(title);
         this.parentScreen = parentScreen;
         this.targetPlayerUUID = targetPlayerUUID;
@@ -63,7 +64,7 @@ public class RoleSelectionScreen extends Screen {
     /**
      * Constructor for assigning a role to a BLUFF slot.
      */
-    public RoleSelectionScreen(Text title, int bluffIndex, Screen parentScreen) {
+    public RoleSelectionScreen(Component title, int bluffIndex, Screen parentScreen) {
         super(title);
         this.parentScreen = parentScreen;
         this.targetPlayerUUID = null; // Not a player
@@ -163,57 +164,57 @@ public class RoleSelectionScreen extends Screen {
             int totalWidth = searchWidth + alignWidth + unassignWidth + (2 * spacing);
             int startX = this.width / 2 - totalWidth / 2;
 
-            this.searchField = new TextFieldWidget(this.textRenderer, startX, topBarY, searchWidth, 20, Text.empty());
-            this.addDrawableChild(this.searchField);
+            this.searchField = new EditBox(this.font, startX, topBarY, searchWidth, 20, Component.empty());
+            this.addRenderableWidget(this.searchField);
 
             // Alignment Button
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal(alignmentOverride.getDisplayName()).styled(style -> style.withColor(TextColor.fromRgb(getAlignmentColor()))),
+            this.addRenderableWidget(Button.builder(
+                    Component.literal(alignmentOverride.getDisplayName()).withStyle(style -> style.withColor(TextColor.fromRgb(getAlignmentColor()))),
                     button -> {
                         this.alignmentOverride = this.alignmentOverride.next();
                         // Save scroll position before reinitializing screen
                         if (this.roleListWidget != null) {
                             this.savedScrollAmount = this.roleListWidget.getScrollAmount();
                         }
-                        this.client.setScreen(this);
+                        this.minecraft.setScreen(this);
                     }
-            ).dimensions(startX + searchWidth + spacing, topBarY, alignWidth, 20).build());
+            ).bounds(startX + searchWidth + spacing, topBarY, alignWidth, 20).build());
 
             // Unassign Button (for players)
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.translatable("gui.blood-on-the-blocktower.role_selection.unassign").formatted(Formatting.RED),
+            this.addRenderableWidget(Button.builder(
+                    Component.translatable("gui.blood-on-the-blocktower.role_selection.unassign").withStyle(ChatFormatting.RED),
                     button -> unassignAndClose() // Calls player unassign
-            ).dimensions(startX + searchWidth + alignWidth + (2 * spacing), topBarY, unassignWidth, 20).build());
+            ).bounds(startX + searchWidth + alignWidth + (2 * spacing), topBarY, unassignWidth, 20).build());
 
         } else {
             // Bluff Mode: Show Search and Unassign
             int totalWidth = searchWidth + unassignWidth + spacing;
             int startX = this.width / 2 - totalWidth / 2;
 
-            this.searchField = new TextFieldWidget(this.textRenderer, startX, topBarY, searchWidth, 20, Text.empty());
-            this.addDrawableChild(this.searchField);
+            this.searchField = new EditBox(this.font, startX, topBarY, searchWidth, 20, Component.empty());
+            this.addRenderableWidget(this.searchField);
 
             // Unassign Button (for bluffs)
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.translatable("gui.blood-on-the-blocktower.role_selection.unassign").formatted(Formatting.RED),
+            this.addRenderableWidget(Button.builder(
+                    Component.translatable("gui.blood-on-the-blocktower.role_selection.unassign").withStyle(ChatFormatting.RED),
                     button -> unassignBluffAndClose() // Calls bluff unassign
-            ).dimensions(startX + searchWidth + spacing, topBarY, unassignWidth, 20).build());
+            ).bounds(startX + searchWidth + spacing, topBarY, unassignWidth, 20).build());
         }
 
-        this.searchField.setChangedListener(this::filterRoles);
+        this.searchField.setResponder(this::filterRoles);
 
 
         // --- Role List Widget ---
         int listTopY = topBarY + 20 + 10;
         int footerHeight = 40;
-        this.roleListWidget = new RoleListWidget(this.client, this.width, this.height - listTopY - footerHeight, listTopY);
+        this.roleListWidget = new RoleListWidget(this.minecraft, this.width, this.height - listTopY - footerHeight, listTopY);
         this.roleListWidget.populateRoles(this.filteredRoles);
         this.roleListWidget.setScrollAmount(this.savedScrollAmount); // Restore scroll position
-        this.addDrawableChild(this.roleListWidget);
+        this.addRenderableWidget(this.roleListWidget);
 
         // --- Footer ---
-        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.done"), (button) -> this.client.setScreen(this.parentScreen))
-                .dimensions(this.width / 2 - 100, this.height - 28, 200, 20)
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), (button) -> this.minecraft.setScreen(this.parentScreen))
+                .bounds(this.width / 2 - 100, this.height - 28, 200, 20)
                 .build());
     }
 
@@ -307,7 +308,7 @@ public class RoleSelectionScreen extends Screen {
             if (!selectedScriptRole.isCustom()) {
                 Role selectedRole = ((ScriptRole.Official) selectedScriptRole).role();
                 boolean isStartOfGame = ClientState.currentDay == 0 && ClientState.currentNight == 0;
-                if (wasAssigned && oldRole != null && oldRole != selectedRole && !isStartOfGame && this.client.player != null && this.client.player.hasPermissionLevel(2)) {
+                if (wasAssigned && oldRole != null && oldRole != selectedRole && !isStartOfGame && this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
                     NightOrderHudManager.createRoleSwitchTrigger(targetPlayerUUID, selectedRole);
                 }
             }
@@ -338,7 +339,7 @@ public class RoleSelectionScreen extends Screen {
                 }
             }
 
-            if (this.client.player != null && this.client.player.hasPermissionLevel(2)) {
+            if (this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
                 // Handle marking for night order
                 if (selectedScriptRole.isCustom()) {
                     // Custom roles are mark-based on other nights
@@ -371,7 +372,7 @@ public class RoleSelectionScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.client.setScreen(this.parentScreen);
+        this.minecraft.setScreen(this.parentScreen);
     }
 
     /**
@@ -383,7 +384,7 @@ public class RoleSelectionScreen extends Screen {
         }
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
-        this.client.setScreen(this.parentScreen);
+        this.minecraft.setScreen(this.parentScreen);
     }
 
     /**
@@ -392,7 +393,7 @@ public class RoleSelectionScreen extends Screen {
     private void unassignAndClose() {
         if (this.targetPlayerUUID == null) return; // Safety check
 
-        boolean isOperator = this.client.player != null && this.client.player.hasPermissionLevel(2);
+        boolean isOperator = this.minecraft.player != null && this.minecraft.player.hasPermissions(2);
 
         StorytellerState.PENDING_ROLES.remove(this.targetPlayerUUID);
 
@@ -425,30 +426,30 @@ public class RoleSelectionScreen extends Screen {
         // Sync grimoire with other storytellers
         StorytellerState.syncGrimoire();
 
-        this.client.setScreen(this.parentScreen);
+        this.minecraft.setScreen(this.parentScreen);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 15, 0xFFFFFF);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 15, 0xFFFFFF);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // Don't close screen if typing in search field
-        if ((KeyInputHandler.openAssignGui.matchesKey(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
+        if ((KeyInputHandler.openAssignGui.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E)
                 && !this.searchField.isFocused()) {
-            this.client.setScreen(this.parentScreen);
+            this.minecraft.setScreen(this.parentScreen);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     // --- Inner Classes for the Scrollable List ---
-    private class RoleListWidget extends ElementListWidget<RoleListWidget.RoleGridEntry> {
+    private class RoleListWidget extends ContainerObjectSelectionList<RoleListWidget.RoleGridEntry> {
 
-        public RoleListWidget(MinecraftClient client, int width, int height, int y) {
+        public RoleListWidget(Minecraft client, int width, int height, int y) {
             super(client, width, height, y, 70); // 70px height for icon + text
         }
 
@@ -464,9 +465,9 @@ public class RoleSelectionScreen extends Screen {
         }
 
         @Override public int getRowWidth() { return 75 * 5; } // 75px width * 5 columns
-        @Override protected int getScrollbarX() { return super.getScrollbarX() + 30; }
+        @Override protected int getScrollbarPosition() { return super.getScrollbarPosition() + 30; }
 
-        public class RoleGridEntry extends ElementListWidget.Entry<RoleGridEntry> {
+        public class RoleGridEntry extends ContainerObjectSelectionList.Entry<RoleGridEntry> {
             private final List<ScriptRole> rolesInRow;
             private int entryY;
 
@@ -475,7 +476,7 @@ public class RoleSelectionScreen extends Screen {
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 this.entryY = y;
                 int itemWidth = 75; // Same as catalog
 
@@ -492,13 +493,13 @@ public class RoleSelectionScreen extends Screen {
                     int borderColor = getButtonColor(scriptRole);
 
                     // Draw Icon
-                    context.drawBorder(borderX, y + 5, borderWidth, 40, borderColor);
-                    context.drawTexture(scriptRole.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                    context.renderOutline(borderX, y + 5, borderWidth, 40, borderColor);
+                    context.blit(scriptRole.getIcon(), borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
 
                     // Draw barrier overlay if role is crossed out (but not in bluff mode)
                     if (RoleSelectionScreen.this.bluffIndex == null &&
                             ClientState.crossedOutRoles.contains(scriptRole.getId())) {
-                        context.drawTexture(barrierTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
+                        context.blit(barrierTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     }
 
                     int textCenterX = borderX + (borderWidth / 2);
@@ -507,29 +508,29 @@ public class RoleSelectionScreen extends Screen {
                     // Use wider margin for single words, narrower for multi-word names
                     int wrapWidth = roleNameString.contains(" ") ? itemWidth - 4 : itemWidth + 1;
 
-                    List<Text> textLines = client.textRenderer.getTextHandler()
-                            .wrapLines(roleNameString, wrapWidth, Style.EMPTY)
+                    List<Component> textLines = minecraft.font.getSplitter()
+                            .splitLines(roleNameString, wrapWidth, Style.EMPTY)
                             .stream()
-                            .map(line -> Text.literal(line.getString()))
+                            .map(line -> Component.literal(line.getString()))
                             .collect(Collectors.toList());
 
                     int startY = y + 50; // Y position for text
 
                     for (int j = 0; j < textLines.size(); j++) {
-                        Text line = textLines.get(j);
-                        int currentLineY = startY + (j * client.textRenderer.fontHeight);
-                        context.drawCenteredTextWithShadow(client.textRenderer, line, textCenterX, currentLineY, 0xFFFFFF);
+                        Component line = textLines.get(j);
+                        int currentLineY = startY + (j * minecraft.font.lineHeight);
+                        context.drawCenteredString(minecraft.font, line, textCenterX, currentLineY, 0xFFFFFF);
                     }
 
                     // Show role description on hover
                     if (isMouseOver) {
                         int tooltipMaxWidth = 170;
-                        List<StringVisitable> wrappedLines = client.textRenderer.getTextHandler()
-                                .wrapLines(AbilityText.of(scriptRole), tooltipMaxWidth, Style.EMPTY);
-                        List<Text> tooltipTextLines = wrappedLines.stream()
-                                .map(line -> Text.literal(line.getString()).formatted(Formatting.YELLOW))
+                        List<FormattedText> wrappedLines = minecraft.font.getSplitter()
+                                .splitLines(AbilityText.of(scriptRole), tooltipMaxWidth, Style.EMPTY);
+                        List<Component> tooltipTextLines = wrappedLines.stream()
+                                .map(line -> Component.literal(line.getString()).withStyle(ChatFormatting.YELLOW))
                                 .collect(Collectors.toList());
-                        context.drawTooltip(client.textRenderer, tooltipTextLines, mouseX, mouseY);
+                        context.renderComponentTooltip(minecraft.font, tooltipTextLines, mouseX, mouseY);
                     }
                 }
             }
@@ -562,7 +563,7 @@ public class RoleSelectionScreen extends Screen {
                             // Shift+left_click opens role details screen
                             if (Screen.hasShiftDown()) {
                                 RoleSelectionScreen.this.savedScrollAmount = RoleListWidget.this.getScrollAmount();
-                                MinecraftClient.getInstance().setScreen(new CharacterDetailsScreen(selectedScriptRole, RoleSelectionScreen.this));
+                                Minecraft.getInstance().setScreen(new CharacterDetailsScreen(selectedScriptRole, RoleSelectionScreen.this));
                                 return true;
                             }
 
@@ -574,8 +575,8 @@ public class RoleSelectionScreen extends Screen {
                 return false;
             }
 
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
     }
 }

@@ -1,15 +1,6 @@
 package com.autumnwind.botb.gui;
 
 import com.autumnwind.botb.event.KeyInputHandler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -17,6 +8,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.FormattedCharSequence;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleGuides;
@@ -43,7 +43,7 @@ public class AdvancedGuideScreen extends Screen {
     }
 
     public AdvancedGuideScreen(Screen parent) {
-        super(Text.translatable(KEY_PREFIX + "title"));
+        super(Component.translatable(KEY_PREFIX + "title"));
         this.parent = parent;
     }
 
@@ -58,8 +58,8 @@ public class AdvancedGuideScreen extends Screen {
 
         private final String key = KEY_PREFIX + name().toLowerCase(Locale.ROOT);
 
-        MutableText getDisplayName() {
-            return Text.translatable(key);
+        MutableComponent getDisplayName() {
+            return Component.translatable(key);
         }
     }
 
@@ -75,31 +75,31 @@ public class AdvancedGuideScreen extends Screen {
         int currentY = startY;
         for (GuideCategory category : GuideCategory.values()) {
             final GuideCategory cat = category;
-            Formatting color = (category == selectedCategory) ? Formatting.YELLOW : Formatting.WHITE;
-            this.addDrawableChild(ButtonWidget.builder(
-                    category.getDisplayName().formatted(color),
+            ChatFormatting color = (category == selectedCategory) ? ChatFormatting.YELLOW : ChatFormatting.WHITE;
+            this.addRenderableWidget(Button.builder(
+                    category.getDisplayName().withStyle(color),
                     button -> {
                         selectedCategory = cat;
                         savedScrollAmount = 0.0;
-                        this.client.setScreen(this);
+                        this.minecraft.setScreen(this);
                     }
-            ).dimensions(leftColumnX, currentY, buttonWidth, buttonHeight).build());
+            ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight).build());
             currentY += buttonHeight + buttonSpacing;
         }
 
         // Role Guides opens its own screen rather than a category
         currentY += buttonSpacing;
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.translatable(KEY_PREFIX + "role_guides").formatted(Formatting.AQUA),
-                button -> this.client.setScreen(new RoleGuidesScreen(this))
-        ).dimensions(leftColumnX, currentY, buttonWidth, buttonHeight).build());
+        this.addRenderableWidget(Button.builder(
+                Component.translatable(KEY_PREFIX + "role_guides").withStyle(ChatFormatting.AQUA),
+                button -> this.minecraft.setScreen(new RoleGuidesScreen(this))
+        ).bounds(leftColumnX, currentY, buttonWidth, buttonHeight).build());
 
         // Back button
         int backButtonWidth = 60;
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.translatable("gui.blood-on-the-blocktower.back").formatted(Formatting.YELLOW),
-                button -> this.client.setScreen(this.parent)
-        ).dimensions(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
+        this.addRenderableWidget(Button.builder(
+                Component.translatable("gui.blood-on-the-blocktower.back").withStyle(ChatFormatting.YELLOW),
+                button -> this.minecraft.setScreen(this.parent)
+        ).bounds(this.width - backButtonWidth - 10, this.height - 30, backButtonWidth, 20).build());
 
         // Content widget (right side)
         int contentX = leftColumnX + buttonWidth + 20;
@@ -107,24 +107,24 @@ public class AdvancedGuideScreen extends Screen {
         int contentWidth = this.width - contentX - 15;
         int contentHeight = this.height - contentY - 40;
 
-        this.contentWidget = new GuideContentWidget(this.client, contentWidth, contentHeight, contentY, selectedCategory);
+        this.contentWidget = new GuideContentWidget(this.minecraft, contentWidth, contentHeight, contentY, selectedCategory);
         this.contentWidget.setX(contentX);
         this.contentWidget.setScrollAmount(savedScrollAmount);
-        this.addDrawableChild(this.contentWidget);
+        this.addRenderableWidget(this.contentWidget);
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 10, 0xFFFFFF);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 10, 0xFFFFFF);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         boolean exitKeyPressed = keyCode == GLFW.GLFW_KEY_ESCAPE || keyCode == GLFW.GLFW_KEY_E;
-        boolean openAssignGuiPressed = KeyInputHandler.openAssignGui != null && KeyInputHandler.openAssignGui.matchesKey(keyCode, scanCode);
+        boolean openAssignGuiPressed = KeyInputHandler.openAssignGui != null && KeyInputHandler.openAssignGui.matches(keyCode, scanCode);
         if (exitKeyPressed || openAssignGuiPressed) {
-            this.client.setScreen(this.parent);
+            this.minecraft.setScreen(this.parent);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -133,10 +133,10 @@ public class AdvancedGuideScreen extends Screen {
     /**
      * Scrollable content widget that displays guide text based on selected category.
      */
-    private class GuideContentWidget extends ElementListWidget<DocumentEntry> {
+    private class GuideContentWidget extends ContainerObjectSelectionList<DocumentEntry> {
 
-        public GuideContentWidget(MinecraftClient client, int width, int height, int y, GuideCategory category) {
-            super(client, width, height, y, client.textRenderer.fontHeight + 2);
+        public GuideContentWidget(Minecraft client, int width, int height, int y, GuideCategory category) {
+            super(client, width, height, y, client.font.lineHeight + 2);
             populateContent(category);
         }
 
@@ -393,31 +393,31 @@ public class AdvancedGuideScreen extends Screen {
 
         // Helper methods for adding entries
         private void addTitle(String key) {
-            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable(KEY_PREFIX + key).formatted(Formatting.GOLD, Formatting.BOLD)));
+            this.addEntry(DocumentEntry.title(font, Component.translatable(KEY_PREFIX + key).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
         }
 
         private void addSubtitle(String key) {
-            this.addEntry(DocumentEntry.title(textRenderer, Text.translatable(KEY_PREFIX + key).formatted(Formatting.WHITE, Formatting.UNDERLINE)));
+            this.addEntry(DocumentEntry.title(font, Component.translatable(KEY_PREFIX + key).withStyle(ChatFormatting.WHITE, ChatFormatting.UNDERLINE)));
         }
 
         private void addBody(String key, int width) {
-            for (OrderedText line : textRenderer.wrapLines(Text.translatable(KEY_PREFIX + key), width)) {
-                this.addEntry(DocumentEntry.text(textRenderer, line, 0xCCCCCC));
+            for (FormattedCharSequence line : font.split(Component.translatable(KEY_PREFIX + key), width)) {
+                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
             }
         }
 
         private void addHighlight(String key, int width) {
-            MutableText highlighted = Text.translatable(KEY_PREFIX + key).formatted(Formatting.GOLD);
-            for (OrderedText line : textRenderer.wrapLines(highlighted, width)) {
-                this.addEntry(DocumentEntry.text(textRenderer, line, 0xCCCCCC));
+            MutableComponent highlighted = Component.translatable(KEY_PREFIX + key).withStyle(ChatFormatting.GOLD);
+            for (FormattedCharSequence line : font.split(highlighted, width)) {
+                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
             }
         }
 
         /** Plain aqua text in the same style as a role list, without links. */
         private void addAqua(String key, int width) {
-            MutableText aqua = Text.translatable(KEY_PREFIX + key).formatted(Formatting.AQUA);
-            for (OrderedText line : textRenderer.wrapLines(aqua, width)) {
-                this.addEntry(DocumentEntry.text(textRenderer, line, 0xCCCCCC));
+            MutableComponent aqua = Component.translatable(KEY_PREFIX + key).withStyle(ChatFormatting.AQUA);
+            for (FormattedCharSequence line : font.split(aqua, width)) {
+                this.addEntry(DocumentEntry.text(font, line, 0xCCCCCC));
             }
         }
 
@@ -432,8 +432,8 @@ public class AdvancedGuideScreen extends Screen {
             for (int i = 0; i < ids.length; i++) {
                 Role role = ROLES_BY_ID.get(ids[i]);
                 String label = (role != null ? role.getDisplayName() : ids[i]) + (i < ids.length - 1 ? "," : "");
-                int labelWidth = textRenderer.getWidth(label);
-                int gap = line.isEmpty() ? 0 : textRenderer.getWidth(" ");
+                int labelWidth = font.width(label);
+                int gap = line.isEmpty() ? 0 : font.width(" ");
                 if (!line.isEmpty() && lineWidth + gap + labelWidth > width) {
                     this.addEntry(new RoleListEntry(line));
                     line = new ArrayList<>();
@@ -461,7 +461,7 @@ public class AdvancedGuideScreen extends Screen {
             }
 
             private RoleLink linkAt(double mouseX, double mouseY) {
-                if (mouseY < lastY || mouseY >= lastY + textRenderer.fontHeight) return null;
+                if (mouseY < lastY || mouseY >= lastY + font.lineHeight) return null;
                 for (RoleLink link : links) {
                     if (link.role() != null && mouseX >= lastX + link.x() && mouseX < lastX + link.x() + link.width()) {
                         return link;
@@ -471,14 +471,14 @@ public class AdvancedGuideScreen extends Screen {
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 lastX = x;
                 lastY = y;
                 RoleLink hoveredLink = linkAt(mouseX, mouseY);
                 for (RoleLink link : links) {
-                    MutableText text = Text.literal(link.label()).formatted(Formatting.AQUA);
-                    if (link == hoveredLink) text.formatted(Formatting.UNDERLINE);
-                    context.drawText(textRenderer, text, x + link.x(), y, 0xCCCCCC, false);
+                    MutableComponent text = Component.literal(link.label()).withStyle(ChatFormatting.AQUA);
+                    if (link == hoveredLink) text.withStyle(ChatFormatting.UNDERLINE);
+                    context.drawString(font, text, x + link.x(), y, 0xCCCCCC, false);
                 }
             }
 
@@ -488,9 +488,9 @@ public class AdvancedGuideScreen extends Screen {
                 if (button != GLFW.GLFW_MOUSE_BUTTON_1 || link == null) return false;
                 savedScrollAmount = GuideContentWidget.this.getScrollAmount();
                 if (RoleGuides.has(link.role())) {
-                    client.setScreen(new RoleGuideDetailsScreen(link.role(), AdvancedGuideScreen.this, RoleGuides.roles()));
+                    minecraft.setScreen(new RoleGuideDetailsScreen(link.role(), AdvancedGuideScreen.this, RoleGuides.roles()));
                 } else {
-                    client.setScreen(new CharacterDetailsScreen(link.role(), AdvancedGuideScreen.this));
+                    minecraft.setScreen(new CharacterDetailsScreen(link.role(), AdvancedGuideScreen.this));
                 }
                 return true;
             }
@@ -506,7 +506,7 @@ public class AdvancedGuideScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarX() {
+        protected int getScrollbarPosition() {
             return this.getX() + this.width - 6;
         }
     }

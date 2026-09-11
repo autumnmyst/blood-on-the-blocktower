@@ -4,28 +4,27 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.item.ModItems;
 import com.autumnwind.botb.networking.SetupHudS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import com.autumnwind.botb.daytime.ElectionManager;
-import net.minecraft.world.GameRules;
 import com.autumnwind.botb.world.VoteIndicators;
 
 /**
@@ -69,13 +68,13 @@ public final class SetupStick {
         }
 
         /** The step name, with the seat number filled in for the per-seat steps. */
-        MutableText title(int seat) {
-            return Text.translatable(key, seat);
+        MutableComponent title(int seat) {
+            return Component.translatable(key, seat);
         }
 
         /** What to click, with the floor word in bold so it's clear the click goes on the ground block. */
-        MutableText target() {
-            return Text.translatable(key + ".target", Text.translatable("hud.blood-on-the-blocktower.setup.floor").formatted(Formatting.BOLD));
+        MutableComponent target() {
+            return Component.translatable(key + ".target", Component.translatable("hud.blood-on-the-blocktower.setup.floor").withStyle(ChatFormatting.BOLD));
         }
 
         /** The seat loop: town square seat, lever, vote indicator. */
@@ -117,17 +116,17 @@ public final class SetupStick {
      * /botb setup (also the Storyteller Tools "World Setup" button): sets the
      * gamerules and hands over the stick and starts (or restarts) the walkthrough.
      */
-    public static int startCommand(ServerCommandSource source) {
-        ServerPlayerEntity player = source.getPlayer();
+    public static int startCommand(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
         if (player == null) {
-            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.only_player_run"));
+            source.sendFailure(Component.translatable("message.blood-on-the-blocktower.setup.only_player_run"));
             return 0;
         }
         GameRules rules = source.getServer().getGameRules();
-        rules.get(GameRules.DO_IMMEDIATE_RESPAWN).set(true, source.getServer());
-        rules.get(GameRules.DO_DAYLIGHT_CYCLE).set(false, source.getServer());
-        rules.get(GameRules.DO_MOB_SPAWNING).set(false, source.getServer());
-        rules.get(GameRules.KEEP_INVENTORY).set(true, source.getServer());
+        rules.getRule(GameRules.RULE_DO_IMMEDIATE_RESPAWN).set(true, source.getServer());
+        rules.getRule(GameRules.RULE_DAYLIGHT).set(false, source.getServer());
+        rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, source.getServer());
+        rules.getRule(GameRules.RULE_KEEPINVENTORY).set(true, source.getServer());
         giveStick(player);
         reportGamerules(player);
         startSession(player);
@@ -135,10 +134,10 @@ public final class SetupStick {
     }
 
     /** /botb setup help: the map positions and the other map settings, with current values. */
-    public static int helpCommand(ServerCommandSource source) {
-        ServerPlayerEntity player = source.getPlayer();
+    public static int helpCommand(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
         if (player == null) {
-            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.only_player_help"));
+            source.sendFailure(Component.translatable("message.blood-on-the-blocktower.setup.only_player_help"));
             return 0;
         }
         sendPositionsSummary(player);
@@ -147,11 +146,11 @@ public final class SetupStick {
     }
 
     /** /botb setup skip: keeps the current value for this step and moves on. */
-    public static int skipCommand(ServerCommandSource source) {
-        ServerPlayerEntity player = source.getPlayer();
-        Session session = player != null ? SESSIONS.get(player.getUuid()) : null;
+    public static int skipCommand(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        Session session = player != null ? SESSIONS.get(player.getUUID()) : null;
         if (session == null) {
-            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
+            source.sendFailure(Component.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
             return 0;
         }
         skip(player, session);
@@ -159,11 +158,11 @@ public final class SetupStick {
     }
 
     /** /botb setup back: returns to the previous step so it can be clicked again. */
-    public static int backCommand(ServerCommandSource source) {
-        ServerPlayerEntity player = source.getPlayer();
-        Session session = player != null ? SESSIONS.get(player.getUuid()) : null;
+    public static int backCommand(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        Session session = player != null ? SESSIONS.get(player.getUUID()) : null;
         if (session == null) {
-            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
+            source.sendFailure(Component.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
             return 0;
         }
         back(player, session);
@@ -171,10 +170,10 @@ public final class SetupStick {
     }
 
     /** /botb setup finish: ends the walkthrough early, removing the stick. */
-    public static int finishCommand(ServerCommandSource source) {
-        ServerPlayerEntity player = source.getPlayer();
-        if (player == null || SESSIONS.remove(player.getUuid()) == null) {
-            source.sendError(Text.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
+    public static int finishCommand(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+        if (player == null || SESSIONS.remove(player.getUUID()) == null) {
+            source.sendFailure(Component.translatable("message.blood-on-the-blocktower.setup.not_in_progress"));
             return 0;
         }
         finish(player);
@@ -184,81 +183,81 @@ public final class SetupStick {
     // ========== Item events ==========
 
     /** MB1 on a block while holding the stick: sets the current step (Shift: skips it). */
-    public static ActionResult onAttackBlock(PlayerEntity player, World world, Hand hand, BlockPos pos, Direction side) {
+    public static InteractionResult onAttackBlock(Player player, Level world, InteractionHand hand, BlockPos pos, Direction side) {
         long now = System.currentTimeMillis();
-        if (!player.getStackInHand(hand).isOf(ModItems.SETUP_STICK)) {
-            Long lastHeld = LAST_STICK_ATTACK_MS.get(player.getUuid());
-            if (lastHeld != null && now - lastHeld < EMPTY_HAND_GRACE_MS) return ActionResult.SUCCESS;
-            return ActionResult.PASS;
+        if (!player.getItemInHand(hand).is(ModItems.SETUP_STICK)) {
+            Long lastHeld = LAST_STICK_ATTACK_MS.get(player.getUUID());
+            if (lastHeld != null && now - lastHeld < EMPTY_HAND_GRACE_MS) return InteractionResult.SUCCESS;
+            return InteractionResult.PASS;
         }
-        LAST_STICK_ATTACK_MS.put(player.getUuid(), now);
-        if (world.isClient()) return ActionResult.SUCCESS; // the server does the work
-        if (!(player instanceof ServerPlayerEntity serverPlayer)) return ActionResult.PASS;
-        if (!serverPlayer.hasPermissionLevel(2)) {
-            send(serverPlayer, Text.translatable("message.blood-on-the-blocktower.setup.operators_only").formatted(Formatting.RED));
-            return ActionResult.SUCCESS;
+        LAST_STICK_ATTACK_MS.put(player.getUUID(), now);
+        if (world.isClientSide()) return InteractionResult.SUCCESS; // the server does the work
+        if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
+        if (!serverPlayer.hasPermissions(2)) {
+            send(serverPlayer, Component.translatable("message.blood-on-the-blocktower.setup.operators_only").withStyle(ChatFormatting.RED));
+            return InteractionResult.SUCCESS;
         }
 
-        Session session = SESSIONS.get(serverPlayer.getUuid());
+        Session session = SESSIONS.get(serverPlayer.getUUID());
         if (session == null) {
             startSession(serverPlayer).lastClickMs = now;
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (now - session.lastClickMs < CLICK_COOLDOWN_MS) return ActionResult.SUCCESS;
+        if (now - session.lastClickMs < CLICK_COOLDOWN_MS) return InteractionResult.SUCCESS;
         session.lastClickMs = now;
 
-        if (serverPlayer.isSneaking()) {
+        if (serverPlayer.isShiftKeyDown()) {
             skip(serverPlayer, session);
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        BlockPos target = session.step.standing ? pos.offset(side) : pos;
+        BlockPos target = session.step.standing ? pos.relative(side) : pos;
         apply(session, target);
         ServerConfig.save();
-        serverPlayer.sendMessage(Text.translatable("message.blood-on-the-blocktower.setup.step_set", session.step.title(session.seat)).formatted(Formatting.GREEN)
-                .append(Text.literal(target.toShortString()).formatted(Formatting.WHITE)), true);
+        serverPlayer.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.setup.step_set", session.step.title(session.seat)).withStyle(ChatFormatting.GREEN)
+                .append(Component.literal(target.toShortString()).withStyle(ChatFormatting.WHITE)), true);
         advance(serverPlayer, session);
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     /** MB2 on a block while holding the stick: back a step (Shift: seats to homes, or homes to finish). */
-    public static ActionResult onUseBlock(PlayerEntity player, World world, Hand hand, BlockHitResult hit) {
-        if (!player.getStackInHand(hand).isOf(ModItems.SETUP_STICK)) return ActionResult.PASS;
-        if (world.isClient()) return ActionResult.SUCCESS;
-        if (player instanceof ServerPlayerEntity serverPlayer) {
+    public static InteractionResult onUseBlock(Player player, Level world, InteractionHand hand, BlockHitResult hit) {
+        if (!player.getItemInHand(hand).is(ModItems.SETUP_STICK)) return InteractionResult.PASS;
+        if (world.isClientSide()) return InteractionResult.SUCCESS;
+        if (player instanceof ServerPlayer serverPlayer) {
             rightClick(serverPlayer);
         }
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     /** MB2 in the air while holding the stick: back a step (Shift: seats to homes, or homes to finish). */
-    public static TypedActionResult<ItemStack> onUseItem(PlayerEntity player, World world, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
-        if (!stack.isOf(ModItems.SETUP_STICK)) return TypedActionResult.pass(stack);
-        if (world.isClient()) return TypedActionResult.success(stack);
-        if (player instanceof ServerPlayerEntity serverPlayer) {
+    public static InteractionResultHolder<ItemStack> onUseItem(Player player, Level world, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.is(ModItems.SETUP_STICK)) return InteractionResultHolder.pass(stack);
+        if (world.isClientSide()) return InteractionResultHolder.success(stack);
+        if (player instanceof ServerPlayer serverPlayer) {
             rightClick(serverPlayer);
         }
-        return TypedActionResult.success(stack);
+        return InteractionResultHolder.success(stack);
     }
 
-    private static void rightClick(ServerPlayerEntity player) {
-        if (!player.hasPermissionLevel(2)) {
-            send(player, Text.translatable("message.blood-on-the-blocktower.setup.operators_only").formatted(Formatting.RED));
+    private static void rightClick(ServerPlayer player) {
+        if (!player.hasPermissions(2)) {
+            send(player, Component.translatable("message.blood-on-the-blocktower.setup.operators_only").withStyle(ChatFormatting.RED));
             return;
         }
-        Session session = SESSIONS.get(player.getUuid());
+        Session session = SESSIONS.get(player.getUUID());
         if (session == null) {
-            send(player, Text.translatable("message.blood-on-the-blocktower.setup.run_to_start", command("/botb setup", "/botb setup"))
-                    .formatted(Formatting.GRAY));
+            send(player, Component.translatable("message.blood-on-the-blocktower.setup.run_to_start", command("/botb setup", "/botb setup"))
+                    .withStyle(ChatFormatting.GRAY));
             return;
         }
-        if (player.isSneaking()) {
+        if (player.isShiftKeyDown()) {
             if (session.step.isSeatStep()) {
                 startHomes(player, session);
             } else {
-                SESSIONS.remove(player.getUuid());
+                SESSIONS.remove(player.getUUID());
                 finish(player);
             }
         } else {
@@ -293,12 +292,12 @@ public final class SetupStick {
         };
     }
 
-    private static void skip(ServerPlayerEntity player, Session session) {
+    private static void skip(ServerPlayer player, Session session) {
         if (session.step.isSeatStep()) session.seatStarted = true;
         advance(player, session);
     }
 
-    private static void advance(ServerPlayerEntity player, Session session) {
+    private static void advance(ServerPlayer player, Session session) {
         switch (session.step) {
             case TOWN_SQUARE -> session.step = Step.EXECUTION;
             case EXECUTION -> session.step = Step.CLOCK_CENTER;
@@ -319,7 +318,7 @@ public final class SetupStick {
             case SEAT_HOME -> {
                 sendHomeSummary(player, session.seat);
                 if (session.seat >= session.seatCount) {
-                    SESSIONS.remove(player.getUuid());
+                    SESSIONS.remove(player.getUUID());
                     finish(player);
                     return;
                 }
@@ -330,10 +329,10 @@ public final class SetupStick {
     }
 
     /** Ends the seat loop and walks the homes for every seat touched, in one pass. */
-    private static void startHomes(ServerPlayerEntity player, Session session) {
+    private static void startHomes(ServerPlayer player, Session session) {
         session.seatCount = session.seatStarted ? session.seat : session.seat - 1;
         if (session.seatCount == 0) {
-            SESSIONS.remove(player.getUuid());
+            SESSIONS.remove(player.getUUID());
             finish(player);
             return;
         }
@@ -344,10 +343,10 @@ public final class SetupStick {
     }
 
     /** Steps back one position so it can be clicked again; the old value is overwritten on the next click. */
-    private static void back(ServerPlayerEntity player, Session session) {
+    private static void back(ServerPlayer player, Session session) {
         switch (session.step) {
             case TOWN_SQUARE -> {
-                send(player, Text.translatable("message.blood-on-the-blocktower.setup.already_first_step").formatted(Formatting.YELLOW));
+                send(player, Component.translatable("message.blood-on-the-blocktower.setup.already_first_step").withStyle(ChatFormatting.YELLOW));
                 return;
             }
             case EXECUTION -> session.step = Step.TOWN_SQUARE;
@@ -379,97 +378,97 @@ public final class SetupStick {
 
     /** Updates the on-screen box for the current step. */
     /** Starts (or restarts) the walkthrough from the first step and shows the HUD. */
-    private static Session startSession(ServerPlayerEntity player) {
+    private static Session startSession(ServerPlayer player) {
         Session session = new Session();
-        SESSIONS.put(player.getUuid(), session);
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.started").formatted(Formatting.GOLD));
+        SESSIONS.put(player.getUUID(), session);
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.started").withStyle(ChatFormatting.GOLD));
         prompt(player);
         return session;
     }
 
-    private static void prompt(ServerPlayerEntity player) {
-        Session session = SESSIONS.get(player.getUuid());
+    private static void prompt(ServerPlayer player) {
+        Session session = SESSIONS.get(player.getUUID());
         if (session == null) return;
         BlockPos existing = current(session);
         ServerPlayNetworking.send(player, new SetupHudS2CPayload(true, session.step.title(session.seat),
                 existing != null ? existing.toShortString() : "", session.step.target(),
-                Text.translatable(session.step.isSeatStep() ? "hud.blood-on-the-blocktower.setup.control.homes" : "hud.blood-on-the-blocktower.setup.control.finish")));
+                Component.translatable(session.step.isSeatStep() ? "hud.blood-on-the-blocktower.setup.control.homes" : "hud.blood-on-the-blocktower.setup.control.finish")));
     }
 
-    private static void hideHud(ServerPlayerEntity player) {
+    private static void hideHud(ServerPlayer player) {
         ServerPlayNetworking.send(player, SetupHudS2CPayload.hidden());
     }
 
     // ========== Chat summaries ==========
 
-    private static void sendTownSquareSummary(ServerPlayerEntity player) {
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.town_square_summary").formatted(Formatting.GOLD));
+    private static void sendTownSquareSummary(ServerPlayer player) {
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.town_square_summary").withStyle(ChatFormatting.GOLD));
         line(player, Step.TOWN_SQUARE.title(0), posOrUnset(ServerConfig.TOWN_SQUARE));
         line(player, Step.EXECUTION.title(0), posOrUnset(ServerConfig.EXECUTION_POSITION));
         line(player, Step.CLOCK_CENTER.title(0), posOrUnset(ServerConfig.CLOCK_CENTER));
     }
 
-    private static void sendSeatSummary(ServerPlayerEntity player, int seat) {
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.seat_summary", seat).formatted(Formatting.GOLD)
+    private static void sendSeatSummary(ServerPlayer player, int seat) {
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.seat_summary", seat).withStyle(ChatFormatting.GOLD)
                 .append(labeled("message.blood-on-the-blocktower.setup.seat_label", posOrUnset(ServerConfig.TOWN_SQUARE_SEATS.get(seat))))
-                .append(Text.literal(", ").formatted(Formatting.GRAY))
+                .append(Component.literal(", ").withStyle(ChatFormatting.GRAY))
                 .append(labeled("message.blood-on-the-blocktower.setup.lever_label", posOrUnset(ServerConfig.SEAT_SWITCH_POSITIONS.get(seat))))
-                .append(Text.literal(", ").formatted(Formatting.GRAY))
+                .append(Component.literal(", ").withStyle(ChatFormatting.GRAY))
                 .append(labeled("message.blood-on-the-blocktower.setup.indicator_label", posOrUnset(ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat)))));
     }
 
-    private static void sendHomeSummary(ServerPlayerEntity player, int seat) {
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.home_summary", seat).formatted(Formatting.GOLD)
-                .append(posOrUnset(ServerConfig.SEAT_HOMES.get(seat)).copy().formatted(Formatting.WHITE)));
+    private static void sendHomeSummary(ServerPlayer player, int seat) {
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.home_summary", seat).withStyle(ChatFormatting.GOLD)
+                .append(posOrUnset(ServerConfig.SEAT_HOMES.get(seat)).copy().withStyle(ChatFormatting.WHITE)));
     }
 
-    private static MutableText labeled(String labelKey, Text value) {
-        return Text.translatable(labelKey).formatted(Formatting.GRAY).append(value.copy().formatted(Formatting.WHITE));
+    private static MutableComponent labeled(String labelKey, Component value) {
+        return Component.translatable(labelKey).withStyle(ChatFormatting.GRAY).append(value.copy().withStyle(ChatFormatting.WHITE));
     }
 
     // ========== Finish: remaining settings ==========
 
-    private static void finish(ServerPlayerEntity player) {
+    private static void finish(ServerPlayer player) {
         hideHud(player);
         takeStick(player);
         VoteIndicators.paintVoteIndicatorStacks(player.getServer(), true);
         ElectionManager.powerAllSeatPistons(player.getServer());
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.complete").formatted(Formatting.GREEN)
-                .append(Text.translatable("message.blood-on-the-blocktower.setup.run_for_settings", Text.literal("/botb setup help").styled(style -> style
-                        .withColor(Formatting.AQUA)
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.complete").withStyle(ChatFormatting.GREEN)
+                .append(Component.translatable("message.blood-on-the-blocktower.setup.run_for_settings", Component.literal("/botb setup help").withStyle(style -> style
+                        .withColor(ChatFormatting.AQUA)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/botb setup help"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.blood-on-the-blocktower.setup.click_to_run")))))
-                        .formatted(Formatting.GRAY)));
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("message.blood-on-the-blocktower.setup.click_to_run")))))
+                        .withStyle(ChatFormatting.GRAY)));
     }
 
     /** The map positions with their current values, as one summary line. */
-    private static void sendPositionsSummary(ServerPlayerEntity player) {
+    private static void sendPositionsSummary(ServerPlayer player) {
         int seats = Math.max(Math.max(ServerConfig.SEAT_HOMES.size(), ServerConfig.TOWN_SQUARE_SEATS.size()),
                 Math.max(ServerConfig.SEAT_SWITCH_POSITIONS.size(), ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.size()));
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.positions").formatted(Formatting.GOLD)
-                .append(Text.translatable("message.blood-on-the-blocktower.setup.positions_summary", seats, ServerConfig.SEAT_HOMES.size(),
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.positions").withStyle(ChatFormatting.GOLD)
+                .append(Component.translatable("message.blood-on-the-blocktower.setup.positions_summary", seats, ServerConfig.SEAT_HOMES.size(),
                         ServerConfig.TOWN_SQUARE_SEATS.size(),
                         ServerConfig.SEAT_SWITCH_POSITIONS.size(),
                         ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.size(),
                         posOrUnset(ServerConfig.TOWN_SQUARE),
                         posOrUnset(ServerConfig.EXECUTION_POSITION),
-                        posOrUnset(ServerConfig.CLOCK_CENTER)).formatted(Formatting.GRAY)));
+                        posOrUnset(ServerConfig.CLOCK_CENTER)).withStyle(ChatFormatting.GRAY)));
     }
 
     /** The other map settings with their current values; each command is clickable. */
-    private static void sendSettings(ServerPlayerEntity player) {
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.other_settings").formatted(Formatting.GOLD));
-        setting(player, "/botb setClockHandScale <scale>", "/botb setClockHandScale ", "message.blood-on-the-blocktower.setup.setting.clock_hand_scale", Text.literal(String.valueOf(ServerConfig.CLOCK_HAND_SCALE)));
-        setting(player, "/botb setNameMaxLength <length>", "/botb setNameMaxLength ", "message.blood-on-the-blocktower.setup.setting.name_max_length", Text.literal(String.valueOf(ServerConfig.MAX_NAME_LENGTH)));
+    private static void sendSettings(ServerPlayer player) {
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.other_settings").withStyle(ChatFormatting.GOLD));
+        setting(player, "/botb setClockHandScale <scale>", "/botb setClockHandScale ", "message.blood-on-the-blocktower.setup.setting.clock_hand_scale", Component.literal(String.valueOf(ServerConfig.CLOCK_HAND_SCALE)));
+        setting(player, "/botb setNameMaxLength <length>", "/botb setNameMaxLength ", "message.blood-on-the-blocktower.setup.setting.name_max_length", Component.literal(String.valueOf(ServerConfig.MAX_NAME_LENGTH)));
         setting(player, "/botb setVoteTimePerPlayer <ms>", "/botb setVoteTimePerPlayer ", "message.blood-on-the-blocktower.setup.setting.vote_time_per_player", ms(ServerConfig.VOTE_TIME_PER_PLAYER));
-        setting(player, "/botb setAnvilHeight <blocks>", "/botb setAnvilHeight ", "message.blood-on-the-blocktower.setup.setting.anvil_height", Text.literal(String.valueOf(ServerConfig.ANVIL_HEIGHT)));
-        setting(player, "/botb lockInExecutionPosition <true|false>", "/botb lockInExecutionPosition ", "message.blood-on-the-blocktower.setup.setting.lock_in_execution_position", Text.literal(String.valueOf(ServerConfig.LOCK_IN_EXECUTION_POSITION)));
+        setting(player, "/botb setAnvilHeight <blocks>", "/botb setAnvilHeight ", "message.blood-on-the-blocktower.setup.setting.anvil_height", Component.literal(String.valueOf(ServerConfig.ANVIL_HEIGHT)));
+        setting(player, "/botb lockInExecutionPosition <true|false>", "/botb lockInExecutionPosition ", "message.blood-on-the-blocktower.setup.setting.lock_in_execution_position", Component.literal(String.valueOf(ServerConfig.LOCK_IN_EXECUTION_POSITION)));
         setting(player, "/botb setExecution soundDelay <ms>", "/botb setExecution soundDelay ", "message.blood-on-the-blocktower.setup.setting.execution_sound_delay", ms(ServerConfig.EXECUTION_SOUND_DELAY));
         setting(player, "/botb setExecution survivedSoundDelay <ms>", "/botb setExecution survivedSoundDelay ", "message.blood-on-the-blocktower.setup.setting.execution_survived_sound_delay", ms(ServerConfig.EXECUTION_SURVIVED_SOUND_DELAY));
         setting(player, "/botb setExecution deathTitleDelay <ms>", "/botb setExecution deathTitleDelay ", "message.blood-on-the-blocktower.setup.setting.execution_death_title_delay", ms(ServerConfig.EXECUTION_DEATH_TITLE_DELAY));
-        setting(player, "/botb setTime dawn <ticks>", "/botb setTime dawn ", "message.blood-on-the-blocktower.setup.setting.time_dawn", Text.literal(String.valueOf(ServerConfig.TIME_DAWN)));
-        setting(player, "/botb setTime evening <ticks>", "/botb setTime evening ", "message.blood-on-the-blocktower.setup.setting.time_evening", Text.literal(String.valueOf(ServerConfig.TIME_EVENING)));
-        setting(player, "/botb setTime dusk <ticks>", "/botb setTime dusk ", "message.blood-on-the-blocktower.setup.setting.time_dusk", Text.literal(String.valueOf(ServerConfig.TIME_DUSK)));
+        setting(player, "/botb setTime dawn <ticks>", "/botb setTime dawn ", "message.blood-on-the-blocktower.setup.setting.time_dawn", Component.literal(String.valueOf(ServerConfig.TIME_DAWN)));
+        setting(player, "/botb setTime evening <ticks>", "/botb setTime evening ", "message.blood-on-the-blocktower.setup.setting.time_evening", Component.literal(String.valueOf(ServerConfig.TIME_EVENING)));
+        setting(player, "/botb setTime dusk <ticks>", "/botb setTime dusk ", "message.blood-on-the-blocktower.setup.setting.time_dusk", Component.literal(String.valueOf(ServerConfig.TIME_DUSK)));
         setting(player, "/botb setDuskCommand <command>", "/botb setDuskCommand ", "message.blood-on-the-blocktower.setup.setting.dusk_command", orNone(ServerConfig.DUSK_COMMAND));
         setting(player, "/botb setDawnCommand <command>", "/botb setDawnCommand ", "message.blood-on-the-blocktower.setup.setting.dawn_command", orNone(ServerConfig.DAWN_COMMAND));
         setting(player, "/botb setDeathCommand <seat> <command>", "/botb setDeathCommand ", "message.blood-on-the-blocktower.setup.setting.death_command", seatsSet(ServerConfig.DEATH_COMMANDS.size()));
@@ -478,69 +477,69 @@ public final class SetupStick {
         setting(player, "/botb setExecutionCommand <seat> <command>", "/botb setExecutionCommand ", "message.blood-on-the-blocktower.setup.setting.execution_command", seatsSet(ServerConfig.EXECUTION_COMMANDS.size()));
     }
 
-    private static void setting(ServerPlayerEntity player, String usage, String suggest, String descriptionKey, Text value) {
-        send(player, Text.literal("  ").append(command(usage, suggest))
-                .append(Text.literal("\n    ").append(Text.translatable(descriptionKey)).append(": ").formatted(Formatting.GRAY))
-                .append(value.copy().formatted(Formatting.WHITE)));
+    private static void setting(ServerPlayer player, String usage, String suggest, String descriptionKey, Component value) {
+        send(player, Component.literal("  ").append(command(usage, suggest))
+                .append(Component.literal("\n    ").append(Component.translatable(descriptionKey)).append(": ").withStyle(ChatFormatting.GRAY))
+                .append(value.copy().withStyle(ChatFormatting.WHITE)));
     }
 
-    private static MutableText command(String label, String suggest) {
-        return Text.literal(label).styled(style -> style
-                .withColor(Formatting.AQUA)
+    private static MutableComponent command(String label, String suggest) {
+        return Component.literal(label).withStyle(style -> style
+                .withColor(ChatFormatting.AQUA)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, suggest))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.translatable("message.blood-on-the-blocktower.setup.click_to_suggest"))));
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("message.blood-on-the-blocktower.setup.click_to_suggest"))));
     }
 
-    private static Text posOrUnset(BlockPos pos) {
-        return pos != null ? Text.literal(pos.toShortString()) : Text.translatable("message.blood-on-the-blocktower.setup.unset");
+    private static Component posOrUnset(BlockPos pos) {
+        return pos != null ? Component.literal(pos.toShortString()) : Component.translatable("message.blood-on-the-blocktower.setup.unset");
     }
 
-    private static Text orNone(String value) {
-        return value != null && !value.isBlank() ? Text.literal(value) : Text.translatable("message.blood-on-the-blocktower.setup.none");
+    private static Component orNone(String value) {
+        return value != null && !value.isBlank() ? Component.literal(value) : Component.translatable("message.blood-on-the-blocktower.setup.none");
     }
 
-    private static Text ms(long millis) {
-        return Text.translatable("message.blood-on-the-blocktower.setup.ms", millis);
+    private static Component ms(long millis) {
+        return Component.translatable("message.blood-on-the-blocktower.setup.ms", millis);
     }
 
-    private static Text seatsSet(int count) {
-        return Text.translatable("message.blood-on-the-blocktower.setup.seats_set", count);
+    private static Component seatsSet(int count) {
+        return Component.translatable("message.blood-on-the-blocktower.setup.seats_set", count);
     }
 
     // ========== Helpers ==========
 
-    private static void line(ServerPlayerEntity player, Text label, Text value) {
-        send(player, Text.literal("  ").append(label).append(": ").formatted(Formatting.GRAY)
-                .append(value.copy().formatted(Formatting.WHITE)));
+    private static void line(ServerPlayer player, Component label, Component value) {
+        send(player, Component.literal("  ").append(label).append(": ").withStyle(ChatFormatting.GRAY)
+                .append(value.copy().withStyle(ChatFormatting.WHITE)));
     }
 
     /** Lists the gamerules World Setup manages, one per line, red when not at the expected value. */
-    private static void reportGamerules(ServerPlayerEntity player) {
+    private static void reportGamerules(ServerPlayer player) {
         GameRules rules = player.getServer().getGameRules();
-        send(player, Text.translatable("message.blood-on-the-blocktower.setup.gamerules").formatted(Formatting.GOLD));
-        gamerule(player, "doImmediateRespawn", rules.getBoolean(GameRules.DO_IMMEDIATE_RESPAWN), true);
-        gamerule(player, "doDaylightCycle", rules.getBoolean(GameRules.DO_DAYLIGHT_CYCLE), false);
-        gamerule(player, "doMobSpawning", rules.getBoolean(GameRules.DO_MOB_SPAWNING), false);
-        gamerule(player, "keepInventory", rules.getBoolean(GameRules.KEEP_INVENTORY), true);
+        send(player, Component.translatable("message.blood-on-the-blocktower.setup.gamerules").withStyle(ChatFormatting.GOLD));
+        gamerule(player, "doImmediateRespawn", rules.getBoolean(GameRules.RULE_DO_IMMEDIATE_RESPAWN), true);
+        gamerule(player, "doDaylightCycle", rules.getBoolean(GameRules.RULE_DAYLIGHT), false);
+        gamerule(player, "doMobSpawning", rules.getBoolean(GameRules.RULE_DOMOBSPAWNING), false);
+        gamerule(player, "keepInventory", rules.getBoolean(GameRules.RULE_KEEPINVENTORY), true);
     }
 
-    private static void gamerule(ServerPlayerEntity player, String name, boolean value, boolean expected) {
-        send(player, Text.literal("  " + name + ": ").formatted(Formatting.GRAY)
-                .append(Text.literal(String.valueOf(value)).formatted(value == expected ? Formatting.GREEN : Formatting.RED)));
+    private static void gamerule(ServerPlayer player, String name, boolean value, boolean expected) {
+        send(player, Component.literal("  " + name + ": ").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(String.valueOf(value)).withStyle(value == expected ? ChatFormatting.GREEN : ChatFormatting.RED)));
     }
 
-    private static void takeStick(ServerPlayerEntity player) {
-        player.getInventory().remove(stack -> stack.isOf(ModItems.SETUP_STICK), -1, player.playerScreenHandler.getCraftingInput());
+    private static void takeStick(ServerPlayer player) {
+        player.getInventory().clearOrCountMatchingItems(stack -> stack.is(ModItems.SETUP_STICK), -1, player.inventoryMenu.getCraftSlots());
     }
 
-    private static void giveStick(ServerPlayerEntity player) {
-        boolean hasStick = player.getInventory().contains(stack -> stack.isOf(ModItems.SETUP_STICK));
+    private static void giveStick(ServerPlayer player) {
+        boolean hasStick = player.getInventory().contains(stack -> stack.is(ModItems.SETUP_STICK));
         if (!hasStick) {
-            player.giveItemStack(new ItemStack(ModItems.SETUP_STICK));
+            player.addItem(new ItemStack(ModItems.SETUP_STICK));
         }
     }
 
-    private static void send(ServerPlayerEntity player, Text text) {
-        player.sendMessage(text, false);
+    private static void send(ServerPlayer player, Component text) {
+        player.displayClientMessage(text, false);
     }
 }

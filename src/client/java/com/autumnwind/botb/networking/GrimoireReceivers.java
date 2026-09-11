@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 /** Client-bound packet receivers for grimoire contents, for the storyteller and for a player shown one. */
 final class GrimoireReceivers {
@@ -67,17 +67,17 @@ final class GrimoireReceivers {
                 if (payload.isTargetedSend()) {
                     // Show message to player
                     if (context.client().player != null) {
-                        context.client().player.sendMessage(
-                                Text.translatable("message.blood-on-the-blocktower.client.grimoire_received")
-                                        .formatted(Formatting.LIGHT_PURPLE),
+                        context.client().player.displayClientMessage(
+                                Component.translatable("message.blood-on-the-blocktower.client.grimoire_received")
+                                        .withStyle(ChatFormatting.LIGHT_PURPLE),
                                 false
                         );
                     }
 
                     // Refresh AssignRolesScreen if it's currently open
-                    if (context.client().currentScreen instanceof AssignRolesScreen) {
+                    if (context.client().screen instanceof AssignRolesScreen) {
                         context.client().setScreen(new AssignRolesScreen(
-                                Text.translatable("message.blood-on-the-blocktower.client.title_grimoire")
+                                Component.translatable("message.blood-on-the-blocktower.client.title_grimoire")
                         ));
                     }
                 }
@@ -88,7 +88,7 @@ final class GrimoireReceivers {
         ClientPlayNetworking.registerGlobalReceiver(SyncGrimoireS2CPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 // Only operators should process this
-                if (context.client().player == null || !context.client().player.hasPermissionLevel(2)) {
+                if (context.client().player == null || !context.client().player.hasPermissions(2)) {
                     return;
                 }
 
@@ -140,7 +140,7 @@ final class GrimoireReceivers {
                 NightOrderHudManager.rebuildActiveNightOrder();
 
                 // If on AssignRolesScreen, refresh it
-                if (context.client().currentScreen instanceof AssignRolesScreen assignRolesScreen) {
+                if (context.client().screen instanceof AssignRolesScreen assignRolesScreen) {
                     assignRolesScreen.refreshFromSync();
                 }
             });

@@ -1,12 +1,12 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Server-to-Client payload for updating clock hands state during nominations, voting, and exile.
@@ -21,26 +21,26 @@ public record ClockHandsStateS2CPayload(
         int mode,                    // 0=HIDDEN, 1=NOMINATION, 2=VOTING, 3=EXILE
         BlockPos clockCenter,        // Center position for clock hands (nullable if not set)
         float scale,                 // Scale multiplier for clock hands
-        Vec3d hourHandTargetPos,     // Target position for hour hand (nullable when hidden or voting)
-        Vec3d minuteHandTargetPos,   // Target position for minute hand (nullable when hidden)
+        Vec3 hourHandTargetPos,     // Target position for hour hand (nullable when hidden or voting)
+        Vec3 minuteHandTargetPos,   // Target position for minute hand (nullable when hidden)
         boolean fadeIn,              // True if hands should fade in (new nomination/vote start)
         boolean swivel               // True if hands should do swivel animation (nomination only)
-) implements CustomPayload {
+) implements CustomPacketPayload {
 
     public static final int MODE_HIDDEN = 0;
     public static final int MODE_NOMINATION = 1;
     public static final int MODE_VOTING = 2;
     public static final int MODE_EXILE = 3;
 
-    public static final CustomPayload.Id<ClockHandsStateS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "clock_hands_state"));
+    public static final CustomPacketPayload.Type<ClockHandsStateS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "clock_hands_state"));
 
-    public static final PacketCodec<RegistryByteBuf, ClockHandsStateS2CPayload> CODEC = PacketCodec.of(
+    public static final StreamCodec<RegistryFriendlyByteBuf, ClockHandsStateS2CPayload> CODEC = StreamCodec.ofMember(
             ClockHandsStateS2CPayload::write,
             ClockHandsStateS2CPayload::read
     );
 
-    private static void write(ClockHandsStateS2CPayload payload, RegistryByteBuf buf) {
+    private static void write(ClockHandsStateS2CPayload payload, RegistryFriendlyByteBuf buf) {
         buf.writeInt(payload.mode);
 
         // Write clock center (nullable)
@@ -74,27 +74,27 @@ public record ClockHandsStateS2CPayload(
         buf.writeBoolean(payload.swivel);
     }
 
-    private static ClockHandsStateS2CPayload read(RegistryByteBuf buf) {
+    private static ClockHandsStateS2CPayload read(RegistryFriendlyByteBuf buf) {
         int mode = buf.readInt();
 
         // Read clock center (nullable)
         BlockPos clockCenter = null;
         if (buf.readBoolean()) {
-            clockCenter = BlockPos.fromLong(buf.readLong());
+            clockCenter = BlockPos.of(buf.readLong());
         }
 
         float scale = buf.readFloat();
 
         // Read hour hand target position (nullable)
-        Vec3d hourHandTargetPos = null;
+        Vec3 hourHandTargetPos = null;
         if (buf.readBoolean()) {
-            hourHandTargetPos = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            hourHandTargetPos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
         }
 
         // Read minute hand target position (nullable)
-        Vec3d minuteHandTargetPos = null;
+        Vec3 minuteHandTargetPos = null;
         if (buf.readBoolean()) {
-            minuteHandTargetPos = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            minuteHandTargetPos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
         }
 
         boolean fadeIn = buf.readBoolean();
@@ -104,7 +104,7 @@ public record ClockHandsStateS2CPayload(
     }
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

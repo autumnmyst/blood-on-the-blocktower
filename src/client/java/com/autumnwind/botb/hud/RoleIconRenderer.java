@@ -8,18 +8,18 @@ import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.UrlTextureLoader;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import java.util.UUID;
@@ -51,34 +51,34 @@ public class RoleIconRenderer {
 
         if (StorytellerState.PENDING_ROLES.isEmpty()) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.world == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.level == null) return;
 
-        MatrixStack matrices = context.matrixStack();
-        VertexConsumerProvider consumers = context.consumers();
+        PoseStack matrices = context.matrixStack();
+        MultiBufferSource consumers = context.consumers();
         if (matrices == null || consumers == null) return;
 
-        Vec3d cameraPos = context.camera().getPos();
-        Quaternionf cameraRotation = context.camera().getRotation();
+        Vec3 cameraPos = context.camera().getPosition();
+        Quaternionf cameraRotation = context.camera().rotation();
         // Interpolate between last tick and current position so motion is smooth at framerate
         // instead of jittering at the 20 Hz tick rate. Same trick MC's entity renderer uses.
-        float tickDelta = context.tickCounter().getTickDelta(true);
+        float tickDelta = context.tickCounter().getGameTimeDeltaPartialTick(true);
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
-        UUID selfUuid = client.player != null ? client.player.getUuid() : null;
-        for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
-            if (selfUuid != null && player.getUuid().equals(selfUuid)) continue; // skip self
-            PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(player.getUuid());
+        UUID selfUuid = client.player != null ? client.player.getUUID() : null;
+        for (AbstractClientPlayer player : client.level.players()) {
+            if (selfUuid != null && player.getUUID().equals(selfUuid)) continue; // skip self
+            PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(player.getUUID());
             if (assignment == null) continue;
 
-            Identifier icon = iconFor(assignment);
+            ResourceLocation icon = iconFor(assignment);
             if (icon == null) continue;
 
-            Vec3d lerped = player.getLerpedPos(tickDelta);
+            Vec3 lerped = player.getPosition(tickDelta);
             double worldX = lerped.x - cameraPos.x;
-            double worldY = lerped.y + player.getHeight() + HEAD_OFFSET - cameraPos.y;
+            double worldY = lerped.y + player.getBbHeight() + HEAD_OFFSET - cameraPos.y;
             double worldZ = lerped.z - cameraPos.z;
 
             drawBillboard(matrices, consumers, icon, cameraRotation, worldX, worldY, worldZ);
@@ -87,7 +87,7 @@ public class RoleIconRenderer {
         RenderSystem.disableBlend();
     }
 
-    private static Identifier iconFor(PendingRoleAssignment assignment) {
+    private static ResourceLocation iconFor(PendingRoleAssignment assignment) {
         if (assignment.isCustomRole() && assignment.customRole().isPresent()) {
             CustomRole custom = assignment.customRole().get();
             return UrlTextureLoader.getTexture(custom);
@@ -97,25 +97,25 @@ public class RoleIconRenderer {
         return role.getIcon();
     }
 
-    private static void drawBillboard(MatrixStack matrices, VertexConsumerProvider consumers,
-                                      Identifier texture, Quaternionf cameraRotation,
+    private static void drawBillboard(PoseStack matrices, MultiBufferSource consumers,
+                                      ResourceLocation texture, Quaternionf cameraRotation,
                                       double x, double y, double z) {
-        matrices.push();
+        matrices.pushPose();
         matrices.translate(x, y, z);
-        matrices.multiply(cameraRotation);
+        matrices.mulPose(cameraRotation);
         matrices.scale(ICON_SIZE, -ICON_SIZE, ICON_SIZE); // negate Y so +v is down like screen textures
 
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-        VertexConsumer buffer = consumers.getBuffer(RenderLayer.getEntityTranslucent(texture));
-        int light = LightmapTextureManager.MAX_LIGHT_COORDINATE;
+        Matrix4f matrix = matrices.last().pose();
+        VertexConsumer buffer = consumers.getBuffer(RenderType.entityTranslucent(texture));
+        int light = LightTexture.FULL_BRIGHT;
 
         // Centered unit quad at origin, facing +Z (camera forward after rotation)
         float half = 0.5f;
-        buffer.vertex(matrix, -half, -half, 0f).color(255, 255, 255, 255).texture(0f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0f, 0f, 1f);
-        buffer.vertex(matrix, -half,  half, 0f).color(255, 255, 255, 255).texture(0f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0f, 0f, 1f);
-        buffer.vertex(matrix,  half,  half, 0f).color(255, 255, 255, 255).texture(1f, 1f).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0f, 0f, 1f);
-        buffer.vertex(matrix,  half, -half, 0f).color(255, 255, 255, 255).texture(1f, 0f).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0f, 0f, 1f);
+        buffer.addVertex(matrix, -half, -half, 0f).setColor(255, 255, 255, 255).setUv(0f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0f, 0f, 1f);
+        buffer.addVertex(matrix, -half,  half, 0f).setColor(255, 255, 255, 255).setUv(0f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0f, 0f, 1f);
+        buffer.addVertex(matrix,  half,  half, 0f).setColor(255, 255, 255, 255).setUv(1f, 1f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0f, 0f, 1f);
+        buffer.addVertex(matrix,  half, -half, 0f).setColor(255, 255, 255, 255).setUv(1f, 0f).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0f, 0f, 1f);
 
-        matrices.pop();
+        matrices.popPose();
     }
 }

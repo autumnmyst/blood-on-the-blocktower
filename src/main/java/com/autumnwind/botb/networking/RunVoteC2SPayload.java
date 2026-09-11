@@ -1,16 +1,15 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Client-to-Server payload for running a vote on the current nominee.
@@ -29,23 +28,23 @@ import java.util.UUID;
 public record RunVoteC2SPayload(boolean organGrinderMode, List<UUID> bansheeHasAbilityPlayers,
                                  boolean voudonModeActive, Optional<UUID> voudonPlayerUuid,
                                  VoteMultiplierLists voteMultipliers,
-                                 Optional<List<UUID>> evilsForLegion) implements CustomPayload {
-    public static final CustomPayload.Id<RunVoteC2SPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "run_vote"));
+                                 Optional<List<UUID>> evilsForLegion) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<RunVoteC2SPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "run_vote"));
 
-    public static final PacketCodec<RegistryByteBuf, RunVoteC2SPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.BOOL, RunVoteC2SPayload::organGrinderMode,
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()), RunVoteC2SPayload::bansheeHasAbilityPlayers,
-            PacketCodecs.BOOL, RunVoteC2SPayload::voudonModeActive,
-            Uuids.PACKET_CODEC.collect(PacketCodecs::optional), RunVoteC2SPayload::voudonPlayerUuid,
+    public static final StreamCodec<RegistryFriendlyByteBuf, RunVoteC2SPayload> CODEC = StreamCodec.composite(
+            ByteBufCodecs.BOOL, RunVoteC2SPayload::organGrinderMode,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()), RunVoteC2SPayload::bansheeHasAbilityPlayers,
+            ByteBufCodecs.BOOL, RunVoteC2SPayload::voudonModeActive,
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs::optional), RunVoteC2SPayload::voudonPlayerUuid,
             VoteMultiplierLists.CODEC, RunVoteC2SPayload::voteMultipliers,
-            Uuids.PACKET_CODEC.collect(PacketCodecs.toList()).collect(PacketCodecs::optional),
+            UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list()).apply(ByteBufCodecs::optional),
             RunVoteC2SPayload::evilsForLegion,
             RunVoteC2SPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

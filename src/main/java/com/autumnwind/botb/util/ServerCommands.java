@@ -14,6 +14,6 @@ public final class ServerCommands {
 
     /** Runs {@code command} as the server console with feedback suppressed. */
     public static void run(MinecraftServer server, String command) {
-        server.getCommandManager().executeWithPrefix(server.getCommandSource().withSilent(), command);
+        server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withSuppressedOutput(), command);
     }
 }

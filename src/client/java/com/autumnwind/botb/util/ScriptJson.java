@@ -1,5 +1,6 @@
 package com.autumnwind.botb.util;
 
+import com.autumnwind.botb.util.Role;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;

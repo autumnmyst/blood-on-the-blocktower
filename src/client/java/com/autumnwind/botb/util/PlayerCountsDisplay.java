@@ -2,10 +2,10 @@ package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 /**
  * Utility class for building player counts display text.
@@ -16,8 +16,8 @@ public class PlayerCountsDisplay {
     private PlayerCountsDisplay() {} // Prevent instantiation
 
     private static boolean isOperator() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        return client.player != null && client.player.hasPermissionLevel(2);
+        Minecraft client = Minecraft.getInstance();
+        return client.player != null && client.player.hasPermissions(2);
     }
 
     /** Storytellers count from their own grimoire; players use what the server sent them. */
@@ -35,7 +35,7 @@ public class PlayerCountsDisplay {
      * @param fullFormat true for expanded format, false for compressed format
      * @return The formatted Text, or null if counts are unavailable
      */
-    public static Text buildPlayerCountsText(boolean fullFormat) {
+    public static Component buildPlayerCountsText(boolean fullFormat) {
         int playerCount = playerCount();
         int travelerCount = travelerCount();
         int nonTravelerCount = playerCount - travelerCount;
@@ -55,23 +55,23 @@ public class PlayerCountsDisplay {
      * @param fullFormat true for expanded format, false for compressed format
      * @return The formatted Text
      */
-    public static Text buildPlayerCountsText(int playerCount, int travelerCount,
+    public static Component buildPlayerCountsText(int playerCount, int travelerCount,
                                               RoleCounts.RoleCountInfo counts, boolean fullFormat) {
         if (counts == null) return null;
 
-        MutableText countText;
+        MutableComponent countText;
         if (fullFormat) {
             countText = buildFullFormat(playerCount, counts);
             // Add traveler count in purple if there are travelers
             if (travelerCount > 0) {
-                countText.append(Text.translatable("hud.blood-on-the-blocktower.player_counts.travelers", travelerCount).formatted(Formatting.LIGHT_PURPLE));
+                countText.append(Component.translatable("hud.blood-on-the-blocktower.player_counts.travelers", travelerCount).withStyle(ChatFormatting.LIGHT_PURPLE));
             }
         } else {
             countText = buildCompressedFormat(counts);
             // Add traveler count in purple if there are travelers
             if (travelerCount > 0) {
-                countText.append(Text.literal(" : ").formatted(Formatting.WHITE))
-                        .append(Text.literal(String.valueOf(travelerCount)).formatted(Formatting.LIGHT_PURPLE));
+                countText.append(Component.literal(" : ").withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(String.valueOf(travelerCount)).withStyle(ChatFormatting.LIGHT_PURPLE));
             }
         }
 
@@ -81,24 +81,24 @@ public class PlayerCountsDisplay {
     /**
      * Builds the full format: "Players: X | Townsfolk: Y Outsiders: Z Minions: W Demon: V"
      */
-    private static MutableText buildFullFormat(int playerCount, RoleCounts.RoleCountInfo counts) {
-        return Text.translatable("hud.blood-on-the-blocktower.player_counts.players", playerCount)
-                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.townsfolk", counts.townsfolk()).formatted(Formatting.BLUE))
-                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.outsiders", counts.outsiders()).formatted(Formatting.DARK_AQUA))
-                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.minions", counts.minions()).formatted(Formatting.RED))
-                .append(Text.translatable("hud.blood-on-the-blocktower.player_counts.demon", counts.demon()).formatted(Formatting.DARK_RED));
+    private static MutableComponent buildFullFormat(int playerCount, RoleCounts.RoleCountInfo counts) {
+        return Component.translatable("hud.blood-on-the-blocktower.player_counts.players", playerCount)
+                .append(Component.translatable("hud.blood-on-the-blocktower.player_counts.townsfolk", counts.townsfolk()).withStyle(ChatFormatting.BLUE))
+                .append(Component.translatable("hud.blood-on-the-blocktower.player_counts.outsiders", counts.outsiders()).withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.translatable("hud.blood-on-the-blocktower.player_counts.minions", counts.minions()).withStyle(ChatFormatting.RED))
+                .append(Component.translatable("hud.blood-on-the-blocktower.player_counts.demon", counts.demon()).withStyle(ChatFormatting.DARK_RED));
     }
 
     /**
      * Builds the compressed format: "Y : Z : W : V" with colored numbers
      */
-    private static MutableText buildCompressedFormat(RoleCounts.RoleCountInfo counts) {
-        return Text.literal(String.valueOf(counts.townsfolk())).formatted(Formatting.BLUE)
-                .append(Text.literal(" : ").formatted(Formatting.WHITE))
-                .append(Text.literal(String.valueOf(counts.outsiders())).formatted(Formatting.DARK_AQUA))
-                .append(Text.literal(" : ").formatted(Formatting.WHITE))
-                .append(Text.literal(String.valueOf(counts.minions())).formatted(Formatting.RED))
-                .append(Text.literal(" : ").formatted(Formatting.WHITE))
-                .append(Text.literal(String.valueOf(counts.demon())).formatted(Formatting.DARK_RED));
+    private static MutableComponent buildCompressedFormat(RoleCounts.RoleCountInfo counts) {
+        return Component.literal(String.valueOf(counts.townsfolk())).withStyle(ChatFormatting.BLUE)
+                .append(Component.literal(" : ").withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(String.valueOf(counts.outsiders())).withStyle(ChatFormatting.DARK_AQUA))
+                .append(Component.literal(" : ").withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(String.valueOf(counts.minions())).withStyle(ChatFormatting.RED))
+                .append(Component.literal(" : ").withStyle(ChatFormatting.WHITE))
+                .append(Component.literal(String.valueOf(counts.demon())).withStyle(ChatFormatting.DARK_RED));
     }
 }

@@ -2,11 +2,6 @@ package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
@@ -16,7 +11,11 @@ import java.io.ByteArrayInputStream;
 import java.util.Iterator;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
 import com.autumnwind.botb.util.FetchLimits;
+import com.mojang.blaze3d.platform.NativeImage;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -33,7 +32,7 @@ import java.net.URI;
  */
 public class UrlTextureLoaderImpl {
 
-    private static final Map<String, Identifier> loadedTextures = new ConcurrentHashMap<>();
+    private static final Map<String, ResourceLocation> loadedTextures = new ConcurrentHashMap<>();
     private static final Map<String, int[]> textureDimensions = new ConcurrentHashMap<>(); // [width, height]
     private static final Set<String> pendingLoads = ConcurrentHashMap.newKeySet();
     private static final Set<String> failedLoads = ConcurrentHashMap.newKeySet();
@@ -67,7 +66,7 @@ public class UrlTextureLoaderImpl {
     /**
      * Get texture for a URL. Starts async load if not already loaded.
      */
-    public static Identifier getTextureForUrl(String url) {
+    public static ResourceLocation getTextureForUrl(String url) {
         if (url == null || url.isEmpty()) {
             return UrlTextureLoader.PLACEHOLDER;
         }
@@ -94,7 +93,7 @@ public class UrlTextureLoaderImpl {
     /**
      * Get texture for a custom role (uses neutral/default image).
      */
-    public static Identifier getTextureForCustomRole(CustomRole customRole) {
+    public static ResourceLocation getTextureForCustomRole(CustomRole customRole) {
         if (customRole == null || customRole.imageUrls().isEmpty()) {
             return UrlTextureLoader.PLACEHOLDER;
         }
@@ -106,7 +105,7 @@ public class UrlTextureLoaderImpl {
      * Looks up the custom role from the current script.
      * Also handles fabled characters with "fabled:" prefix.
      */
-    public static Identifier getTextureForCustomRoleId(String customRoleId) {
+    public static ResourceLocation getTextureForCustomRoleId(String customRoleId) {
         if (customRoleId == null || customRoleId.isEmpty()) {
             return UrlTextureLoader.PLACEHOLDER;
         }
@@ -218,13 +217,13 @@ public class UrlTextureLoaderImpl {
 
                 // Generate unique identifier
                 String hash = Integer.toHexString(url.hashCode() & 0x7FFFFFFF);
-                Identifier id = Identifier.of(BloodOnTheBlocktower.MOD_ID, "dynamic/custom_" + hash);
+                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "dynamic/custom_" + hash);
 
                 // Register on main thread
-                MinecraftClient.getInstance().execute(() -> {
+                Minecraft.getInstance().execute(() -> {
                     try {
-                        NativeImageBackedTexture texture = new NativeImageBackedTexture(nativeImage);
-                        MinecraftClient.getInstance().getTextureManager().registerTexture(id, texture);
+                        DynamicTexture texture = new DynamicTexture(nativeImage);
+                        Minecraft.getInstance().getTextureManager().register(id, texture);
                         loadedTextures.put(url, id);
                         pendingLoads.remove(url);
                         retryCount.remove(url); // Clear retry count on success
@@ -330,7 +329,7 @@ public class UrlTextureLoaderImpl {
             // No content found, just copy as-is
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    nativeImage.setColor(x, y, convertArgbToAbgr(image.getRGB(x, y)));
+                    nativeImage.setPixelRGBA(x, y, convertArgbToAbgr(image.getRGB(x, y)));
                 }
             }
             return nativeImage;
@@ -364,9 +363,9 @@ public class UrlTextureLoaderImpl {
 
                 // If outside source bounds, use transparent
                 if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) {
-                    nativeImage.setColor(x, y, 0); // Transparent
+                    nativeImage.setPixelRGBA(x, y, 0); // Transparent
                 } else {
-                    nativeImage.setColor(x, y, convertArgbToAbgr(image.getRGB(sampleX, sampleY)));
+                    nativeImage.setPixelRGBA(x, y, convertArgbToAbgr(image.getRGB(sampleX, sampleY)));
                 }
             }
         }

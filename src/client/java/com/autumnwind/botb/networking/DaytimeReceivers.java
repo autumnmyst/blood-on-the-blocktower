@@ -14,9 +14,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.chat.Component;
 
 /** Client-bound packet receivers for nominations, votes, results, the timer, and the clock hands. */
 final class DaytimeReceivers {
@@ -39,7 +39,7 @@ final class DaytimeReceivers {
 
                 // Track minion nomination for Town Crier (only for operators)
                 // Check if this is a new nomination (current is null, new is not)
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissionLevel(2);
+                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
                 if (isOperator && ClientState.currentNominator == null && payload.currentNominator() != null) {
                     // New nomination - check if nominator is a minion
                     PendingRoleAssignment nominatorAssignment =
@@ -87,8 +87,8 @@ final class DaytimeReceivers {
                 );
 
                 // Refresh AssignRolesScreen if it's open and nomination or exile state changed
-                if ((nominationStateChanged || exileStateChanged) && context.client().currentScreen instanceof AssignRolesScreen assignRolesScreen) {
-                    assignRolesScreen.init(context.client(), context.client().getWindow().getScaledWidth(), context.client().getWindow().getScaledHeight());
+                if ((nominationStateChanged || exileStateChanged) && context.client().screen instanceof AssignRolesScreen assignRolesScreen) {
+                    assignRolesScreen.init(context.client(), context.client().getWindow().getGuiScaledWidth(), context.client().getWindow().getGuiScaledHeight());
                 }
             });
         });
@@ -140,7 +140,7 @@ final class DaytimeReceivers {
                 UUID nomineeUuid = ClientState.currentNominee;
 
                 // Legion Vote Hiding: use server-provided storyteller view (authoritative)
-                boolean isOperator = context.client().player != null && context.client().player.hasPermissionLevel(2);
+                boolean isOperator = context.client().player != null && context.client().player.hasPermissions(2);
                 if (isOperator) {
                     // Update storyteller's MFE view (may differ from ClientState.markedForExecution)
                     StorytellerState.storytellerMFE = payload.storytellerMFE();
@@ -187,19 +187,19 @@ final class DaytimeReceivers {
                         isOperator ? payload.storytellerResult() : payload.result();
                 int displayVoteCount = isOperator ? payload.storytellerMFEVotes() : payload.voteCount();
 
-                Text resultMessage;
+                Component resultMessage;
                 if (hideVoteInfo) {
                     // Organ Grinder mode: hide details from non-operators
-                    resultMessage = Text.translatable("message.blood-on-the-blocktower.client.vote_counted")
-                            .formatted(Formatting.LIGHT_PURPLE);
+                    resultMessage = Component.translatable("message.blood-on-the-blocktower.client.vote_counted")
+                            .withStyle(ChatFormatting.LIGHT_PURPLE);
                 } else {
                     // Get the name to display for marked player (for operators, may be different than nominee)
                     String markedPlayerName = payload.nomineeName();
                     if (isOperator && payload.storytellerMFE() != null && displayResult == VotingManager.VoteResult.MARKED) {
                         // For operators: show the storyteller's MFE name if different (supports distant players)
-                        AbstractClientPlayerEntity stMFEPlayer =
-                                (AbstractClientPlayerEntity)
-                                context.client().world.getPlayerByUuid(payload.storytellerMFE());
+                        AbstractClientPlayer stMFEPlayer =
+                                (AbstractClientPlayer)
+                                context.client().level.getPlayerByUUID(payload.storytellerMFE());
                         if (stMFEPlayer != null) {
                             markedPlayerName = stMFEPlayer.getName().getString();
                         } else {
@@ -210,38 +210,38 @@ final class DaytimeReceivers {
 
                     final String finalMarkedPlayerName = markedPlayerName;
                     resultMessage = switch (displayResult) {
-                        case MARKED -> Text.literal(finalMarkedPlayerName)
-                                .styled(style -> style.withColor(0xFF8C00)) // Orange (canBeNominated color)
-                                .append(Text.translatable("message.blood-on-the-blocktower.client.has_been").formatted(Formatting.WHITE))
-                                .append(Text.translatable("message.blood-on-the-blocktower.client.marked_for_execution").formatted(Formatting.RED))
-                                .append(Text.translatable("message.blood-on-the-blocktower.client.with_votes", displayVoteCount).formatted(Formatting.WHITE));
-                        case TIE -> Text.translatable("message.blood-on-the-blocktower.client.tie").formatted(Formatting.YELLOW)
-                                .append(Text.translatable("message.blood-on-the-blocktower.client.all_pardoned_with_votes", payload.voteCount()).formatted(Formatting.WHITE));
-                        case NOT_ENOUGH -> Text.translatable("message.blood-on-the-blocktower.client.not_enough_votes", payload.voteCount())
-                                .formatted(Formatting.WHITE);
+                        case MARKED -> Component.literal(finalMarkedPlayerName)
+                                .withStyle(style -> style.withColor(0xFF8C00)) // Orange (canBeNominated color)
+                                .append(Component.translatable("message.blood-on-the-blocktower.client.has_been").withStyle(ChatFormatting.WHITE))
+                                .append(Component.translatable("message.blood-on-the-blocktower.client.marked_for_execution").withStyle(ChatFormatting.RED))
+                                .append(Component.translatable("message.blood-on-the-blocktower.client.with_votes", displayVoteCount).withStyle(ChatFormatting.WHITE));
+                        case TIE -> Component.translatable("message.blood-on-the-blocktower.client.tie").withStyle(ChatFormatting.YELLOW)
+                                .append(Component.translatable("message.blood-on-the-blocktower.client.all_pardoned_with_votes", payload.voteCount()).withStyle(ChatFormatting.WHITE));
+                        case NOT_ENOUGH -> Component.translatable("message.blood-on-the-blocktower.client.not_enough_votes", payload.voteCount())
+                                .withStyle(ChatFormatting.WHITE);
                     };
                 }
 
                 if (context.client().player != null) {
-                    context.client().player.sendMessage(resultMessage, false);
+                    context.client().player.displayClientMessage(resultMessage, false);
 
                     // For operators: explain when it's a Legion-protected vote (evil-only)
                     if (isOperator && payload.legionProtectedVote()) {
-                        context.client().player.sendMessage(
-                            Text.translatable("message.blood-on-the-blocktower.client.legion_evil_only_vote")
-                                .formatted(Formatting.DARK_PURPLE),
+                        context.client().player.displayClientMessage(
+                            Component.translatable("message.blood-on-the-blocktower.client.legion_evil_only_vote")
+                                .withStyle(ChatFormatting.DARK_PURPLE),
                             false
                         );
                     }
 
                     // Only show voters list if not hiding vote info (supports distant players)
                     if (!hideVoteInfo && !voters.isEmpty()) {
-                        context.client().player.sendMessage(Text.translatable("message.blood-on-the-blocktower.client.voted"), false);
+                        context.client().player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.client.voted"), false);
                         for (UUID voterUuid : voters) {
                             String voterName = null;
-                            AbstractClientPlayerEntity voter =
-                                (AbstractClientPlayerEntity)
-                                context.client().world.getPlayerByUuid(voterUuid);
+                            AbstractClientPlayer voter =
+                                (AbstractClientPlayer)
+                                context.client().level.getPlayerByUUID(voterUuid);
 
                             if (voter != null) {
                                 voterName = voter.getName().getString();
@@ -251,9 +251,9 @@ final class DaytimeReceivers {
                             }
 
                             if (voterName != null) {
-                                context.client().player.sendMessage(
-                                    Text.translatable("message.blood-on-the-blocktower.client.voter_entry",
-                                        Text.literal(voterName).formatted(Formatting.YELLOW)).formatted(Formatting.WHITE),
+                                context.client().player.displayClientMessage(
+                                    Component.translatable("message.blood-on-the-blocktower.client.voter_entry",
+                                        Component.literal(voterName).withStyle(ChatFormatting.YELLOW)).withStyle(ChatFormatting.WHITE),
                                     false
                                 );
                             }

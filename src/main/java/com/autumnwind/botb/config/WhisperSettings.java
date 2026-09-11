@@ -1,8 +1,8 @@
 package com.autumnwind.botb.config;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 /**
  * Server-authoritative whisper rules. Sent from server to all clients on join and on
@@ -51,27 +51,27 @@ public record WhisperSettings(
         return range <= 0.0;
     }
 
-    public static final PacketCodec<ByteBuf, WhisperSettings> CODEC = new PacketCodec<>() {
+    public static final StreamCodec<ByteBuf, WhisperSettings> CODEC = new StreamCodec<>() {
         @Override
         public WhisperSettings decode(ByteBuf buf) {
-            boolean allow = PacketCodecs.BOOL.decode(buf);
-            boolean broadcast = PacketCodecs.BOOL.decode(buf);
-            int visualOrd = PacketCodecs.VAR_INT.decode(buf);
-            boolean audio = PacketCodecs.BOOL.decode(buf);
-            double range = PacketCodecs.DOUBLE.decode(buf);
-            boolean vc = PacketCodecs.BOOL.decode(buf);
+            boolean allow = ByteBufCodecs.BOOL.decode(buf);
+            boolean broadcast = ByteBufCodecs.BOOL.decode(buf);
+            int visualOrd = ByteBufCodecs.VAR_INT.decode(buf);
+            boolean audio = ByteBufCodecs.BOOL.decode(buf);
+            double range = ByteBufCodecs.DOUBLE.decode(buf);
+            boolean vc = ByteBufCodecs.BOOL.decode(buf);
             VisualMode v = VisualMode.values()[Math.floorMod(visualOrd, VisualMode.values().length)];
             return new WhisperSettings(allow, broadcast, v, audio, range, vc);
         }
 
         @Override
         public void encode(ByteBuf buf, WhisperSettings v) {
-            PacketCodecs.BOOL.encode(buf, v.allowWhispering);
-            PacketCodecs.BOOL.encode(buf, v.broadcast);
-            PacketCodecs.VAR_INT.encode(buf, v.visual.ordinal());
-            PacketCodecs.BOOL.encode(buf, v.audio);
-            PacketCodecs.DOUBLE.encode(buf, v.range);
-            PacketCodecs.BOOL.encode(buf, v.vcEnforced);
+            ByteBufCodecs.BOOL.encode(buf, v.allowWhispering);
+            ByteBufCodecs.BOOL.encode(buf, v.broadcast);
+            ByteBufCodecs.VAR_INT.encode(buf, v.visual.ordinal());
+            ByteBufCodecs.BOOL.encode(buf, v.audio);
+            ByteBufCodecs.DOUBLE.encode(buf, v.range);
+            ByteBufCodecs.BOOL.encode(buf, v.vcEnforced);
         }
     };
 }

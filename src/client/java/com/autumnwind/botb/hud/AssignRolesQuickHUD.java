@@ -6,13 +6,12 @@ import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
 import com.autumnwind.botb.voicechat.VoiceChatClientCompat;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import java.util.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class AssignRolesQuickHUD {
 
@@ -22,27 +21,27 @@ public class AssignRolesQuickHUD {
     private static final int REMINDER_ICON_SIZE = 14;
     private static final int REMINDER_PADDING = 2;
     private static final int SEAT_NUMBER_RADIUS_OFFSET = 20;
-    private static final Identifier SHROUD_ICON = Identifier.of("blood-on-the-blocktower", "textures/icons/barrier.png");
-    private static final Identifier DUSK_ICON = Identifier.of("blood-on-the-blocktower", "textures/icons/dusk.png");
-    private static final Identifier DAWN_ICON = Identifier.of("blood-on-the-blocktower", "textures/icons/dawn.png");
+    private static final ResourceLocation SHROUD_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/barrier.png");
+    private static final ResourceLocation DUSK_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/dusk.png");
+    private static final ResourceLocation DAWN_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/dawn.png");
 
-    public static void render(DrawContext context, MinecraftClient client) {
-        if (client == null || client.world == null || client.player == null) return;
+    public static void render(GuiGraphics context, Minecraft client) {
+        if (client == null || client.level == null || client.player == null) return;
 
-        UUID selfUUID = client.player.getUuid();
+        UUID selfUUID = client.player.getUUID();
         // Use UUID-based approach to support distant players
         List<UUID> uuidsToRender = new ArrayList<>();
-        Map<UUID, AbstractClientPlayerEntity> playerEntityMap = new HashMap<>();
+        Map<UUID, AbstractClientPlayer> playerEntityMap = new HashMap<>();
         Map<UUID, Role> roleMap = new HashMap<>();
         Map<UUID, ScriptRole> scriptRoleMap = new HashMap<>();
         Map<UUID, Integer> colorMap = new HashMap<>();
 
-        boolean isOperator = client.player.hasPermissionLevel(2);
+        boolean isOperator = client.player.hasPermissions(2);
         boolean showPreGameCount = false;
 
         // Build a map of UUID -> player entity (if in render distance)
-        for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
-            playerEntityMap.put(player.getUuid(), player);
+        for (AbstractClientPlayer player : client.level.players()) {
+            playerEntityMap.put(player.getUUID(), player);
         }
 
         if (isOperator) {
@@ -129,13 +128,13 @@ public class AssignRolesQuickHUD {
             }
         }
 
-        int screenWidth = context.getScaledWindowWidth();
-        int screenHeight = context.getScaledWindowHeight();
+        int screenWidth = context.guiWidth();
+        int screenHeight = context.guiHeight();
 
         // Render player counts at top (same format as RoleHUD based on toggle state)
-        Text countText = PlayerCountsDisplay.buildPlayerCountsText(ClientState.isRoleHudVisible);
+        Component countText = PlayerCountsDisplay.buildPlayerCountsText(ClientState.isRoleHudVisible);
         if (countText != null) {
-            context.drawCenteredTextWithShadow(client.textRenderer, countText, screenWidth / 2, 10, 0xFFFFFF);
+            context.drawCenteredString(client.font, countText, screenWidth / 2, 10, 0xFFFFFF);
         }
 
         // Calculate circle positions
@@ -149,10 +148,10 @@ public class AssignRolesQuickHUD {
         if (showPreGameCount) {
             String playersLine = "Players: " + ClientState.lobbyPlayerCount;
             String storytellersLine = "Storytellers: " + ClientState.lobbyStorytellerCount;
-            int lineHeight = client.textRenderer.fontHeight + 6;
+            int lineHeight = client.font.lineHeight + 6;
             int topY = centerY - lineHeight;
-            context.drawCenteredTextWithShadow(client.textRenderer, playersLine, centerX, topY, 0xFFFFFFFF);
-            context.drawCenteredTextWithShadow(client.textRenderer, storytellersLine, centerX, topY + lineHeight, 0xFFFFFFFF);
+            context.drawCenteredString(client.font, playersLine, centerX, topY, 0xFFFFFFFF);
+            context.drawCenteredString(client.font, storytellersLine, centerX, topY + lineHeight, 0xFFFFFFFF);
         }
 
         // Find the viewing player's index to rotate the circle
@@ -180,7 +179,7 @@ public class AssignRolesQuickHUD {
         for (int i = 0; i < numPlayers; i++) {
             UUID uuid = uuidsToRender.get(i);
             // Get player entity if in render distance (may be null for distant players)
-            AbstractClientPlayerEntity player = playerEntityMap.get(uuid);
+            AbstractClientPlayer player = playerEntityMap.get(uuid);
             double angle = (2 * Math.PI / numPlayers) * i - (Math.PI / 2) + angleOffset;
             // Use Math.round for consistent positioning regardless of player count
             int roleX = (int) Math.round(centerX + roleRadius * Math.cos(angle)) - (ROLE_ICON_SIZE / 2);
@@ -193,9 +192,9 @@ public class AssignRolesQuickHUD {
             int borderColor = colorMap.getOrDefault(uuid, RoleType.NONE.getColor() | 0xFF000000);
 
             // Draw role icon (use scriptRole if available for custom role support)
-            Identifier roleIcon = scriptRole != null ? scriptRole.getIcon() : role.getIcon();
-            context.drawTexture(roleIcon, roleX, roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
-            context.drawBorder(roleX - 1, roleY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
+            ResourceLocation roleIcon = scriptRole != null ? scriptRole.getIcon() : role.getIcon();
+            context.blit(roleIcon, roleX, roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
+            context.renderOutline(roleX - 1, roleY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
 
             // Draw death indicator (shroud icon overlay)
             // Use ClientState as the single source of truth (operators update it directly)
@@ -204,21 +203,21 @@ public class AssignRolesQuickHUD {
             if (isDead) {
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
-                context.drawTexture(SHROUD_ICON, roleX, roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
+                context.blit(SHROUD_ICON, roleX, roleY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
                 RenderSystem.disableBlend();
             }
 
             // Draw orange border if marked
             if (StorytellerState.markedPlayers.contains(uuid)) {
                 int offset = 4;
-                context.drawBorder(roleX - offset, roleY - offset, ROLE_ICON_SIZE + (offset * 2), ROLE_ICON_SIZE + (offset * 2), 0xFFFFA500);
+                context.renderOutline(roleX - offset, roleY - offset, ROLE_ICON_SIZE + (offset * 2), ROLE_ICON_SIZE + (offset * 2), 0xFFFFA500);
             }
 
             // Get player info for distant players (null if nearby player exists)
             PlayerListUtil.PlayerInfo distantPlayerInfo = player == null ? PlayerListUtil.getPlayer(client, uuid) : null;
 
             // Draw white talking border if player is talking
-            UUID localGroupId = VoiceChatClientCompat.getPlayerGroupId(client.player.getUuid());
+            UUID localGroupId = VoiceChatClientCompat.getPlayerGroupId(client.player.getUUID());
             UUID playerGroupId = VoiceChatClientCompat.getPlayerGroupId(uuid);
             boolean isLocalSpectator = client.player.isSpectator();
             boolean isPlayerSpectator = player != null ? player.isSpectator()
@@ -252,8 +251,8 @@ public class AssignRolesQuickHUD {
                 String seatText = String.valueOf(seat);
 
                 // Calculate text bounds for backgrounds/borders
-                int seatWidth = client.textRenderer.getWidth(seatText);
-                int seatHeight = client.textRenderer.fontHeight;
+                int seatWidth = client.font.width(seatText);
+                int seatHeight = client.font.lineHeight;
                 int seatTextX = seatX - seatWidth / 2; // Centered
                 int seatTextY = seatY - 4;
 
@@ -296,7 +295,7 @@ public class AssignRolesQuickHUD {
                     if (canNominate && !isBishopMode) {
                         int nomRemaining = ClientState.nominationsRemaining.getOrDefault(uuid, 1);
                         int nomBorderColor = nomRemaining >= 2 ? 0xFF00FF00 : 0xFF4FC3F7; // Green for 2+ noms, light blue otherwise
-                        context.drawBorder(seatTextX - 3, seatTextY - 3, seatWidth + 5, seatHeight + 4, nomBorderColor);
+                        context.renderOutline(seatTextX - 3, seatTextY - 3, seatWidth + 5, seatHeight + 4, nomBorderColor);
                     }
 
                     // Draw inner border: orange if can be nominated, purple if can be exiled (travelers)
@@ -304,25 +303,25 @@ public class AssignRolesQuickHUD {
                     // Dead travelers cannot be called for exile
                     if (canBeExiled && !isDead) {
                         // Purple border for travelers (same size as orange border)
-                        context.drawBorder(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
+                        context.renderOutline(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
                     } else if (canBeNominated) {
                         // Orange border for nominatable non-travelers
                         // Half faded opacity for dead players
                         int orangeColor = isDead ? 0x80FF8C00 : 0xFFFF8C00;
-                        context.drawBorder(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, orangeColor);
+                        context.renderOutline(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, orangeColor);
                     }
 
                     // Draw text with appropriate styling
                     if (isNominated) {
                         // Black text on white background, no shadow
-                        context.drawText(client.textRenderer, Text.literal(seatText), seatTextX, seatTextY, 0xFF000000, false);
+                        context.drawString(client.font, Component.literal(seatText), seatTextX, seatTextY, 0xFF000000, false);
                     } else if (isMFE) {
                         // White text on red background, no shadow
-                        context.drawText(client.textRenderer, Text.literal(seatText), seatTextX, seatTextY, 0xFFFFFFFF, false);
+                        context.drawString(client.font, Component.literal(seatText), seatTextX, seatTextY, 0xFFFFFFFF, false);
                     } else {
                         // Normal text with shadow
                         int seatColor = shouldFade ? 0x80FFFFFF : 0xFFFFFFFF;
-                        context.drawCenteredTextWithShadow(client.textRenderer, Text.literal(seatText), seatX, seatY - 4, seatColor);
+                        context.drawCenteredString(client.font, Component.literal(seatText), seatX, seatY - 4, seatColor);
                     }
                 } else {
                     // Nominations closed - normal rendering with shadow
@@ -330,10 +329,10 @@ public class AssignRolesQuickHUD {
                     // Dead travelers cannot be called for exile
                     boolean isDaytime = ClientState.currentNight == ClientState.currentDay && ClientState.currentNight > 0;
                     if (canBeExiled && isDaytime && !isDead) {
-                        context.drawBorder(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
+                        context.renderOutline(seatTextX - 2, seatTextY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
                     }
                     int seatColor = shouldFade ? 0x80FFFFFF : 0xFFFFFFFF;
-                    context.drawCenteredTextWithShadow(client.textRenderer, Text.literal(seatText), seatX, seatY - 4, seatColor);
+                    context.drawCenteredString(client.font, Component.literal(seatText), seatX, seatY - 4, seatColor);
                 }
             }
 
@@ -355,19 +354,19 @@ public class AssignRolesQuickHUD {
                 int bluffStartY = screenHeight / 2 - ROLE_ICON_SIZE;
                 int bluffSpacing = ROLE_ICON_SIZE + 10;
 
-                context.drawTextWithShadow(client.textRenderer, Text.translatable("hud.blood-on-the-blocktower.quick_view.bluffs"), bluffX, bluffStartY - 15, 0xFFFFFF);
+                context.drawString(client.font, Component.translatable("hud.blood-on-the-blocktower.quick_view.bluffs"), bluffX, bluffStartY - 15, 0xFFFFFF);
 
                 for (int i = 0; i < 3; i++) {
                     ScriptRole scriptRole = StorytellerState.DEMON_BLUFFS.get(i);
                     int bluffY = bluffStartY + (i * bluffSpacing);
 
                     if (scriptRole != null) {
-                        Identifier icon = scriptRole.getIcon();
+                        ResourceLocation icon = scriptRole.getIcon();
                         RoleType team = scriptRole.getTeam();
                         int borderColor = (team != null ? team.getColor() : RoleType.NONE.getColor()) | 0xFF000000;
 
-                        context.drawTexture(icon, bluffX, bluffY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
-                        context.drawBorder(bluffX - 1, bluffY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
+                        context.blit(icon, bluffX, bluffY, 0, 0, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE, ROLE_ICON_SIZE);
+                        context.renderOutline(bluffX - 1, bluffY - 1, ROLE_ICON_SIZE + 2, ROLE_ICON_SIZE + 2, borderColor);
                     }
                 }
             }
@@ -381,12 +380,12 @@ public class AssignRolesQuickHUD {
         int verticalSpacing = 4;
 
         // Night indicator (Dusk icon + number)
-        context.drawTexture(DUSK_ICON, dayNightX, dayNightY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+        context.blit(DUSK_ICON, dayNightX, dayNightY, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
         // Calculate night number size
         String nightText = String.valueOf(ClientState.currentNight);
-        int nightTextWidth = client.textRenderer.getWidth(nightText);
-        int nightTextHeight = client.textRenderer.fontHeight;
+        int nightTextWidth = client.font.width(nightText);
+        int nightTextHeight = client.font.lineHeight;
 
         // Dark background for night number (scaled to text, centered with icon)
         int nightNumX = dayNightX + iconSize + 2;
@@ -397,16 +396,16 @@ public class AssignRolesQuickHUD {
         // White night number (centered in background)
         int nightTextX = nightNumX + padding;
         int nightTextY = nightNumY + padding;
-        context.drawText(client.textRenderer, Text.literal(nightText), nightTextX, nightTextY, 0xFFFFFFFF, false);
+        context.drawString(client.font, Component.literal(nightText), nightTextX, nightTextY, 0xFFFFFFFF, false);
 
         // Day indicator (Dawn icon + number) below night
         int dayY = dayNightY + iconSize + verticalSpacing;
-        context.drawTexture(DAWN_ICON, dayNightX, dayY, 0, 0, iconSize, iconSize, iconSize, iconSize);
+        context.blit(DAWN_ICON, dayNightX, dayY, 0, 0, iconSize, iconSize, iconSize, iconSize);
 
         // Calculate day number size
         String dayText = String.valueOf(ClientState.currentDay);
-        int dayTextWidth = client.textRenderer.getWidth(dayText);
-        int dayTextHeight = client.textRenderer.fontHeight;
+        int dayTextWidth = client.font.width(dayText);
+        int dayTextHeight = client.font.lineHeight;
 
         // Dark background for day number (scaled to text, centered with icon)
         int dayNumX = dayNightX + iconSize + 2;
@@ -417,10 +416,10 @@ public class AssignRolesQuickHUD {
         // White day number (centered in background)
         int dayTextX = dayNumX + padding;
         int dayTextY = dayNumY + padding;
-        context.drawText(client.textRenderer, Text.literal(dayText), dayTextX, dayTextY, 0xFFFFFFFF, false);
+        context.drawString(client.font, Component.literal(dayText), dayTextX, dayTextY, 0xFFFFFFFF, false);
     }
 
-    private static void renderReminders(DrawContext context, MinecraftClient client, int roleX, int roleY, double angle, List<Reminder> reminders) {
+    private static void renderReminders(GuiGraphics context, Minecraft client, int roleX, int roleY, double angle, List<Reminder> reminders) {
         int r = ROLE_ICON_SIZE;
         int s = REMINDER_ICON_SIZE;
         int p = REMINDER_PADDING;
@@ -504,14 +503,14 @@ public class AssignRolesQuickHUD {
                 PlayerListUtil.drawPlayerHead(context, client, reminder.playerUuid().get(), pos[0], pos[1], s);
             } else {
                 // Render normal role icon
-                Identifier icon = reminder.getIcon();
-                context.drawTexture(icon, pos[0], pos[1], 0, 0, s, s, s, s);
+                ResourceLocation icon = reminder.getIcon();
+                context.blit(icon, pos[0], pos[1], 0, 0, s, s, s, s);
             }
 
             // Check for special reminder border (use shared utility for custom role support)
             if (AssignRolesUtils.isSpecialReminder(reminder)) {
                 int borderColor = reminder.getAlignmentColor(ClientState.currentScript) | 0xFF000000;
-                context.drawBorder(pos[0] - 1, pos[1] - 1, s + 2, s + 2, borderColor);
+                context.renderOutline(pos[0] - 1, pos[1] - 1, s + 2, s + 2, borderColor);
             }
         }
     }

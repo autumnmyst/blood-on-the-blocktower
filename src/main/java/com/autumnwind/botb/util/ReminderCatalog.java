@@ -1,13 +1,12 @@
 package com.autumnwind.botb.util;
 
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
 
 /**
  * Holds static definitions for all available reminder tokens.
@@ -58,7 +57,7 @@ public class ReminderCatalog {
             return new ReminderDefinition(null, "fabled:" + fabledId, text, isGlobal, Optional.empty());
         }
 
-        public Text displayText() {
+        public Component displayText() {
             return Reminders.display(text, Optional.ofNullable(role));
         }
     }

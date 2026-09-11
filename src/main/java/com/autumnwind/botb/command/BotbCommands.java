@@ -6,8 +6,8 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import java.util.*;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.argument.Vec3ArgumentType;
-import net.minecraft.server.command.CommandManager;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 
 /** The /botb command tree. Handler bodies live in {@link ConfigCommands} and {@link GameCommands}. */
 public final class BotbCommands {
@@ -16,26 +16,26 @@ public final class BotbCommands {
 
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            dispatcher.register(CommandManager.literal("botb")
-                    .then(CommandManager.literal("setup")
-                            .requires(source -> source.hasPermissionLevel(2))
+            dispatcher.register(Commands.literal("botb")
+                    .then(Commands.literal("setup")
+                            .requires(source -> source.hasPermission(2))
                             .executes(context -> SetupStick.startCommand(context.getSource()))
-                            .then(CommandManager.literal("help")
+                            .then(Commands.literal("help")
                                     .executes(context -> SetupStick.helpCommand(context.getSource()))
                             )
-                            .then(CommandManager.literal("skip")
+                            .then(Commands.literal("skip")
                                     .executes(context -> SetupStick.skipCommand(context.getSource()))
                             )
-                            .then(CommandManager.literal("back")
+                            .then(Commands.literal("back")
                                     .executes(context -> SetupStick.backCommand(context.getSource()))
                             )
-                            .then(CommandManager.literal("finish")
+                            .then(Commands.literal("finish")
                                     .executes(context -> SetupStick.finishCommand(context.getSource()))
                             )
                     )
-                    .then(CommandManager.literal("setSeatHome")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
+                    .then(Commands.literal("setSeatHome")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                     // /botb setSeatHome <seat>
                                     .executes(context -> ConfigCommands.setSeatHome(
                                             context.getSource(),
@@ -43,19 +43,19 @@ public final class BotbCommands {
                                             null
                                     ))
                                     // /botb setSeatHome <seat> <xyz>
-                                    .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                                    .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                             .executes(context -> ConfigCommands.setSeatHome(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
-                                                    Vec3ArgumentType.getVec3(context, "pos")
+                                                    Vec3Argument.getVec3(context, "pos")
                                             ))
                                     )
                             )
                     )
                     // --- Teleport Command ---
-                    .then(CommandManager.literal("teleportToSeat")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
+                    .then(Commands.literal("teleportToSeat")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                     .executes(context -> GameCommands.teleportToSeat(
                                             context.getSource(),
                                             IntegerArgumentType.getInteger(context, "seat")
@@ -63,20 +63,20 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Town Square Command ---
-                    .then(CommandManager.literal("setTownSquare")
-                            .requires(source -> source.hasPermissionLevel(2))
+                    .then(Commands.literal("setTownSquare")
+                            .requires(source -> source.hasPermission(2))
                             .executes(context -> ConfigCommands.setTownSquare(context.getSource(), null))
-                            .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                            .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                     .executes(context -> ConfigCommands.setTownSquare(
                                             context.getSource(),
-                                            Vec3ArgumentType.getVec3(context, "pos")
+                                            Vec3Argument.getVec3(context, "pos")
                                     ))
                             )
                     )
                     // --- Set Town Square Seat Command ---
-                    .then(CommandManager.literal("setTownSquareSeat")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
+                    .then(Commands.literal("setTownSquareSeat")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                     // /botb setTownSquareSeat <seat>
                                     .executes(context -> ConfigCommands.setTownSquareSeat(
                                             context.getSource(),
@@ -84,23 +84,23 @@ public final class BotbCommands {
                                             null
                                     ))
                                     // /botb setTownSquareSeat <seat> <xyz>
-                                    .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                                    .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                             .executes(context -> ConfigCommands.setTownSquareSeat(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
-                                                    Vec3ArgumentType.getVec3(context, "pos")
+                                                    Vec3Argument.getVec3(context, "pos")
                                             ))
                                     )
                             )
                     )
                     // --- Set Death Command ---
-                    .then(CommandManager.literal("setDeathCommand")
+                    .then(Commands.literal("setDeathCommand")
                             // Stored commands run with the server's console-level source, so only
                             // full admins may set them; a storyteller (level 2) could otherwise
                             // schedule "op @s" or "stop" for the next dusk
-                            .requires(source -> source.hasPermissionLevel(4))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
-                                    .then(CommandManager.argument("command", StringArgumentType.greedyString())
+                            .requires(source -> source.hasPermission(4))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                    .then(Commands.argument("command", StringArgumentType.greedyString())
                                             .executes(context -> ConfigCommands.setDeathCommand(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
@@ -110,13 +110,13 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Revive Command ---
-                    .then(CommandManager.literal("setReviveCommand")
+                    .then(Commands.literal("setReviveCommand")
                             // Stored commands run with the server's console-level source, so only
                             // full admins may set them; a storyteller (level 2) could otherwise
                             // schedule "op @s" or "stop" for the next dusk
-                            .requires(source -> source.hasPermissionLevel(4))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
-                                    .then(CommandManager.argument("command", StringArgumentType.greedyString())
+                            .requires(source -> source.hasPermission(4))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                    .then(Commands.argument("command", StringArgumentType.greedyString())
                                             .executes(context -> ConfigCommands.setReviveCommand(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
@@ -126,13 +126,13 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Seat Assignment Command ---
-                    .then(CommandManager.literal("setSeatAssignmentCommand")
+                    .then(Commands.literal("setSeatAssignmentCommand")
                             // Stored commands run with the server's console-level source, so only
                             // full admins may set them; a storyteller (level 2) could otherwise
                             // schedule "op @s" or "stop" for the next dusk
-                            .requires(source -> source.hasPermissionLevel(4))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
-                                    .then(CommandManager.argument("command", StringArgumentType.greedyString())
+                            .requires(source -> source.hasPermission(4))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                    .then(Commands.argument("command", StringArgumentType.greedyString())
                                             .executes(context -> ConfigCommands.setSeatAssignmentCommand(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
@@ -142,12 +142,12 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Dusk Command ---
-                    .then(CommandManager.literal("setDuskCommand")
+                    .then(Commands.literal("setDuskCommand")
                             // Stored commands run with the server's console-level source, so only
                             // full admins may set them; a storyteller (level 2) could otherwise
                             // schedule "op @s" or "stop" for the next dusk
-                            .requires(source -> source.hasPermissionLevel(4))
-                            .then(CommandManager.argument("command", StringArgumentType.greedyString())
+                            .requires(source -> source.hasPermission(4))
+                            .then(Commands.argument("command", StringArgumentType.greedyString())
                                     .executes(context -> ConfigCommands.setDuskCommand(
                                             context.getSource(),
                                             StringArgumentType.getString(context, "command")
@@ -155,12 +155,12 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Dawn Command ---
-                    .then(CommandManager.literal("setDawnCommand")
+                    .then(Commands.literal("setDawnCommand")
                             // Stored commands run with the server's console-level source, so only
                             // full admins may set them; a storyteller (level 2) could otherwise
                             // schedule "op @s" or "stop" for the next dusk
-                            .requires(source -> source.hasPermissionLevel(4))
-                            .then(CommandManager.argument("command", StringArgumentType.greedyString())
+                            .requires(source -> source.hasPermission(4))
+                            .then(Commands.argument("command", StringArgumentType.greedyString())
                                     .executes(context -> ConfigCommands.setDawnCommand(
                                             context.getSource(),
                                             StringArgumentType.getString(context, "command")
@@ -168,49 +168,49 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Switch Position ---
-                    .then(CommandManager.literal("setSwitchPosition")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
+                    .then(Commands.literal("setSwitchPosition")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                     .executes(context -> ConfigCommands.setSwitchPosition(
                                             context.getSource(),
                                             IntegerArgumentType.getInteger(context, "seat"),
                                             null
                                     ))
-                                    .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                                    .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                             .executes(context -> ConfigCommands.setSwitchPosition(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
-                                                    Vec3ArgumentType.getVec3(context, "pos")
+                                                    Vec3Argument.getVec3(context, "pos")
                                             ))
                                     )
                             )
                     )
                     // --- Set Vote Indicator Position ---
-                    .then(CommandManager.literal("setVoteIndicatorPosition")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
+                    .then(Commands.literal("setVoteIndicatorPosition")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
                                     .executes(context -> ConfigCommands.setVoteIndicatorPosition(
                                             context.getSource(),
                                             IntegerArgumentType.getInteger(context, "seat"),
                                             null
                                     ))
-                                    .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                                    .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                             .executes(context -> ConfigCommands.setVoteIndicatorPosition(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
-                                                    Vec3ArgumentType.getVec3(context, "pos")
+                                                    Vec3Argument.getVec3(context, "pos")
                                             ))
                                     )
                             )
                     )
                     // --- Set Execution Command ---
-                    .then(CommandManager.literal("setExecutionCommand")
+                    .then(Commands.literal("setExecutionCommand")
                             // Stored commands run with the server's console-level source, so only
                             // full admins may set them; a storyteller (level 2) could otherwise
                             // schedule "op @s" or "stop" for the next dusk
-                            .requires(source -> source.hasPermissionLevel(4))
-                            .then(CommandManager.argument("seat", IntegerArgumentType.integer(1))
-                                    .then(CommandManager.argument("command", StringArgumentType.greedyString())
+                            .requires(source -> source.hasPermission(4))
+                            .then(Commands.argument("seat", IntegerArgumentType.integer(1))
+                                    .then(Commands.argument("command", StringArgumentType.greedyString())
                                             .executes(context -> ConfigCommands.setExecutionCommand(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "seat"),
@@ -220,26 +220,26 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Execution Delays ---
-                    .then(CommandManager.literal("setExecution")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.literal("soundDelay")
-                                    .then(CommandManager.argument("delay", IntegerArgumentType.integer(0))
+                    .then(Commands.literal("setExecution")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.literal("soundDelay")
+                                    .then(Commands.argument("delay", IntegerArgumentType.integer(0))
                                             .executes(context -> ConfigCommands.setExecutionSoundDelay(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "delay")
                                             ))
                                     )
                             )
-                            .then(CommandManager.literal("deathTitleDelay")
-                                    .then(CommandManager.argument("delay", IntegerArgumentType.integer(0))
+                            .then(Commands.literal("deathTitleDelay")
+                                    .then(Commands.argument("delay", IntegerArgumentType.integer(0))
                                             .executes(context -> ConfigCommands.setExecutionDeathTitleDelay(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "delay")
                                             ))
                                     )
                             )
-                            .then(CommandManager.literal("survivedSoundDelay")
-                                    .then(CommandManager.argument("delay", IntegerArgumentType.integer(0))
+                            .then(Commands.literal("survivedSoundDelay")
+                                    .then(Commands.argument("delay", IntegerArgumentType.integer(0))
                                             .executes(context -> ConfigCommands.setExecutionSurvivedSoundDelay(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "delay")
@@ -248,20 +248,20 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Execution Position ---
-                    .then(CommandManager.literal("setExecutionPosition")
-                            .requires(source -> source.hasPermissionLevel(2))
+                    .then(Commands.literal("setExecutionPosition")
+                            .requires(source -> source.hasPermission(2))
                             .executes(context -> ConfigCommands.setExecutionPosition(context.getSource(), null))
-                            .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                            .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                     .executes(context -> ConfigCommands.setExecutionPosition(
                                             context.getSource(),
-                                            Vec3ArgumentType.getVec3(context, "pos")
+                                            Vec3Argument.getVec3(context, "pos")
                                     ))
                             )
                     )
                     // --- Set Anvil Height ---
-                    .then(CommandManager.literal("setAnvilHeight")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("height", IntegerArgumentType.integer())
+                    .then(Commands.literal("setAnvilHeight")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("height", IntegerArgumentType.integer())
                                     .executes(context -> ConfigCommands.setAnvilHeight(
                                             context.getSource(),
                                             IntegerArgumentType.getInteger(context, "height")
@@ -269,36 +269,36 @@ public final class BotbCommands {
                             )
                     )
                     // --- Lock In Execution Position ---
-                    .then(CommandManager.literal("lockInExecutionPosition")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.literal("true")
+                    .then(Commands.literal("lockInExecutionPosition")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.literal("true")
                                     .executes(context -> ConfigCommands.setLockInExecutionPosition(context.getSource(), true))
                             )
-                            .then(CommandManager.literal("false")
+                            .then(Commands.literal("false")
                                     .executes(context -> ConfigCommands.setLockInExecutionPosition(context.getSource(), false))
                             )
                     )
                     // --- Set Time Commands ---
-                    .then(CommandManager.literal("setTime")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.literal("dawn")
-                                    .then(CommandManager.argument("time", IntegerArgumentType.integer(0, 24000))
+                    .then(Commands.literal("setTime")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.literal("dawn")
+                                    .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                                             .executes(context -> ConfigCommands.setTimeDawn(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "time")
                                             ))
                                     )
                             )
-                            .then(CommandManager.literal("evening")
-                                    .then(CommandManager.argument("time", IntegerArgumentType.integer(0, 24000))
+                            .then(Commands.literal("evening")
+                                    .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                                             .executes(context -> ConfigCommands.setTimeEvening(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "time")
                                             ))
                                     )
                             )
-                            .then(CommandManager.literal("dusk")
-                                    .then(CommandManager.argument("time", IntegerArgumentType.integer(0, 24000))
+                            .then(Commands.literal("dusk")
+                                    .then(Commands.argument("time", IntegerArgumentType.integer(0, 24000))
                                             .executes(context -> ConfigCommands.setTimeDusk(
                                                     context.getSource(),
                                                     IntegerArgumentType.getInteger(context, "time")
@@ -307,20 +307,20 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Clock Center Command ---
-                    .then(CommandManager.literal("setClockCenter")
-                            .requires(source -> source.hasPermissionLevel(2))
+                    .then(Commands.literal("setClockCenter")
+                            .requires(source -> source.hasPermission(2))
                             .executes(context -> ConfigCommands.setClockCenter(context.getSource(), null))
-                            .then(CommandManager.argument("pos", Vec3ArgumentType.vec3(true))
+                            .then(Commands.argument("pos", Vec3Argument.vec3(true))
                                     .executes(context -> ConfigCommands.setClockCenter(
                                             context.getSource(),
-                                            Vec3ArgumentType.getVec3(context, "pos")
+                                            Vec3Argument.getVec3(context, "pos")
                                     ))
                             )
                     )
                     // --- Set Vote Time Per Player Command ---
-                    .then(CommandManager.literal("setVoteTimePerPlayer")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("millis", IntegerArgumentType.integer(0))
+                    .then(Commands.literal("setVoteTimePerPlayer")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("millis", IntegerArgumentType.integer(0))
                                     .executes(context -> ConfigCommands.setVoteTimePerPlayer(
                                             context.getSource(),
                                             IntegerArgumentType.getInteger(context, "millis")
@@ -328,9 +328,9 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Name Max Length Command ---
-                    .then(CommandManager.literal("setNameMaxLength")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("length", IntegerArgumentType.integer(1, 64))
+                    .then(Commands.literal("setNameMaxLength")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("length", IntegerArgumentType.integer(1, 64))
                                     .executes(context -> ConfigCommands.setNameMaxLength(
                                             context.getSource(),
                                             IntegerArgumentType.getInteger(context, "length")
@@ -338,9 +338,9 @@ public final class BotbCommands {
                             )
                     )
                     // --- Set Clock Hand Scale Command ---
-                    .then(CommandManager.literal("setClockHandScale")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.argument("scale", FloatArgumentType.floatArg(0.1f, 10.0f))
+                    .then(Commands.literal("setClockHandScale")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.argument("scale", FloatArgumentType.floatArg(0.1f, 10.0f))
                                     .executes(context -> ConfigCommands.setClockHandScale(
                                             context.getSource(),
                                             FloatArgumentType.getFloat(context, "scale")
@@ -348,29 +348,29 @@ public final class BotbCommands {
                             )
                     )
                     // --- End Game Command ---
-                    .then(CommandManager.literal("endGame")
-                            .requires(source -> source.hasPermissionLevel(2))
-                            .then(CommandManager.literal("good")
+                    .then(Commands.literal("endGame")
+                            .requires(source -> source.hasPermission(2))
+                            .then(Commands.literal("good")
                                     .executes(context -> GameCommands.endGame(context.getSource(), true))
                             )
-                            .then(CommandManager.literal("evil")
+                            .then(Commands.literal("evil")
                                     .executes(context -> GameCommands.endGame(context.getSource(), false))
                             )
                     )
                     // --- Reset Game (soft) Command (revive all, unassign players but keep storyteller grimoire) ---
-                    .then(CommandManager.literal("resetGame")
-                            .requires(source -> source.hasPermissionLevel(2))
+                    .then(Commands.literal("resetGame")
+                            .requires(source -> source.hasPermission(2))
                             .executes(context -> GameCommands.resetGame(context.getSource()))
                     )
                     // --- Reset Game Hard Command (full reset including grimoire) ---
-                    .then(CommandManager.literal("resetGameHard")
-                            .requires(source -> source.hasPermissionLevel(2))
+                    .then(Commands.literal("resetGameHard")
+                            .requires(source -> source.hasPermission(2))
                             .executes(context -> GameCommands.resetGameHard(context.getSource()))
                     )
                     // --- Set Name Command (no permission requirement - players can set their own name) ---
-                    .then(CommandManager.literal("setName")
+                    .then(Commands.literal("setName")
                             .executes(context -> GameCommands.setPlayerName(context.getSource(), ""))
-                            .then(CommandManager.argument("name", StringArgumentType.greedyString())
+                            .then(Commands.argument("name", StringArgumentType.greedyString())
                                     .executes(context -> GameCommands.setPlayerName(
                                             context.getSource(),
                                             StringArgumentType.getString(context, "name")

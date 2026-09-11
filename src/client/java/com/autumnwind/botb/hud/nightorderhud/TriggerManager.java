@@ -4,13 +4,14 @@ import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.text.Text;
-
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.network.chat.Component;
 
 import static com.autumnwind.botb.hud.nightorderhud.AbilityChecker.doesDeathQualifyForTrigger;
 import static com.autumnwind.botb.hud.nightorderhud.RoleHelpers.*;
+
+import com.autumnwind.botb.util.RoleVisit;
 
 /**
  * Manages triggered role visits (death-based, mark-based, role-switch, etc.).
@@ -608,7 +609,7 @@ public class TriggerManager {
                         && v.players().contains(playerUUID));
         if (alreadyTriggered) return;
 
-        String instruction = Text.translatable(key("evil_traveler")).getString();
+        String instruction = Component.translatable(key("evil_traveler")).getString();
         NightOrder.getFirstNightOrder().stream()
                 .filter(info -> info.isStatic() && info.getStaticAction() == NightOrder.StaticAction.MINION_INFO)
                 .findFirst()
@@ -683,7 +684,7 @@ public class TriggerManager {
                 Role.CANNIBAL,
                 cannibalPlayers,
                 false, // seatTeleport = false
-                Text.translatable(key("cannibal_execution")).getString(),
+                Component.translatable(key("cannibal_execution")).getString(),
                 Collections.emptyList(),
                 Optional.empty(),
                 true, // triggered = true
@@ -696,7 +697,7 @@ public class TriggerManager {
 
     /** Opening line of a role-switch trigger, also its identity marker in the triggeredVisits map. */
     private static String roleSwitchInstruction(Role newRole) {
-        return Text.translatable(key("role_switch"), newRole.getDisplayName()).getString();
+        return Component.translatable(key("role_switch"), newRole.getDisplayName()).getString();
     }
 
     /**
@@ -756,7 +757,7 @@ public class TriggerManager {
         if (shouldIncludeFnInstructions) {
             String firstNightInstructions = getFirstNightInstructions(newRole);
             if (!firstNightInstructions.isBlank()) {
-                instructions.append("\n\n").append(Text.translatable(key("first_night_instructions"), firstNightInstructions).getString());
+                instructions.append("\n\n").append(Component.translatable(key("first_night_instructions"), firstNightInstructions).getString());
             }
         }
 
@@ -845,7 +846,7 @@ public class TriggerManager {
         if (shouldIncludeFnInstructions) {
             String firstNightInstructions = getFirstNightInstructions(newRole);
             if (!firstNightInstructions.isBlank()) {
-                instructions.append("\n\n").append(Text.translatable(key("first_night_instructions"), firstNightInstructions).getString());
+                instructions.append("\n\n").append(Component.translatable(key("first_night_instructions"), firstNightInstructions).getString());
             }
         }
 

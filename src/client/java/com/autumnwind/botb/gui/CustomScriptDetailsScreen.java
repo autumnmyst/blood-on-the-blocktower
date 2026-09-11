@@ -7,23 +7,23 @@ import com.autumnwind.botb.util.AlmanacParser;
 import com.autumnwind.botb.util.Script;
 import com.autumnwind.botb.util.UrlTextureLoader;
 import com.autumnwind.botb.util.UrlTextureLoaderImpl;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ElementListWidget;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 
 /**
  * Screen for displaying custom script details from the almanac.
@@ -41,7 +41,7 @@ public class CustomScriptDetailsScreen extends Screen {
     private final Map<Page, Double> savedScrollAmounts = new EnumMap<>(Page.class);
 
     public CustomScriptDetailsScreen(Screen parent) {
-        super(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.title"));
+        super(Component.translatable("gui.blood-on-the-blocktower.custom_script_details.title"));
         this.script = ClientState.currentScript;
         this.parent = parent;
 
@@ -52,8 +52,8 @@ public class CustomScriptDetailsScreen extends Screen {
                     this.almanacData = data;
                     this.isLoading = false;
                     // Refresh the current page if we're still on screen
-                    MinecraftClient.getInstance().execute(() -> {
-                        if (MinecraftClient.getInstance().currentScreen == this) {
+                    Minecraft.getInstance().execute(() -> {
+                        if (Minecraft.getInstance().screen == this) {
                             switchPage(currentPage, true);
                         }
                     });
@@ -77,20 +77,20 @@ public class CustomScriptDetailsScreen extends Screen {
         int overviewX = this.width / 2 - buttonWidth / 2;
         int changelogX = this.width / 2 + buttonWidth / 2 + spacing;
 
-        this.addDrawableChild(ButtonWidget.builder(pageTitle(Page.SYNOPSIS), b -> switchPage(Page.SYNOPSIS)).dimensions(synopsisX, topY, buttonWidth, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(pageTitle(Page.OVERVIEW), b -> switchPage(Page.OVERVIEW)).dimensions(overviewX, topY, buttonWidth, 20).build());
-        this.addDrawableChild(ButtonWidget.builder(pageTitle(Page.CHANGELOG), b -> switchPage(Page.CHANGELOG)).dimensions(changelogX, topY, buttonWidth, 20).build());
+        this.addRenderableWidget(Button.builder(pageTitle(Page.SYNOPSIS), b -> switchPage(Page.SYNOPSIS)).bounds(synopsisX, topY, buttonWidth, 20).build());
+        this.addRenderableWidget(Button.builder(pageTitle(Page.OVERVIEW), b -> switchPage(Page.OVERVIEW)).bounds(overviewX, topY, buttonWidth, 20).build());
+        this.addRenderableWidget(Button.builder(pageTitle(Page.CHANGELOG), b -> switchPage(Page.CHANGELOG)).bounds(changelogX, topY, buttonWidth, 20).build());
 
         this.switchPage(this.currentPage, true);
 
-        this.addDrawableChild(ButtonWidget.builder(Text.translatable("gui.back"), (button) -> this.client.setScreen(this.parent)).dimensions(this.width / 2 - 100, this.height - 28, 200, 20).build());
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.back"), (button) -> this.minecraft.setScreen(this.parent)).bounds(this.width / 2 - 100, this.height - 28, 200, 20).build());
     }
 
     private void switchPage(Page newPage, boolean isInitial) {
         if (!isInitial && this.currentPage == newPage) return;
         if (this.listWidget != null) {
             this.savedScrollAmounts.put(this.currentPage, this.listWidget.getScrollAmount());
-            this.remove(this.listWidget);
+            this.removeWidget(this.listWidget);
         }
         this.currentPage = newPage;
 
@@ -99,84 +99,84 @@ public class CustomScriptDetailsScreen extends Screen {
         int listTopY = buttonTopY + 20 + gapBelowButtons;
         int footerHeight = 40;
 
-        this.listWidget = new DetailsListWidget(this.client, this.width, this.height - listTopY - footerHeight, listTopY);
+        this.listWidget = new DetailsListWidget(this.minecraft, this.width, this.height - listTopY - footerHeight, listTopY);
         this.listWidget.buildPage(newPage);
         this.listWidget.setScrollAmount(this.savedScrollAmounts.getOrDefault(newPage, 0.0));
-        this.addDrawableChild(this.listWidget);
+        this.addRenderableWidget(this.listWidget);
     }
 
     private void switchPage(Page newPage) {
         this.switchPage(newPage, false);
     }
 
-    private static Text pageTitle(Page page) {
+    private static Component pageTitle(Page page) {
         return switch (page) {
-            case SYNOPSIS -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.synopsis");
-            case OVERVIEW -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.overview");
-            case CHANGELOG -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.changelog");
+            case SYNOPSIS -> Component.translatable("gui.blood-on-the-blocktower.custom_script_details.synopsis");
+            case OVERVIEW -> Component.translatable("gui.blood-on-the-blocktower.custom_script_details.overview");
+            case CHANGELOG -> Component.translatable("gui.blood-on-the-blocktower.custom_script_details.changelog");
         };
     }
 
-    private static Text noContentMessage(Page page) {
+    private static Component noContentMessage(Page page) {
         return switch (page) {
-            case SYNOPSIS -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_synopsis");
-            case OVERVIEW -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_overview");
-            case CHANGELOG -> Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_changelog");
+            case SYNOPSIS -> Component.translatable("gui.blood-on-the-blocktower.custom_script_details.no_synopsis");
+            case OVERVIEW -> Component.translatable("gui.blood-on-the-blocktower.custom_script_details.no_overview");
+            case CHANGELOG -> Component.translatable("gui.blood-on-the-blocktower.custom_script_details.no_changelog");
         };
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
 
         if (script != null) {
             if (hasAuthor()) {
-                context.drawCenteredTextWithShadow(this.textRenderer, script.name(), this.width / 2, 4, 0xFFFFFF);
-                Text authorText = Text.translatable("gui.blood-on-the-blocktower.custom_script_details.by_author", script.author()).formatted(Formatting.GRAY);
-                context.drawCenteredTextWithShadow(this.textRenderer, authorText, this.width / 2, 15, 0xAAAAAA);
+                context.drawCenteredString(this.font, script.name(), this.width / 2, 4, 0xFFFFFF);
+                Component authorText = Component.translatable("gui.blood-on-the-blocktower.custom_script_details.by_author", script.author()).withStyle(ChatFormatting.GRAY);
+                context.drawCenteredString(this.font, authorText, this.width / 2, 15, 0xAAAAAA);
             } else {
-                context.drawCenteredTextWithShadow(this.textRenderer, script.name(), this.width / 2, 8, 0xFFFFFF);
+                context.drawCenteredString(this.font, script.name(), this.width / 2, 8, 0xFFFFFF);
             }
         }
 
         // Show loading indicator if still fetching
         if (isLoading) {
-            context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("gui.blood-on-the-blocktower.custom_script_details.loading_almanac").formatted(Formatting.YELLOW), this.width / 2, this.height / 2, 0xFFFFFF);
+            context.drawCenteredString(this.font, Component.translatable("gui.blood-on-the-blocktower.custom_script_details.loading_almanac").withStyle(ChatFormatting.YELLOW), this.width / 2, this.height / 2, 0xFFFFFF);
         }
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (KeyInputHandler.openScriptKey.matchesKey(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E) {
-            this.client.setScreen(this.parent);
+        if (KeyInputHandler.openScriptKey.matches(keyCode, scanCode) || keyCode == GLFW.GLFW_KEY_E) {
+            this.minecraft.setScreen(this.parent);
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    private class DetailsListWidget extends ElementListWidget<DetailsListWidget.Entry> {
-        public DetailsListWidget(MinecraftClient client, int width, int height, int y) {
-            super(client, width, height, y, client.textRenderer.fontHeight + 2);
+    private class DetailsListWidget extends ContainerObjectSelectionList<DetailsListWidget.Entry> {
+        public DetailsListWidget(Minecraft client, int width, int height, int y) {
+            super(client, width, height, y, client.font.lineHeight + 2);
         }
 
         public void buildPage(Page page) {
             this.clearEntries();
 
             if (isLoading) {
-                this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.loading").formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(Component.translatable("gui.blood-on-the-blocktower.custom_script_details.loading").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY)));
                 return;
             }
 
             // Check for errors
-            Text lastError = AlmanacParser.getLastError();
+            Component lastError = AlmanacParser.getLastError();
             if (lastError != null && (almanacData == null || !almanacData.hasScriptData())) {
-                this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.load_failed").formatted(Formatting.RED)));
-                this.addEntry(new TextEntry(lastError.copy().formatted(Formatting.GRAY)));
+                this.addEntry(new TextEntry(Component.translatable("gui.blood-on-the-blocktower.custom_script_details.load_failed").withStyle(ChatFormatting.RED)));
+                this.addEntry(new TextEntry(lastError.copy().withStyle(ChatFormatting.GRAY)));
                 return;
             }
 
             if (almanacData == null || almanacData.scriptData() == null) {
-                this.addEntry(new TextEntry(Text.translatable("gui.blood-on-the-blocktower.custom_script_details.no_almanac_data").formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(Component.translatable("gui.blood-on-the-blocktower.custom_script_details.no_almanac_data").withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY)));
                 return;
             }
 
@@ -190,7 +190,7 @@ public class CustomScriptDetailsScreen extends Screen {
             // For Synopsis page, add the logo centered at the top if present
             if (page == Page.SYNOPSIS && script != null && script.hasLogo()) {
                 // Logo is 64px tall, each entry is ~fontHeight+2, so we need multiple entries
-                int entryHeight = textRenderer.fontHeight + 2;
+                int entryHeight = font.lineHeight + 2;
                 int logoEntries = (64 / entryHeight) + 1;
                 for (int i = 0; i < logoEntries; i++) {
                     this.addEntry(new LogoEntry(i));
@@ -203,7 +203,7 @@ public class CustomScriptDetailsScreen extends Screen {
             this.addEntry(new SpacerEntry());
 
             if (content == null || content.isEmpty()) {
-                this.addEntry(new TextEntry(noContentMessage(page).copy().formatted(Formatting.ITALIC, Formatting.GRAY)));
+                this.addEntry(new TextEntry(noContentMessage(page).copy().withStyle(ChatFormatting.ITALIC, ChatFormatting.GRAY)));
                 return;
             }
 
@@ -222,8 +222,8 @@ public class CustomScriptDetailsScreen extends Screen {
                     this.addEntry(new SpacerEntry());
                 }
                 firstParagraph = false;
-                List<OrderedText> wrappedLines = textRenderer.wrapLines(Text.literal(paragraph), textWidth);
-                for (OrderedText line : wrappedLines) {
+                List<FormattedCharSequence> wrappedLines = font.split(Component.literal(paragraph), textWidth);
+                for (FormattedCharSequence line : wrappedLines) {
                     this.addEntry(new TextEntry(line));
                 }
             }
@@ -235,48 +235,48 @@ public class CustomScriptDetailsScreen extends Screen {
         }
 
         @Override
-        protected int getScrollbarX() {
+        protected int getScrollbarPosition() {
             return this.getX() + this.width - 10;
         }
 
-        public abstract class Entry extends ElementListWidget.Entry<Entry> {}
+        public abstract class Entry extends ContainerObjectSelectionList.Entry<com.autumnwind.botb.gui.CustomScriptDetailsScreen.DetailsListWidget.Entry> {}
 
-        public class TitleEntry extends Entry {
-            private final Text text;
-            public TitleEntry(Text title) {
-                this.text = title.copy().formatted(Formatting.GOLD, Formatting.BOLD);
+        public class TitleEntry extends com.autumnwind.botb.gui.CustomScriptDetailsScreen.DetailsListWidget.Entry {
+            private final Component text;
+            public TitleEntry(Component title) {
+                this.text = title.copy().withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawCenteredTextWithShadow(textRenderer, text, DetailsListWidget.this.width / 2, y, 0xFFFFFF);
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                context.drawCenteredString(font, text, DetailsListWidget.this.width / 2, y, 0xFFFFFF);
             }
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
 
-        public class TextEntry extends Entry {
-            private final OrderedText text;
-            public TextEntry(OrderedText text) { this.text = text; }
-            public TextEntry(Text text) { this.text = text.asOrderedText(); }
+        public class TextEntry extends com.autumnwind.botb.gui.CustomScriptDetailsScreen.DetailsListWidget.Entry {
+            private final FormattedCharSequence text;
+            public TextEntry(FormattedCharSequence text) { this.text = text; }
+            public TextEntry(Component text) { this.text = text.getVisualOrderText(); }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawText(textRenderer, text, x + 10, y, 0xFFFFFF, false);
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+                context.drawString(font, text, x + 10, y, 0xFFFFFF, false);
             }
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
 
-        public class SpacerEntry extends Entry {
+        public class SpacerEntry extends com.autumnwind.botb.gui.CustomScriptDetailsScreen.DetailsListWidget.Entry {
             public SpacerEntry() {}
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {}
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {}
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
 
-        public class LogoEntry extends Entry {
+        public class LogoEntry extends com.autumnwind.botb.gui.CustomScriptDetailsScreen.DetailsListWidget.Entry {
             private static final int MAX_LOGO_HEIGHT = 64;
             private static final int MAX_LOGO_WIDTH = 200;
             private final int entryIndex;
@@ -286,10 +286,10 @@ public class CustomScriptDetailsScreen extends Screen {
             }
 
             @Override
-            public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+            public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
                 // Only render on the first logo entry (we use multiple entries for height)
                 if (entryIndex == 0 && script != null && script.hasLogo()) {
-                    Identifier logoTexture = UrlTextureLoader.getTexture(script.logo());
+                    ResourceLocation logoTexture = UrlTextureLoader.getTexture(script.logo());
 
                     // Get actual dimensions if available
                     int[] dims = UrlTextureLoaderImpl.getDimensions(script.logo());
@@ -331,12 +331,12 @@ public class CustomScriptDetailsScreen extends Screen {
                     int logoX = (DetailsListWidget.this.width - renderWidth) / 2;
                     // Draw the texture scaled to renderWidth x renderHeight
                     // The last two params are the texture size for UV mapping
-                    context.drawTexture(logoTexture, logoX, y, renderWidth, renderHeight, 0, 0, textureWidth, textureHeight, textureWidth, textureHeight);
+                    context.blit(logoTexture, logoX, y, renderWidth, renderHeight, 0, 0, textureWidth, textureHeight, textureWidth, textureHeight);
                 }
             }
 
-            @Override public List<? extends Element> children() { return Collections.emptyList(); }
-            @Override public List<? extends Selectable> selectableChildren() { return Collections.emptyList(); }
+            @Override public List<? extends GuiEventListener> children() { return Collections.emptyList(); }
+            @Override public List<? extends NarratableEntry> narratables() { return Collections.emptyList(); }
         }
     }
 }

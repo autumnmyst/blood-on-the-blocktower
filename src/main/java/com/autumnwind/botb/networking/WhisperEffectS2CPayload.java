@@ -2,14 +2,13 @@ package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.config.WhisperSettings;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Server → clients: render a whisper visual/audio effect arcing from sender to target.
@@ -27,21 +26,21 @@ public record WhisperEffectS2CPayload(
         int visualOrdinal,
         boolean audio,
         float pitch
-) implements CustomPayload {
-    public static final CustomPayload.Id<WhisperEffectS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "whisper_effect"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<WhisperEffectS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "whisper_effect"));
 
-    public static final PacketCodec<RegistryByteBuf, WhisperEffectS2CPayload> CODEC = PacketCodec.tuple(
-            Uuids.PACKET_CODEC, WhisperEffectS2CPayload::senderUuid,
-            Uuids.PACKET_CODEC, WhisperEffectS2CPayload::targetUuid,
-            PacketCodecs.VAR_INT, WhisperEffectS2CPayload::visualOrdinal,
-            PacketCodecs.BOOL, WhisperEffectS2CPayload::audio,
-            PacketCodecs.FLOAT, WhisperEffectS2CPayload::pitch,
+    public static final StreamCodec<RegistryFriendlyByteBuf, WhisperEffectS2CPayload> CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, WhisperEffectS2CPayload::senderUuid,
+            UUIDUtil.STREAM_CODEC, WhisperEffectS2CPayload::targetUuid,
+            ByteBufCodecs.VAR_INT, WhisperEffectS2CPayload::visualOrdinal,
+            ByteBufCodecs.BOOL, WhisperEffectS2CPayload::audio,
+            ByteBufCodecs.FLOAT, WhisperEffectS2CPayload::pitch,
             WhisperEffectS2CPayload::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 

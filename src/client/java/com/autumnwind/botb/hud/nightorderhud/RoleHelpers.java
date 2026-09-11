@@ -1,13 +1,13 @@
 package com.autumnwind.botb.hud.nightorderhud;
 
+import com.autumnwind.botb.util.Reminder;
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
-import net.minecraft.text.Text;
-
 import java.util.*;
 import java.util.stream.Collectors;
+import net.minecraft.network.chat.Component;
 
 /**
  * Helper methods for analyzing roles, associated roles, and reminders.
@@ -295,7 +295,7 @@ public class RoleHelpers {
             // Get first night instructions for this role
             String roleInstructions = getFirstNightInstructions(role);
             if (!roleInstructions.isBlank()) {
-                result.append("\n\n").append(Text.translatable(key("role_instructions"),
+                result.append("\n\n").append(Component.translatable(key("role_instructions"),
                         role.getDisplayName().toUpperCase(Locale.ROOT), roleInstructions).getString());
             }
         }
@@ -305,7 +305,7 @@ public class RoleHelpers {
 
     /** A modifier line for a visit, headed by the role's name in caps. */
     private static String modifier(String name, Role role) {
-        return Text.translatable(key(name), role.getDisplayName().toUpperCase(Locale.ROOT)).getString();
+        return Component.translatable(key(name), role.getDisplayName().toUpperCase(Locale.ROOT)).getString();
     }
 
     /**
@@ -581,8 +581,8 @@ public class RoleHelpers {
         if (reminderTexts.isEmpty()) return "";
         String joined = reminderTexts.stream()
                 .map(text -> Reminders.display(text, Optional.empty()).getString())
-                .collect(Collectors.joining(Text.translatable(key("separator")).getString()));
-        return Text.translatable(key("reminder_suffix"), joined).getString();
+                .collect(Collectors.joining(Component.translatable(key("separator")).getString()));
+        return Component.translatable(key("reminder_suffix"), joined).getString();
     }
 
     /**

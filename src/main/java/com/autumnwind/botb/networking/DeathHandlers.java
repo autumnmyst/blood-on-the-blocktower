@@ -5,14 +5,14 @@ import com.autumnwind.botb.daytime.*;
 import com.autumnwind.botb.states.ServerState;
 import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import com.autumnwind.botb.util.ServerCommands;
 
 /** Server-bound packet handlers: Death status updates and ghost vote toggles. */
@@ -22,8 +22,8 @@ final class DeathHandlers {
 
     static void register() {
         ModPackets.registerGuarded(UpdateDeadPlayersC2SPayload.ID, (payload, context) -> {
-            ServerPlayerEntity player = context.player();
-            if (player.hasPermissionLevel(2)) {
+            ServerPlayer player = context.player();
+            if (player.hasPermissions(2)) {
                 Map<UUID, Boolean> newDeathStatus = payload.deadPlayers();
                 Map<UUID, Integer> seatNumbers = payload.seatNumbers();
                 Map<UUID, Boolean> previousDeathStatus = new HashMap<>(ServerState.PLAYER_DEATH_STATUS);
@@ -37,19 +37,19 @@ final class DeathHandlers {
                     // Get seat number for this player
                     Integer seatNumber = seatNumbers.get(playerUuid);
                     if (seatNumber != null) {
-                        ServerPlayerEntity targetPlayer = context.server().getPlayerManager().getPlayer(playerUuid);
+                        ServerPlayer targetPlayer = context.server().getPlayerList().getPlayer(playerUuid);
                         // Player went from alive -> dead
                         if (isDead && !wasDeadBefore) {
                             String deathCommand = ServerConfig.DEATH_COMMANDS.get(seatNumber);
                             if (deathCommand != null && !deathCommand.isEmpty() && targetPlayer != null) {
                                 // Execute command with server permissions targeting the player
-                                ServerCommands.runAs(context.server(), targetPlayer.getUuidAsString(), deathCommand);
+                                ServerCommands.runAs(context.server(), targetPlayer.getStringUUID(), deathCommand);
                             }
 
                             // Give invisibility effect to dead player
                             if (targetPlayer != null) {
                                 String invisibilityCommand = "effect give @s invisibility infinite 0 true";
-                                ServerCommands.runAs(context.server(), targetPlayer.getUuidAsString(), invisibilityCommand);
+                                ServerCommands.runAs(context.server(), targetPlayer.getStringUUID(), invisibilityCommand);
 
                                 // Daytime mark-dead gets a cosmetic lightning strike at the
                                 // player's position. Cosmetic lightning plays the visual +
@@ -61,12 +61,12 @@ final class DeathHandlers {
                                 boolean isDaytime = ServerState.currentNight == ServerState.currentDay
                                         && ServerState.currentDay > 0;
                                 if (isDaytime && !payload.silent()) {
-                                    ServerWorld targetWorld = targetPlayer.getServerWorld();
-                                    LightningEntity lightning = EntityType.LIGHTNING_BOLT.create(targetWorld);
+                                    ServerLevel targetWorld = targetPlayer.serverLevel();
+                                    LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(targetWorld);
                                     if (lightning != null) {
-                                        lightning.refreshPositionAfterTeleport(targetPlayer.getX(), targetPlayer.getY(), targetPlayer.getZ());
-                                        lightning.setCosmetic(true);
-                                        targetWorld.spawnEntity(lightning);
+                                        lightning.moveTo(targetPlayer.getX(), targetPlayer.getY(), targetPlayer.getZ());
+                                        lightning.setVisualOnly(true);
+                                        targetWorld.addFreshEntity(lightning);
                                     }
                                 }
                             }
@@ -76,13 +76,13 @@ final class DeathHandlers {
                             String reviveCommand = ServerConfig.REVIVE_COMMANDS.get(seatNumber);
                             if (reviveCommand != null && !reviveCommand.isEmpty() && targetPlayer != null) {
                                 // Execute command with server permissions targeting the player
-                                ServerCommands.runAs(context.server(), targetPlayer.getUuidAsString(), reviveCommand);
+                                ServerCommands.runAs(context.server(), targetPlayer.getStringUUID(), reviveCommand);
                             }
 
                             // Remove invisibility effect when resurrected
                             if (targetPlayer != null) {
                                 String clearInvisCommand = "effect clear @s invisibility";
-                                ServerCommands.runAs(context.server(), targetPlayer.getUuidAsString(), clearInvisCommand);
+                                ServerCommands.runAs(context.server(), targetPlayer.getStringUUID(), clearInvisCommand);
                             }
                         }
                     }
@@ -91,7 +91,7 @@ final class DeathHandlers {
                 // Store and broadcast death status
                 ServerState.updateDeathStatus(newDeathStatus);
                 SendDeathStatusS2CPayload deathStatusPayload = new SendDeathStatusS2CPayload(newDeathStatus);
-                for (ServerPlayerEntity onlinePlayer : context.server().getPlayerManager().getPlayerList()) {
+                for (ServerPlayer onlinePlayer : context.server().getPlayerList().getPlayers()) {
                     ServerPlayNetworking.send(onlinePlayer, deathStatusPayload);
                 }
 
@@ -157,12 +157,12 @@ final class DeathHandlers {
                         if (seatNumber != null) {
                             BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seatNumber);
                             if (indicatorPos != null) {
-                                BlockPos belowIndicator = indicatorPos.down();
+                                BlockPos belowIndicator = indicatorPos.below();
                                 // Check if the block is actually the ghost used block before removing it
-                                BlockState blockState = context.server().getOverworld().getBlockState(belowIndicator);
+                                BlockState blockState = context.server().overworld().getBlockState(belowIndicator);
                                 String ghostUsedBlockName = ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED;
                                 if (blockState.getBlock().equals(VotingManager.getBlockFromString(ghostUsedBlockName))) {
-                                    context.server().getOverworld().setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+                                    context.server().overworld().setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
                                 }
                             }
                         }
@@ -180,8 +180,8 @@ final class DeathHandlers {
         });
 
         ModPackets.registerGuarded(ToggleGhostVoteC2SPayload.ID, (payload, context) -> {
-            ServerPlayerEntity player = context.player();
-            if (!player.hasPermissionLevel(2)) {
+            ServerPlayer player = context.player();
+            if (!player.hasPermissions(2)) {
                 return; // Only operators can toggle ghost votes
             }
 

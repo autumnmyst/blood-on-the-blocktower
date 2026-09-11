@@ -1,9 +1,8 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.util.Identifier;
-
 import java.util.function.Function;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Provides texture loading for custom roles from URLs.
@@ -13,17 +12,17 @@ import java.util.function.Function;
 public class UrlTextureLoader {
 
     // Use the existing custom reminder icon as placeholder until custom role images load
-    public static final Identifier PLACEHOLDER = Identifier.of(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png");
+    public static final ResourceLocation PLACEHOLDER = ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "textures/icons/reminder_custom.png");
 
     // Client-side implementation, set during client initialization
-    private static Function<String, Identifier> urlLoader = null;
-    private static Function<CustomRole, Identifier> customRoleLoader = null;
+    private static Function<String, ResourceLocation> urlLoader = null;
+    private static Function<CustomRole, ResourceLocation> customRoleLoader = null;
 
     /**
      * Register the client-side texture loader.
      * Called from client mod initializer.
      */
-    public static void registerLoader(Function<String, Identifier> loader, Function<CustomRole, Identifier> roleLoader) {
+    public static void registerLoader(Function<String, ResourceLocation> loader, Function<CustomRole, ResourceLocation> roleLoader) {
         urlLoader = loader;
         customRoleLoader = roleLoader;
     }
@@ -32,7 +31,7 @@ public class UrlTextureLoader {
      * Get texture identifier for a URL.
      * Returns placeholder if loader not registered or texture not yet loaded.
      */
-    public static Identifier getTexture(String url) {
+    public static ResourceLocation getTexture(String url) {
         if (urlLoader == null || url == null || url.isEmpty()) {
             return PLACEHOLDER;
         }
@@ -43,7 +42,7 @@ public class UrlTextureLoader {
      * Get texture identifier for a custom role.
      * Returns placeholder if loader not registered or texture not yet loaded.
      */
-    public static Identifier getTexture(CustomRole customRole) {
+    public static ResourceLocation getTexture(CustomRole customRole) {
         if (customRoleLoader == null || customRole == null) {
             return PLACEHOLDER;
         }
@@ -53,7 +52,7 @@ public class UrlTextureLoader {
     /**
      * Get texture identifier for a custom role with specific alignment.
      */
-    public static Identifier getTexture(CustomRole customRole, boolean isGood) {
+    public static ResourceLocation getTexture(CustomRole customRole, boolean isGood) {
         if (customRole == null) {
             return PLACEHOLDER;
         }
@@ -65,7 +64,7 @@ public class UrlTextureLoader {
      * Get texture identifier for a custom role by ID.
      * Looks up the custom role from the current script and returns its icon.
      */
-    public static Identifier getTextureByCustomRoleId(String customRoleId) {
+    public static ResourceLocation getTextureByCustomRoleId(String customRoleId) {
         // This is called for custom role reminders - need to look up the role from the script
         // Delegate to the URL loader which handles the lookup on client side
         if (customRoleId == null || customRoleId.isEmpty()) {

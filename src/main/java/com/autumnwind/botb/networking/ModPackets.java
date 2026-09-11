@@ -4,18 +4,17 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.daytime.*;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Blocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import java.util.*;
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import com.autumnwind.botb.voicechat.VoiceChatServerCompat;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.network.packet.CustomPayload;
 public class ModPackets {
 
     /**
@@ -23,8 +22,8 @@ public class ModPackets {
      * dropped instead of escaping into the server's task queue, where it would take the whole
      * server down. Handlers run on the server thread, so the catch is the only guard needed.
      */
-    static <T extends CustomPayload> void registerGuarded(
-            CustomPayload.Id<T> id,
+    static <T extends CustomPacketPayload> void registerGuarded(
+            CustomPacketPayload.Type<T> id,
             ServerPlayNetworking.PlayPayloadHandler<T> handler) {
         ServerPlayNetworking.registerGlobalReceiver(id, (payload, context) -> {
             try {
@@ -54,8 +53,8 @@ public class ModPackets {
      * Removes a player from their current voice chat group.
      * @param player The player to remove from voice chat group
      */
-    static void leaveVoiceChatGroup(ServerPlayerEntity player) {
-        VoiceChatServerCompat.leaveGroup(player.getUuid());
+    static void leaveVoiceChatGroup(ServerPlayer player) {
+        VoiceChatServerCompat.leaveGroup(player.getUUID());
     }
 
     /**
@@ -121,11 +120,11 @@ public class ModPackets {
                     if (seat != null) {
                         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
                         if (indicatorPos != null) {
-                            BlockPos belowIndicator = indicatorPos.down();
-                            BlockState blockState = server.getOverworld().getBlockState(belowIndicator);
+                            BlockPos belowIndicator = indicatorPos.below();
+                            BlockState blockState = server.overworld().getBlockState(belowIndicator);
                             String ghostUsedBlockName = ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED;
                             if (blockState.getBlock().equals(VotingManager.getBlockFromString(ghostUsedBlockName))) {
-                                server.getOverworld().setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+                                server.overworld().setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
                             }
                         }
                     }
@@ -166,11 +165,11 @@ public class ModPackets {
     /**
      * Helper method to check if a player has a specific item in their inventory.
      */
-    static boolean playerHasItem(ServerPlayerEntity player, Item item) {
+    static boolean playerHasItem(ServerPlayer player, Item item) {
         // Check main inventory
-        for (int i = 0; i < player.getInventory().size(); i++) {
-            ItemStack stack = player.getInventory().getStack(i);
-            if (stack.isOf(item)) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (stack.is(item)) {
                 return true;
             }
         }

@@ -1,12 +1,11 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.text.Text;
-
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.network.chat.Component;
 
 /**
  * Reminder text is a reminder's identity: it is what gets compared, synced, and saved.
@@ -117,24 +116,24 @@ public final class Reminders {
     }
 
     /** Translated when the text is a known reminder, otherwise shown as written. */
-    public static Text display(String text, Optional<Role> role) {
+    public static Component display(String text, Optional<Role> role) {
         // Hand-typed caps are an identity claim and stay as typed, even when they spell a catalog word
-        if (role.isEmpty() && text.equals(text.toUpperCase(Locale.ROOT))) return Text.literal(text);
+        if (role.isEmpty() && text.equals(text.toUpperCase(Locale.ROOT))) return Component.literal(text);
         if (role.isPresent()) {
-            Text roleName = Text.literal(role.get().getDisplayName());
+            Component roleName = Component.literal(role.get().getDisplayName());
             if (isRoleMarker(text, role.get())) return roleName;
             if (isMad(text)) return displayMad(roleName);
-            if (isStorytellerMinion(text)) return Text.translatable(STORYTELLER_MINION_KEY, roleName);
+            if (isStorytellerMinion(text)) return Component.translatable(STORYTELLER_MINION_KEY, roleName);
         }
         int night = nightNumber(text);
-        if (night >= 0) return Text.translatable(NIGHT_KEY, night);
+        if (night >= 0) return Component.translatable(NIGHT_KEY, night);
         String key = key(text);
-        if (key.isEmpty()) return Text.literal(text);
-        return Text.translatableWithFallback(KEY_PREFIX + key, text);
+        if (key.isEmpty()) return Component.literal(text);
+        return Component.translatableWithFallback(KEY_PREFIX + key, text);
     }
 
-    public static Text displayMad(Text roleName) {
-        return Text.translatable(MAD_ROLE_KEY, roleName);
+    public static Component displayMad(Component roleName) {
+        return Component.translatable(MAD_ROLE_KEY, roleName);
     }
 
     /** Lang key fragment for reminder text: "Doesn't Kill" becomes doesnt_kill. */

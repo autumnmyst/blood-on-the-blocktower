@@ -4,15 +4,14 @@ import com.autumnwind.botb.gui.AssignRolesScreen;
 import com.autumnwind.botb.states.ClientState;
 import com.autumnwind.botb.util.PlayerListUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import java.util.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.Role;
 
@@ -28,7 +27,7 @@ public class VoiceChatSidebar {
     private static final int MAX_SIDEBAR_WIDTH = 120;
     /** Collapsed: head, gap, then the seat label with room for outer nomination border. */
     private static final int COLLAPSED_HEAD_TO_SEAT_GAP = 6;
-    private static final Identifier SKULL_ICON = Identifier.of("blood-on-the-blocktower", "textures/icons/skull.png");
+    private static final ResourceLocation SKULL_ICON = ResourceLocation.fromNamespaceAndPath("blood-on-the-blocktower", "textures/icons/skull.png");
 
     // Vote state indicator constants
     private static final int INDICATOR_SIZE = 4; // All indicators are 4x4
@@ -53,15 +52,15 @@ public class VoiceChatSidebar {
     /**
      * Renders the sidebar on the right side of the screen
      */
-    public static void render(DrawContext context, MinecraftClient client) {
+    public static void render(GuiGraphics context, Minecraft client) {
         render(context, client, false);
     }
 
     /**
      * Renders the sidebar with option to force rendering (used by AssignRolesScreen)
      */
-    public static void render(DrawContext context, MinecraftClient client, boolean forceRender) {
-        if (client == null || client.world == null || client.player == null) return;
+    public static void render(GuiGraphics context, Minecraft client, boolean forceRender) {
+        if (client == null || client.level == null || client.player == null) return;
 
         // Skip rendering if HUD is disabled (unless force rendering from AssignRolesScreen)
         if (!forceRender && !ClientState.isHudEnabled) return;
@@ -69,8 +68,8 @@ public class VoiceChatSidebar {
         // Skip rendering here if we're in AssignRolesScreen as a non-operator
         // (it will be rendered by the screen itself to appear over the background blur)
         if (!forceRender) {
-            boolean isAssignRolesScreen = client.currentScreen instanceof AssignRolesScreen;
-            boolean isOperator = client.player.hasPermissionLevel(2);
+            boolean isAssignRolesScreen = client.screen instanceof AssignRolesScreen;
+            boolean isOperator = client.player.hasPermissions(2);
             if (isAssignRolesScreen && !isOperator) return;
         }
 
@@ -78,8 +77,8 @@ public class VoiceChatSidebar {
         // When forceRender is true (from AssignRolesScreen), always show expanded
         boolean isCollapsed = !forceRender && !ClientState.isSidebarVisible;
 
-        ClientPlayerEntity localPlayer = client.player;
-        UUID localUuid = localPlayer.getUuid();
+        LocalPlayer localPlayer = client.player;
+        UUID localUuid = localPlayer.getUUID();
 
         // Get local player's group and spectator status
         UUID localGroupId = VoiceChatClientCompat.getLocalGroupId();
@@ -97,9 +96,9 @@ public class VoiceChatSidebar {
         }
 
         // Build UUID -> player entity map (only for nearby players)
-        Map<UUID, AbstractClientPlayerEntity> playerEntityMap = new HashMap<>();
-        for (AbstractClientPlayerEntity player : client.world.getPlayers()) {
-            playerEntityMap.put(player.getUuid(), player);
+        Map<UUID, AbstractClientPlayer> playerEntityMap = new HashMap<>();
+        for (AbstractClientPlayer player : client.level.players()) {
+            playerEntityMap.put(player.getUUID(), player);
         }
 
         // Sort by seat number
@@ -108,7 +107,7 @@ public class VoiceChatSidebar {
 
         for (int seat : sortedSeats) {
             UUID uuid = seatToUuidMap.get(seat);
-            AbstractClientPlayerEntity player = playerEntityMap.get(uuid);
+            AbstractClientPlayer player = playerEntityMap.get(uuid);
 
             boolean isDead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
             boolean isTalking = VoiceChatClientCompat.isPlayerTalking(uuid);
@@ -136,8 +135,8 @@ public class VoiceChatSidebar {
 
         // Render sidebar
         if (!entries.isEmpty()) {
-            int screenWidth = context.getScaledWindowWidth();
-            int screenHeight = context.getScaledWindowHeight();
+            int screenWidth = context.guiWidth();
+            int screenHeight = context.guiHeight();
             int sidebarHeight = entries.size() * ENTRY_HEIGHT + PADDING * 2;
 
             // Calculate dynamic width based on longest player name
@@ -169,10 +168,10 @@ public class VoiceChatSidebar {
     }
 
     /** Collapsed width that fits the widest seat label. */
-    private static int calculateCollapsedWidth(MinecraftClient client, List<PlayerEntry> entries) {
+    private static int calculateCollapsedWidth(Minecraft client, List<PlayerEntry> entries) {
         int maxSeatWidth = 0;
         for (PlayerEntry entry : entries) {
-            maxSeatWidth = Math.max(maxSeatWidth, client.textRenderer.getWidth("#" + entry.seat));
+            maxSeatWidth = Math.max(maxSeatWidth, client.font.width("#" + entry.seat));
         }
         return PADDING * 2 + HEAD_SIZE + COLLAPSED_HEAD_TO_SEAT_GAP + maxSeatWidth;
     }
@@ -180,8 +179,8 @@ public class VoiceChatSidebar {
     /**
      * Calculate the sidebar width needed to fit all player names
      */
-    private static int calculateSidebarWidth(MinecraftClient client, List<PlayerEntry> entries) {
-        TextRenderer textRenderer = client.textRenderer;
+    private static int calculateSidebarWidth(Minecraft client, List<PlayerEntry> entries) {
+        Font textRenderer = client.font;
         int maxWidth = 0;
 
         // Check if vote indicators should be shown (nominations OR exile)
@@ -189,12 +188,12 @@ public class VoiceChatSidebar {
 
         for (PlayerEntry entry : entries) {
             String playerName = entry.playerName;
-            int nameWidth = textRenderer.getWidth(playerName);
+            int nameWidth = textRenderer.width(playerName);
 
             // Calculate total width needed for this entry:
             // [indicator + spacing] + HEAD_SIZE + spacing + name + spacing + seat number + spacing
             String seatText = "#" + entry.seat;
-            int seatWidth = textRenderer.getWidth(seatText);
+            int seatWidth = textRenderer.width(seatText);
 
             int totalWidth;
             if (showVoteIndicators) {
@@ -218,8 +217,8 @@ public class VoiceChatSidebar {
     /**
      * Render a single player entry
      */
-    private static void renderEntry(DrawContext context, MinecraftClient client, PlayerEntry entry, int x, int y, boolean isCollapsed, int sidebarWidth) {
-        TextRenderer textRenderer = client.textRenderer;
+    private static void renderEntry(GuiGraphics context, Minecraft client, PlayerEntry entry, int x, int y, boolean isCollapsed, int sidebarWidth) {
+        Font textRenderer = client.font;
         int currentX = x;
         UUID playerUuid = entry.uuid;
         // Show indicators during nominations OR exile
@@ -246,7 +245,7 @@ public class VoiceChatSidebar {
         if (entry.isDead) {
             RenderSystem.enableBlend();
             RenderSystem.defaultBlendFunc();
-            context.drawTexture(SKULL_ICON, headX, headY, 0, 0, HEAD_SIZE, HEAD_SIZE, HEAD_SIZE, HEAD_SIZE);
+            context.blit(SKULL_ICON, headX, headY, 0, 0, HEAD_SIZE, HEAD_SIZE, HEAD_SIZE, HEAD_SIZE);
             RenderSystem.disableBlend();
         }
 
@@ -272,19 +271,19 @@ public class VoiceChatSidebar {
             // A full name may run right up to the seat number. Only a name that would not
             // fit even there is cut, and the cut version reserves room for its own dots so
             // it ends at the same limit.
-            int seatX = x + sidebarWidth - PADDING * 2 - textRenderer.getWidth("#" + entry.seat);
+            int seatX = x + sidebarWidth - PADDING * 2 - textRenderer.width("#" + entry.seat);
             int nameLimit = seatX - 3 - currentX;
-            if (textRenderer.getWidth(playerName) > nameLimit) {
-                playerName = textRenderer.trimToWidth(playerName, Math.max(0, nameLimit - textRenderer.getWidth("..."))) + "...";
+            if (textRenderer.width(playerName) > nameLimit) {
+                playerName = textRenderer.plainSubstrByWidth(playerName, Math.max(0, nameLimit - textRenderer.width("..."))) + "...";
             }
 
-            context.drawTextWithShadow(textRenderer, Text.literal(playerName), currentX, y + 4, textColor);
+            context.drawString(textRenderer, Component.literal(playerName), currentX, y + 4, textColor);
         }
 
         // Draw seat number on the right with daytime indicators
         String seatText = "#" + entry.seat;
-        int seatWidth = textRenderer.getWidth(seatText);
-        int seatHeight = textRenderer.fontHeight;
+        int seatWidth = textRenderer.width(seatText);
+        int seatHeight = textRenderer.lineHeight;
         int seatX = x + sidebarWidth - PADDING * 2 - seatWidth;
         int seatY = y + 4;
 
@@ -295,7 +294,7 @@ public class VoiceChatSidebar {
         boolean canBeExiled = ClientState.canBeExiled.getOrDefault(playerUuid, false);
         boolean isNominated = playerUuid.equals(ClientState.currentNominee);
         // Check if Organ Grinder mode should hide MFE indicator from non-operators
-        boolean isOperator = client.player != null && client.player.hasPermissionLevel(2);
+        boolean isOperator = client.player != null && client.player.hasPermissions(2);
         boolean hideOGInfo = ClientState.organGrinderModeActiveToday && !isOperator;
 
         // For operators: use storytellerMFE (ignores Legion evil-only votes)
@@ -319,7 +318,7 @@ public class VoiceChatSidebar {
                 int legionIconSize = 12;
                 int legionIconX = x - legionIconSize - 4;
                 int legionIconY = y + (ENTRY_HEIGHT - legionIconSize) / 2;
-                context.drawTexture(Role.LEGION.getIcon(),
+                context.blit(Role.LEGION.getIcon(),
                         legionIconX, legionIconY, 0, 0, legionIconSize, legionIconSize, legionIconSize, legionIconSize);
             }
 
@@ -338,7 +337,7 @@ public class VoiceChatSidebar {
             if (canNominate && !isBishopMode) {
                 int nomRemaining = ClientState.nominationsRemaining.getOrDefault(playerUuid, 1);
                 int borderColor = nomRemaining >= 2 ? 0xFF00FF00 : 0xFF4FC3F7; // Green for 2+ noms, light blue otherwise
-                context.drawBorder(seatX - 3, seatY - 3, seatWidth + 5, seatHeight + 4, borderColor);
+                context.renderOutline(seatX - 3, seatY - 3, seatWidth + 5, seatHeight + 4, borderColor);
             }
 
             // Draw inner border: orange if can be nominated, purple if can be exiled (travelers)
@@ -346,26 +345,26 @@ public class VoiceChatSidebar {
             // Dead travelers cannot be called for exile
             if (canBeExiled && !entry.isDead) {
                 // Purple border for travelers (same size as orange border)
-                context.drawBorder(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
+                context.renderOutline(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
             } else if (canBeNominated) {
                 // Orange border for nominatable non-travelers
                 // Half faded opacity for dead players
                 int orangeColor = entry.isDead ? 0x80FF8C00 : 0xFFFF8C00; // Half opacity if dead
-                context.drawBorder(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, orangeColor);
+                context.renderOutline(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, orangeColor);
             }
 
             // Draw text with appropriate styling
             if (isNominated) {
                 // Black text on white background, no shadow
-                context.drawText(textRenderer, Text.literal(seatText), seatX, seatY, 0xFF000000, false);
+                context.drawString(textRenderer, Component.literal(seatText), seatX, seatY, 0xFF000000, false);
             } else if (isMFE) {
                 // White text on red background, no shadow
-                context.drawText(textRenderer, Text.literal(seatText), seatX, seatY, 0xFFFFFFFF, false);
+                context.drawString(textRenderer, Component.literal(seatText), seatX, seatY, 0xFFFFFFFF, false);
             } else {
                 // Normal text with shadow - color based on alive/dead status
                 int baseColor = entry.isDead ? COLOR_DEAD : COLOR_ALIVE;
                 int seatColor = entry.shouldFade ? (baseColor & 0x00FFFFFF) | 0x80000000 : baseColor;
-                context.drawTextWithShadow(textRenderer, Text.literal(seatText), seatX, seatY, seatColor);
+                context.drawString(textRenderer, Component.literal(seatText), seatX, seatY, seatColor);
             }
         } else {
             // Nominations closed - normal rendering with shadow - color based on alive/dead status
@@ -373,23 +372,23 @@ public class VoiceChatSidebar {
             // Dead travelers cannot be called for exile
             boolean isDaytime = ClientState.currentNight == ClientState.currentDay && ClientState.currentNight > 0;
             if (canBeExiled && isDaytime && !entry.isDead) {
-                context.drawBorder(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
+                context.renderOutline(seatX - 2, seatY - 2, seatWidth + 3, seatHeight + 2, 0xFF9932CC);
             }
             int baseColor = entry.isDead ? COLOR_DEAD : COLOR_ALIVE;
             int seatColor = entry.shouldFade ? (baseColor & 0x00FFFFFF) | 0x80000000 : baseColor;
-            context.drawTextWithShadow(textRenderer, Text.literal(seatText), seatX, seatY, seatColor);
+            context.drawString(textRenderer, Component.literal(seatText), seatX, seatY, seatColor);
         }
     }
 
     /**
      * Renders the vote state indicator for a player
      */
-    private static void renderVoteStateIndicator(DrawContext context, MinecraftClient client, PlayerEntry entry, int x, int y) {
+    private static void renderVoteStateIndicator(GuiGraphics context, Minecraft client, PlayerEntry entry, int x, int y) {
         UUID playerUuid = entry.uuid;
 
         // Check if Organ Grinder mode should hide vote info from non-operators
         // Note: OG mode only applies to regular voting, not exile support
-        boolean isOperator = client.player != null && client.player.hasPermissionLevel(2);
+        boolean isOperator = client.player != null && client.player.hasPermissions(2);
         boolean isExileSupport = ClientState.exileSupportInProgress;
         boolean isExileCall = ClientState.isExileElection(); // Exile call (before or during support)
         boolean hideOGInfo = ClientState.organGrinderMode && !isOperator && !isExileCall;
@@ -518,7 +517,7 @@ public class VoiceChatSidebar {
 
         // Draw 1px border if applicable
         if (borderColor != null) {
-            context.drawBorder(indicatorX - 1, indicatorY - 1, indicatorSize + 2, indicatorSize + 2, borderColor);
+            context.renderOutline(indicatorX - 1, indicatorY - 1, indicatorSize + 2, indicatorSize + 2, borderColor);
         }
     }
 
@@ -690,13 +689,13 @@ public class VoiceChatSidebar {
     private static class PlayerEntry {
         final UUID uuid;
         final String playerName;
-        final Identifier skinTexture;
+        final ResourceLocation skinTexture;
         final int seat;
         final boolean isDead;
         final boolean isTalking;
         final boolean shouldFade;
 
-        PlayerEntry(UUID uuid, String playerName, Identifier skinTexture, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
+        PlayerEntry(UUID uuid, String playerName, ResourceLocation skinTexture, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
             this.uuid = uuid;
             this.playerName = playerName;
             this.skinTexture = skinTexture;
@@ -709,11 +708,11 @@ public class VoiceChatSidebar {
         /**
          * Create a PlayerEntry from a player entity (for nearby players).
          */
-        static PlayerEntry fromPlayer(AbstractClientPlayerEntity player, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
+        static PlayerEntry fromPlayer(AbstractClientPlayer player, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
             return new PlayerEntry(
-                    player.getUuid(),
+                    player.getUUID(),
                     player.getName().getString(),
-                    player.getSkinTextures().texture(),
+                    player.getSkin().texture(),
                     seat, isDead, isTalking, shouldFade
             );
         }
@@ -721,10 +720,10 @@ public class VoiceChatSidebar {
         /**
          * Create a PlayerEntry from a UUID (for distant players, uses PlayerListUtil).
          */
-        static PlayerEntry fromUuid(MinecraftClient client, UUID uuid, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
+        static PlayerEntry fromUuid(Minecraft client, UUID uuid, int seat, boolean isDead, boolean isTalking, boolean shouldFade) {
             PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayerOrCached(client, uuid);
-            String name = info != null ? info.name() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
-            Identifier skin = info != null ? info.skinTexture() : Identifier.of("minecraft", "textures/entity/steve.png");
+            String name = info != null ? info.name() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+            ResourceLocation skin = info != null ? info.skinTexture() : ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/steve.png");
             return new PlayerEntry(uuid, name, skin, seat, isDead, isTalking, shouldFade);
         }
     }

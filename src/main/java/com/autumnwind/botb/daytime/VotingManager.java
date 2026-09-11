@@ -4,29 +4,27 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.networking.*;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeverBlock;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.piston.PistonBaseBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import java.util.*;
-import net.minecraft.block.PistonBlock;
-import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.world.TeamManager;
 
 /**
@@ -83,20 +81,20 @@ public class VotingManager {
         if (organGrinderMode) {
             // Remove glowing from nominee immediately so players can't see their hand moving
             if (nominee != null) {
-                ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
+                ServerPlayer nomineePlayer = server.getPlayerList().getPlayer(nominee);
                 if (nomineePlayer != null) {
-                    nomineePlayer.removeStatusEffect(StatusEffects.GLOWING);
+                    nomineePlayer.removeEffect(MobEffects.GLOWING);
                 }
             }
 
-            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-                if (!player.hasPermissionLevel(2)) {
-                    player.addStatusEffect(new StatusEffectInstance(
-                            StatusEffects.BLINDNESS,
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                if (!player.hasPermissions(2)) {
+                    player.addEffect(new MobEffectInstance(
+                            MobEffects.BLINDNESS,
                             Integer.MAX_VALUE, 0, false, false, false
                     ));
-                    player.addStatusEffect(new StatusEffectInstance(
-                            StatusEffects.NIGHT_VISION,
+                    player.addEffect(new MobEffectInstance(
+                            MobEffects.NIGHT_VISION,
                             Integer.MAX_VALUE, 0, false, false, false
                     ));
                 }
@@ -104,8 +102,8 @@ public class VotingManager {
         }
 
         // Switch clock hands to VOTING mode
-        ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
-        Vec3d nomineePos = nomineePlayer != null ? nomineePlayer.getPos() : null;
+        ServerPlayer nomineePlayer = server.getPlayerList().getPlayer(nominee);
+        Vec3 nomineePos = nomineePlayer != null ? nomineePlayer.position() : null;
         StateBroadcaster.broadcastClockHandsState(
                 server,
                 ClockHandsStateS2CPayload.MODE_VOTING,
@@ -134,13 +132,13 @@ public class VotingManager {
      */
     private static void onVoteLocked(MinecraftServer server, UUID voter, int seat, boolean voteValue) {
         // Update clock hand to point at current voter
-        ServerPlayerEntity voterPlayer = server.getPlayerManager().getPlayer(voter);
+        ServerPlayer voterPlayer = server.getPlayerList().getPlayer(voter);
         if (voterPlayer != null) {
             StateBroadcaster.broadcastClockHandsState(
                     server,
                     ClockHandsStateS2CPayload.MODE_VOTING,
                     null,  // hour hand hidden
-                    voterPlayer.getPos(),
+                    voterPlayer.position(),
                     false,  // no fade in
                     false   // no swivel
             );
@@ -235,9 +233,9 @@ public class VotingManager {
             if (!cachedOrganGrinderMode) {
                 NominationManager.updateMarkedGlow(server, nominee, true);
             } else {
-                ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
+                ServerPlayer nomineePlayer = server.getPlayerList().getPlayer(nominee);
                 if (nomineePlayer != null) {
-                    nomineePlayer.removeStatusEffect(StatusEffects.GLOWING);
+                    nomineePlayer.removeEffect(MobEffects.GLOWING);
                 }
             }
         } else if (result == VoteResult.TIE) {
@@ -299,15 +297,15 @@ public class VotingManager {
                 !Objects.equals(nominee, storytellerMFE) && isLegionGame;
 
         // Get nominee name
-        ServerPlayerEntity nomineePlayer = server.getPlayerManager().getPlayer(nominee);
-        String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : Text.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
+        ServerPlayer nomineePlayer = server.getPlayerList().getPlayer(nominee);
+        String nomineeName = nomineePlayer != null ? nomineePlayer.getName().getString() : Component.translatable("gui.blood-on-the-blocktower.common.unknown_player").getString();
 
         // Send result payload and display titles
         VoteResultS2CPayload resultPayload = new VoteResultS2CPayload(
                 result, nomineeName, adjustedVoteCount, voters, cachedOrganGrinderMode,
                 legionProtectedVote, storytellerResult, storytellerMFE, storytellerMFEVotes);
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, resultPayload);
         }
 
@@ -327,10 +325,10 @@ public class VotingManager {
                 @Override
                 public void run() {
                     server.execute(() -> {
-                        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-                            if (!player.hasPermissionLevel(2)) {
-                                player.removeStatusEffect(StatusEffects.BLINDNESS);
-                                player.removeStatusEffect(StatusEffects.NIGHT_VISION);
+                        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                            if (!player.hasPermissions(2)) {
+                                player.removeEffect(MobEffects.BLINDNESS);
+                                player.removeEffect(MobEffects.NIGHT_VISION);
                             }
                         }
                     });
@@ -354,7 +352,7 @@ public class VotingManager {
             return;
         }
 
-        World world = server.getOverworld();
+        Level world = server.overworld();
         boolean isDead = deadPlayers.contains(player);
         // Banshee players with "Has Ability" are NOT treated as dead for voting purposes
         // In Voudon mode, dead players vote like alive players (use normal indicators)
@@ -381,7 +379,7 @@ public class VotingManager {
             }
         }
 
-        world.setBlockState(indicatorPos, block.getDefaultState());
+        world.setBlockAndUpdate(indicatorPos, block.defaultBlockState());
     }
 
     /**
@@ -390,46 +388,46 @@ public class VotingManager {
      */
     private static void displayResultTitle(MinecraftServer server, VoteResult result, String nomineeName, boolean organGrinderMode) {
         // Prepare titles for operators (real results)
-        Text operatorTitleText;
-        Text operatorSubtitleText;
+        Component operatorTitleText;
+        Component operatorSubtitleText;
         String soundType;
 
         switch (result) {
             case MARKED:
-                operatorTitleText = Text.literal(nomineeName).formatted(Formatting.RED);
-                operatorSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.marked_for_execution").formatted(Formatting.RED);
+                operatorTitleText = Component.literal(nomineeName).withStyle(ChatFormatting.RED);
+                operatorSubtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.marked_for_execution").withStyle(ChatFormatting.RED);
                 soundType = PlaySoundS2CPayload.MARKED;
                 break;
             case TIE:
-                operatorTitleText = Text.translatable("message.blood-on-the-blocktower.daytime.tie").formatted(Formatting.YELLOW);
-                operatorSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.all_players_pardoned").formatted(Formatting.YELLOW);
+                operatorTitleText = Component.translatable("message.blood-on-the-blocktower.daytime.tie").withStyle(ChatFormatting.YELLOW);
+                operatorSubtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.all_players_pardoned").withStyle(ChatFormatting.YELLOW);
                 soundType = PlaySoundS2CPayload.TIE;
                 break;
             case NOT_ENOUGH:
             default:
-                operatorTitleText = Text.translatable("message.blood-on-the-blocktower.daytime.not_enough_votes").formatted(Formatting.WHITE);
-                operatorSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.to_execute", nomineeName).formatted(Formatting.WHITE);
+                operatorTitleText = Component.translatable("message.blood-on-the-blocktower.daytime.not_enough_votes").withStyle(ChatFormatting.WHITE);
+                operatorSubtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.to_execute", nomineeName).withStyle(ChatFormatting.WHITE);
                 soundType = PlaySoundS2CPayload.NOT_ENOUGH_VOTES;
                 break;
         }
 
         // Prepare titles for non-operators in Organ Grinder mode
-        Text hiddenTitleText = Text.literal("???").formatted(Formatting.LIGHT_PURPLE, Formatting.BOLD);
-        Text hiddenSubtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.vote_has_been_counted").formatted(Formatting.LIGHT_PURPLE);
+        Component hiddenTitleText = Component.literal("???").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD);
+        Component hiddenSubtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.vote_has_been_counted").withStyle(ChatFormatting.LIGHT_PURPLE);
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            boolean hideFromPlayer = organGrinderMode && !player.hasPermissionLevel(2);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            boolean hideFromPlayer = organGrinderMode && !player.hasPermissions(2);
 
             // Send result sound - non-operators in OG mode always hear "Not Enough Votes" sound
             String playerSoundType = hideFromPlayer ? PlaySoundS2CPayload.NOT_ENOUGH_VOTES : soundType;
             ServerPlayNetworking.send(player, new PlaySoundS2CPayload(playerSoundType));
 
             // Send title and subtitle - hidden for non-operators in Organ Grinder mode
-            Text titleText = hideFromPlayer ? hiddenTitleText : operatorTitleText;
-            Text subtitleText = hideFromPlayer ? hiddenSubtitleText : operatorSubtitleText;
+            Component titleText = hideFromPlayer ? hiddenTitleText : operatorTitleText;
+            Component subtitleText = hideFromPlayer ? hiddenSubtitleText : operatorSubtitleText;
 
-            player.networkHandler.sendPacket(new TitleS2CPacket(titleText));
-            player.networkHandler.sendPacket(new SubtitleS2CPacket(subtitleText));
+            player.connection.send(new ClientboundSetTitleTextPacket(titleText));
+            player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
         }
     }
 
@@ -441,7 +439,7 @@ public class VotingManager {
         LeverStateUpdateS2CPayload payload = new LeverStateUpdateS2CPayload(DaytimeState.getLeverStates(),
                 DaytimeState.getBansheeDoubleVotePlayers(), DaytimeState.getBansheeDoubleVoteActivePlayers());
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
@@ -451,7 +449,7 @@ public class VotingManager {
      * Called during game reset/newGame.
      */
     public static void resetLeverStates(MinecraftServer server) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         // Physically reset all levers to "off" state
         for (Integer seat : ServerConfig.SEAT_SWITCH_POSITIONS.keySet()) {
@@ -460,8 +458,8 @@ public class VotingManager {
                 BlockState currentState = world.getBlockState(switchPos);
                 if (currentState.getBlock() instanceof LeverBlock) {
                     // Set lever to off (unpowered) while preserving facing and attachment
-                    if (currentState.get(LeverBlock.POWERED)) {
-                        world.setBlockState(switchPos, currentState.with(LeverBlock.POWERED, false));
+                    if (currentState.getValue(LeverBlock.POWERED)) {
+                        world.setBlockAndUpdate(switchPos, currentState.setValue(LeverBlock.POWERED, false));
                     }
                 }
             }
@@ -475,13 +473,13 @@ public class VotingManager {
             BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
             if (indicatorPos != null) {
                 Block offBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
-                world.setBlockState(indicatorPos, offBlock.getDefaultState());
+                world.setBlockAndUpdate(indicatorPos, offBlock.defaultBlockState());
 
                 // Clear blocks below indicator (ghost used / unseated blocks)
-                BlockPos belowIndicator = indicatorPos.down();
+                BlockPos belowIndicator = indicatorPos.below();
                 BlockState belowState = world.getBlockState(belowIndicator);
                 if (belowState.getBlock().equals(ghostUsedBlock) || belowState.getBlock().equals(unseatedBlock)) {
-                    world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+                    world.setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
                 }
             }
         }
@@ -490,65 +488,65 @@ public class VotingManager {
         // Travelers only go to botb_traveler team when called for exile (for purple glow color)
         // Reveal teams (rev_*) from the previous game-end are also cleared here.
         Scoreboard scoreboard = server.getScoreboard();
-        Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+        PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
         if (playerTeam == null) {
-            playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
-            playerTeam.setColor(Formatting.WHITE);
+            playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
+            playerTeam.setColor(ChatFormatting.WHITE);
         }
-        Team mfeTeam = scoreboard.getTeam(TeamManager.MFE_TEAM);
-        Team travelerTeam = scoreboard.getTeam(TeamManager.TRAVELER_TEAM);
-        Team[] revealTeams = new Team[
+        PlayerTeam mfeTeam = scoreboard.getPlayerTeam(TeamManager.MFE_TEAM);
+        PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
+        PlayerTeam[] revealTeams = new PlayerTeam[
                 TeamManager.REVEAL_TEAM_NAMES.length];
         for (int i = 0; i < revealTeams.length; i++) {
-            revealTeams[i] = scoreboard.getTeam(TeamManager.REVEAL_TEAM_NAMES[i]);
+            revealTeams[i] = scoreboard.getPlayerTeam(TeamManager.REVEAL_TEAM_NAMES[i]);
         }
 
         // Add all seated players to botb_player team
         for (UUID playerUuid : ServerState.PLAYER_SEAT_NUMBERS.keySet()) {
-            ServerPlayerEntity player = server.getPlayerManager().getPlayer(playerUuid);
+            ServerPlayer player = server.getPlayerList().getPlayer(playerUuid);
             if (player != null) {
                 String playerName = player.getGameProfile().getName();
 
                 // Remove from MFE team if present
-                if (mfeTeam != null && scoreboard.getScoreHolderTeam(playerName) == mfeTeam) {
-                    scoreboard.removeScoreHolderFromTeam(playerName, mfeTeam);
+                if (mfeTeam != null && scoreboard.getPlayersTeam(playerName) == mfeTeam) {
+                    scoreboard.removePlayerFromTeam(playerName, mfeTeam);
                 }
                 // Remove from traveler team if present
-                if (travelerTeam != null && scoreboard.getScoreHolderTeam(playerName) == travelerTeam) {
-                    scoreboard.removeScoreHolderFromTeam(playerName, travelerTeam);
+                if (travelerTeam != null && scoreboard.getPlayersTeam(playerName) == travelerTeam) {
+                    scoreboard.removePlayerFromTeam(playerName, travelerTeam);
                 }
                 // Remove from any reveal team if present
-                for (Team revealTeam : revealTeams) {
-                    if (revealTeam != null && scoreboard.getScoreHolderTeam(playerName) == revealTeam) {
-                        scoreboard.removeScoreHolderFromTeam(playerName, revealTeam);
+                for (PlayerTeam revealTeam : revealTeams) {
+                    if (revealTeam != null && scoreboard.getPlayersTeam(playerName) == revealTeam) {
+                        scoreboard.removePlayerFromTeam(playerName, revealTeam);
                     }
                 }
                 // Add all players to botb_player team
-                scoreboard.addScoreHolderToTeam(playerName, playerTeam);
+                scoreboard.addPlayerToTeam(playerName, playerTeam);
             }
         }
 
         // Also add all operators (storytellers) to the player team
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            if (player.hasPermissionLevel(2)) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.hasPermissions(2)) {
                 String playerName = player.getGameProfile().getName();
                 // Remove from MFE team if present
-                if (mfeTeam != null && scoreboard.getScoreHolderTeam(playerName) == mfeTeam) {
-                    scoreboard.removeScoreHolderFromTeam(playerName, mfeTeam);
+                if (mfeTeam != null && scoreboard.getPlayersTeam(playerName) == mfeTeam) {
+                    scoreboard.removePlayerFromTeam(playerName, mfeTeam);
                 }
                 // Remove from any reveal team if present
-                for (Team revealTeam : revealTeams) {
-                    if (revealTeam != null && scoreboard.getScoreHolderTeam(playerName) == revealTeam) {
-                        scoreboard.removeScoreHolderFromTeam(playerName, revealTeam);
+                for (PlayerTeam revealTeam : revealTeams) {
+                    if (revealTeam != null && scoreboard.getPlayersTeam(playerName) == revealTeam) {
+                        scoreboard.removePlayerFromTeam(playerName, revealTeam);
                     }
                 }
-                scoreboard.addScoreHolderToTeam(playerName, playerTeam);
+                scoreboard.addPlayerToTeam(playerName, playerTeam);
             }
         }
 
         // Notify clients to clear the AFTER_END floating-role-icon latch so it disappears
         // together with the scoreboard reveal-team wipe above.
-        for (ServerPlayerEntity broadcastTarget : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer broadcastTarget : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(broadcastTarget,
                     new ResetRevealActiveS2CPayload());
         }
@@ -559,7 +557,7 @@ public class VotingManager {
         // Broadcast empty lever states to all clients
         LeverStateUpdateS2CPayload payload = new LeverStateUpdateS2CPayload(new HashMap<>(),
                 new HashSet<>(), new HashSet<>());
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
     }
@@ -573,7 +571,7 @@ public class VotingManager {
      *   Voudon-blocked state from a prior assignment (e.g. role reassigned mid-day).
      */
     public static void applyVoudonModeIndicators(MinecraftServer server, Set<UUID> deadPlayers, UUID voudonPlayer) {
-        World world = server.getOverworld();
+        Level world = server.overworld();
         Block normalOffBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_OFF);
         Block ghostUsedBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
         Set<Integer> seatsWithGhostBlocks = new HashSet<>();
@@ -597,18 +595,18 @@ public class VotingManager {
                 // First, check if they had a ghost used block (used ghost vote before Voudon mode)
                 BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
                 if (indicatorPos != null) {
-                    BlockPos belowIndicator = indicatorPos.down();
+                    BlockPos belowIndicator = indicatorPos.below();
                     BlockState blockState = world.getBlockState(belowIndicator);
 
                     if (blockState.getBlock().equals(ghostUsedBlock)) {
                         // Save this seat for later restoration
                         seatsWithGhostBlocks.add(seat);
                         // Remove the ghost used block temporarily
-                        world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+                        world.setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
                     }
 
                     // Set normal OFF indicator (they vote like alive players in Voudon mode)
-                    world.setBlockState(indicatorPos, normalOffBlock.getDefaultState());
+                    world.setBlockAndUpdate(indicatorPos, normalOffBlock.defaultBlockState());
                 }
             } else {
                 // Alive Voudon: clean up any stale Voudon-blocked state from a prior
@@ -619,10 +617,10 @@ public class VotingManager {
                 DaytimeState.removeVoudonBlockedPlayer(playerUuid);
                 BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
                 if (indicatorPos != null) {
-                    BlockPos belowIndicator = indicatorPos.down();
+                    BlockPos belowIndicator = indicatorPos.below();
                     if (world.getBlockState(belowIndicator).getBlock().equals(ghostUsedBlock)) {
-                        world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
-                        world.setBlockState(indicatorPos, normalOffBlock.getDefaultState());
+                        world.setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
+                        world.setBlockAndUpdate(indicatorPos, normalOffBlock.defaultBlockState());
                     }
                 }
             }
@@ -666,7 +664,7 @@ public class VotingManager {
                 // Banshee with ability votes like a living player, so keep the normal OFF block
                 BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
                 if (indicatorPos != null) {
-                    server.getOverworld().setBlockState(indicatorPos, normalOffBlock.getDefaultState());
+                    server.overworld().setBlockAndUpdate(indicatorPos, normalOffBlock.defaultBlockState());
                 }
             } else if (isDead && hasUsedGhostVote) {
                 // Restore ghost used block for dead player with used ghost vote
@@ -675,7 +673,7 @@ public class VotingManager {
                 // Dead player without used ghost vote - show ghost OFF
                 BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
                 if (indicatorPos != null) {
-                    server.getOverworld().setBlockState(indicatorPos, ghostOffBlock.getDefaultState());
+                    server.overworld().setBlockAndUpdate(indicatorPos, ghostOffBlock.defaultBlockState());
                 }
             }
             // Alive players from this set shouldn't happen, but if so, leave as-is
@@ -700,7 +698,7 @@ public class VotingManager {
                     // Already has ghost used block, just ensure indicator is AIR
                     BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
                     if (indicatorPos != null) {
-                        server.getOverworld().setBlockState(indicatorPos, Blocks.AIR.getDefaultState());
+                        server.overworld().setBlockAndUpdate(indicatorPos, Blocks.AIR.defaultBlockState());
                     }
                 } else {
                     // Show ghost off indicator (dead, can still vote)
@@ -773,8 +771,8 @@ public class VotingManager {
         Set<UUID> bansheePlayers = DaytimeState.getBansheeDoubleVotePlayers();
         Set<UUID> bansheeDoubleActivePlayers = DaytimeState.getBansheeDoubleVoteActivePlayers();
 
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID playerUuid = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerUuid = player.getUUID();
             int playerIndex = votingOrder.indexOf(playerUuid);
             int secondsUntilLock = 0;
             int votePosition = playerIndex + 1; // Convert from 0-based to 1-based (1st, 2nd, 3rd, etc.)
@@ -925,8 +923,8 @@ public class VotingManager {
             // If no lever state yet, read it from the world
             BlockPos switchPos = ServerConfig.SEAT_SWITCH_POSITIONS.get(seat);
             if (switchPos != null) {
-                BlockState state = server.getOverworld().getBlockState(switchPos);
-                leverState = state.getBlock() instanceof LeverBlock && state.get(LeverBlock.POWERED);
+                BlockState state = server.overworld().getBlockState(switchPos);
+                leverState = state.getBlock() instanceof LeverBlock && state.getValue(LeverBlock.POWERED);
                 DaytimeState.setLeverState(playerUuid, leverState);
             } else {
                 leverState = false;
@@ -945,15 +943,15 @@ public class VotingManager {
      * Event handler for block usage. Detects lever flips at configured vote positions.
      * Call this from UseBlockCallback registration.
      */
-    public static ActionResult onBlockUse(World world, BlockPos pos, BlockState state) {
+    public static InteractionResult onBlockUse(Level world, BlockPos pos, BlockState state) {
         // Check if this is a lever
         if (!(state.getBlock() instanceof LeverBlock)) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         // Only process on server side
-        if (world.isClient()) {
-            return ActionResult.PASS;
+        if (world.isClientSide()) {
+            return InteractionResult.PASS;
         }
 
         // Find which seat this lever belongs to (if any)
@@ -967,7 +965,7 @@ public class VotingManager {
 
         // Not a vote lever
         if (matchingSeat == null) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         // Find the player assigned to this seat
@@ -980,7 +978,7 @@ public class VotingManager {
         }
 
         if (playerUuid == null) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
         // Organ Grinder mute: while an OG vote is active, blindness is applied
@@ -991,9 +989,9 @@ public class VotingManager {
         // window blindness is applied: an active vote in OG mode.
         boolean ogMute = DaytimeState.isVoteInProgress() && DaytimeState.isOrganGrinderMode();
         if (ogMute) {
-            world.setBlockState(pos, state.cycle(LeverBlock.POWERED), Block.NOTIFY_ALL);
+            world.setBlock(pos, state.cycle(LeverBlock.POWERED), Block.UPDATE_ALL);
         }
-        ActionResult passResult = ogMute ? ActionResult.SUCCESS : ActionResult.PASS;
+        InteractionResult passResult = ogMute ? InteractionResult.SUCCESS : InteractionResult.PASS;
 
         // Skip processing if this player's vote is already locked. PASS lets
         // the lever physically toggle (so the player sees their click register)
@@ -1062,7 +1060,7 @@ public class VotingManager {
 
             // Read the NEW lever state (after the flip)
             BlockState newState = world.getBlockState(pos);
-            boolean isOn = newState.getBlock() instanceof LeverBlock && newState.get(LeverBlock.POWERED);
+            boolean isOn = newState.getBlock() instanceof LeverBlock && newState.getValue(LeverBlock.POWERED);
 
             // Banshee double vote toggle: when lever turns ON, potentially toggle between 1 and 2 votes
             // First ON keeps default (2 votes), subsequent OFF→ON transitions toggle
@@ -1135,26 +1133,26 @@ public class VotingManager {
         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
         if (indicatorPos == null) return;
 
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         // Set indicator to specified block or AIR
         if (indicatorBlock != null) {
-            world.setBlockState(indicatorPos, indicatorBlock.getDefaultState());
+            world.setBlockAndUpdate(indicatorPos, indicatorBlock.defaultBlockState());
         } else {
-            world.setBlockState(indicatorPos, Blocks.AIR.getDefaultState());
+            world.setBlockAndUpdate(indicatorPos, Blocks.AIR.defaultBlockState());
         }
 
         // Write the retracted piston first so an extended head in the middle slot vanishes
         // on its own instead of the base being broken and dropped when the head is overwritten
-        BlockPos belowIndicator = indicatorPos.down();
-        BlockPos pistonPos = belowIndicator.down();
-        BlockState pistonState = Blocks.STICKY_PISTON.getDefaultState()
-                .with(PistonBlock.FACING, Direction.UP);
-        world.setBlockState(pistonPos, pistonState);
+        BlockPos belowIndicator = indicatorPos.below();
+        BlockPos pistonPos = belowIndicator.below();
+        BlockState pistonState = Blocks.STICKY_PISTON.defaultBlockState()
+                .setValue(PistonBaseBlock.FACING, Direction.UP);
+        world.setBlockAndUpdate(pistonPos, pistonState);
 
         // Place ghost used block below indicator
         Block ghostUsedBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
-        world.setBlockState(belowIndicator, ghostUsedBlock.getDefaultState());
+        world.setBlockAndUpdate(belowIndicator, ghostUsedBlock.defaultBlockState());
     }
 
     /**
@@ -1170,19 +1168,19 @@ public class VotingManager {
         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
         if (indicatorPos == null) return;
 
-        World world = server.getOverworld();
+        Level world = server.overworld();
 
         // Remove the ghost used block (set to AIR)
-        BlockPos belowIndicator = indicatorPos.down();
+        BlockPos belowIndicator = indicatorPos.below();
         Block ghostUsedBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
         BlockState belowState = world.getBlockState(belowIndicator);
         if (belowState.getBlock().equals(ghostUsedBlock)) {
-            world.setBlockState(belowIndicator, Blocks.AIR.getDefaultState());
+            world.setBlockAndUpdate(belowIndicator, Blocks.AIR.defaultBlockState());
         }
 
         // Set the indicator to the new block
         if (newIndicatorBlock != null) {
-            world.setBlockState(indicatorPos, newIndicatorBlock.getDefaultState());
+            world.setBlockAndUpdate(indicatorPos, newIndicatorBlock.defaultBlockState());
         }
     }
 
@@ -1197,8 +1195,8 @@ public class VotingManager {
         BlockPos indicatorPos = ServerConfig.SEAT_VOTE_INDICATOR_POSITIONS.get(seat);
         if (indicatorPos == null) return false;
 
-        World world = server.getOverworld();
-        BlockPos belowIndicator = indicatorPos.down();
+        Level world = server.overworld();
+        BlockPos belowIndicator = indicatorPos.below();
         Block ghostUsedBlock = getBlockFromString(ServerConfig.VOTE_INDICATOR_BLOCK_GHOST_USED);
         BlockState belowState = world.getBlockState(belowIndicator);
         return belowState.getBlock().equals(ghostUsedBlock);

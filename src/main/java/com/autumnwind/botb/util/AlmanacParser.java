@@ -1,8 +1,6 @@
 package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.text.Text;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -17,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import net.minecraft.network.chat.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
@@ -32,7 +31,7 @@ public class AlmanacParser {
     private static final Map<String, CompletableFuture<AlmanacData>> pendingFetches = new ConcurrentHashMap<>();
 
     // Track the last error for user feedback
-    private static volatile Text lastError = null;
+    private static volatile Component lastError = null;
 
     // Patterns for extracting content
     private static final Pattern PAGE_PATTERN = Pattern.compile(
@@ -91,31 +90,31 @@ public class AlmanacParser {
                 lastError = null;
                 String html = fetchHtml(almanacUrl);
                 if (html == null || html.isEmpty()) {
-                    lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.empty");
+                    lastError = Component.translatable("gui.blood-on-the-blocktower.almanac.error.empty");
                     BloodOnTheBlocktower.LOGGER.warn("Almanac returned empty content from {}", almanacUrl);
                     return AlmanacData.empty();
                 }
                 AlmanacData data = parseHtml(html);
                 if (!data.hasScriptData() && (data.roleData() == null || data.roleData().isEmpty())) {
-                    lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.unexpected_format");
+                    lastError = Component.translatable("gui.blood-on-the-blocktower.almanac.error.unexpected_format");
                     BloodOnTheBlocktower.LOGGER.warn("Failed to parse any content from almanac at {}", almanacUrl);
                 }
                 cache.put(almanacUrl, data);
                 return data;
             } catch (UnknownHostException e) {
-                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.unreachable");
+                lastError = Component.translatable("gui.blood-on-the-blocktower.almanac.error.unreachable");
                 BloodOnTheBlocktower.LOGGER.warn("Failed to fetch almanac from {} - unknown host: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } catch (SocketTimeoutException e) {
-                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.timeout");
+                lastError = Component.translatable("gui.blood-on-the-blocktower.almanac.error.timeout");
                 BloodOnTheBlocktower.LOGGER.warn("Timeout fetching almanac from {}: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } catch (IOException e) {
-                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.network", e.getMessage());
+                lastError = Component.translatable("gui.blood-on-the-blocktower.almanac.error.network", e.getMessage());
                 BloodOnTheBlocktower.LOGGER.warn("IO error fetching almanac from {}: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } catch (Exception e) {
-                lastError = Text.translatable("gui.blood-on-the-blocktower.almanac.error.generic", e.getMessage());
+                lastError = Component.translatable("gui.blood-on-the-blocktower.almanac.error.generic", e.getMessage());
                 BloodOnTheBlocktower.LOGGER.warn("Failed to fetch almanac from {}: {}", almanacUrl, e.getMessage());
                 return AlmanacData.empty();
             } finally {
@@ -192,7 +191,7 @@ public class AlmanacParser {
     /**
      * Get the last error message, if any.
      */
-    public static Text getLastError() {
+    public static Component getLastError() {
         return lastError;
     }
 

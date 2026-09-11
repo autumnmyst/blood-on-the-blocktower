@@ -12,13 +12,13 @@ import com.autumnwind.botb.util.Script;
 import com.autumnwind.botb.world.VoteIndicators;
 import java.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.item.ItemStack;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import com.autumnwind.botb.util.ServerCommands;
 import com.autumnwind.botb.world.TeamManager;
 
@@ -29,7 +29,7 @@ final class RoleHandlers {
 
     static void register() {
         ModPackets.registerGuarded(AssignRolesC2SPayload.ID, (payload, context) -> {
-            if (context.player().hasPermissionLevel(2)) {
+            if (context.player().hasPermissions(2)) {
                 Map<UUID, PendingRoleAssignment> pendingRoles = payload.roles();
                 int activePlayerCount = payload.activePlayerCount();
                 Map<UUID, Integer> seatNumbers = payload.seatNumbers();
@@ -55,7 +55,7 @@ final class RoleHandlers {
                 Set<UUID> playersToUnassign = previouslyAssignedPlayers;
 
                 playersToUnassign.forEach(uuid -> {
-                    ServerPlayerEntity player = context.server().getPlayerManager().getPlayer(uuid);
+                    ServerPlayer player = context.server().getPlayerList().getPlayer(uuid);
                     if (player != null) {
                         // NO_ROLE clears their role, and carries the new active player count.
                         ServerPlayNetworking.send(player, SendRoleS2CPayload.ofRole(Role.NO_ROLE, true, activePlayerCount, travelerCount, false));
@@ -71,7 +71,7 @@ final class RoleHandlers {
 
                 payload.script().ifPresent(s -> {
                     SendScriptS2CPayload scriptPayload = new SendScriptS2CPayload(s);
-                    for (ServerPlayerEntity player : context.server().getPlayerManager().getPlayerList()) {
+                    for (ServerPlayer player : context.server().getPlayerList().getPlayers()) {
                         ServerPlayNetworking.send(player, scriptPayload);
                     }
                     // Script and Grimoire items are handed out separately, by the Storyteller
@@ -124,7 +124,7 @@ final class RoleHandlers {
 
                 // Broadcast seat numbers to all players
                 SendSeatsS2CPayload seatsPayload = new SendSeatsS2CPayload(seatNumbers);
-                for (ServerPlayerEntity player : context.server().getPlayerManager().getPlayerList()) {
+                for (ServerPlayer player : context.server().getPlayerList().getPlayers()) {
                     ServerPlayNetworking.send(player, seatsPayload);
                 }
 
@@ -134,26 +134,26 @@ final class RoleHandlers {
                 // Also add all assigned players and the storyteller to botb_player team for nametag hiding
                 // Travelers only go to botb_traveler team when called for exile (for purple glow color)
                 Scoreboard scoreboard = context.server().getScoreboard();
-                Team playerTeam = scoreboard.getTeam(TeamManager.PLAYER_TEAM);
+                PlayerTeam playerTeam = scoreboard.getPlayerTeam(TeamManager.PLAYER_TEAM);
                 if (playerTeam == null) {
-                    playerTeam = scoreboard.addTeam(TeamManager.PLAYER_TEAM);
+                    playerTeam = scoreboard.addPlayerTeam(TeamManager.PLAYER_TEAM);
                 }
-                playerTeam.setColor(Formatting.WHITE);
+                playerTeam.setColor(ChatFormatting.WHITE);
 
                 // Create traveler team (purple) - used only during exile calls for purple glow
-                Team travelerTeam = scoreboard.getTeam(TeamManager.TRAVELER_TEAM);
+                PlayerTeam travelerTeam = scoreboard.getPlayerTeam(TeamManager.TRAVELER_TEAM);
                 if (travelerTeam == null) {
-                    travelerTeam = scoreboard.addTeam(TeamManager.TRAVELER_TEAM);
+                    travelerTeam = scoreboard.addPlayerTeam(TeamManager.TRAVELER_TEAM);
                 }
-                travelerTeam.setColor(Formatting.LIGHT_PURPLE);
+                travelerTeam.setColor(ChatFormatting.LIGHT_PURPLE);
                 // Nametag visibility is set to NEVER at Dusk, ALWAYS at Dawn (both teams)
 
                 // Add the storyteller to the player team
-                scoreboard.addScoreHolderToTeam(context.player().getGameProfile().getName(), playerTeam);
+                scoreboard.addPlayerToTeam(context.player().getGameProfile().getName(), playerTeam);
 
-                final Team finalPlayerTeam = playerTeam;
+                final PlayerTeam finalPlayerTeam = playerTeam;
                 pendingRoles.forEach((uuid, assignment) -> {
-                    ServerPlayerEntity player = context.server().getPlayerManager().getPlayer(uuid);
+                    ServerPlayer player = context.server().getPlayerList().getPlayer(uuid);
                     if (player != null) {
                         // Whatever the storyteller decided this player should be told, including
                         // any Tor / Drunk / Lunatic substitution, which is applied client-side.
@@ -161,18 +161,18 @@ final class RoleHandlers {
 
                         // Add all players to botb_player team
                         // Travelers only go to botb_traveler team when called for exile (for purple glow color)
-                        scoreboard.addScoreHolderToTeam(player.getGameProfile().getName(), finalPlayerTeam);
+                        scoreboard.addPlayerToTeam(player.getGameProfile().getName(), finalPlayerTeam);
 
                         // Seat command and spawnpoint only when the seat is new or changed
                         Integer seatNumber = seatNumbers.get(uuid);
                         if (seatNumber != null && !seatNumber.equals(previousSeats.get(uuid))) {
                             String seatCommand = ServerConfig.SEAT_ASSIGNMENT_COMMANDS.get(seatNumber);
                             if (seatCommand != null && !seatCommand.isEmpty()) {
-                                ServerCommands.runAs(context.server(), player.getUuidAsString(), seatCommand);
+                                ServerCommands.runAs(context.server(), player.getStringUUID(), seatCommand);
                             }
                             BlockPos seatHome = ServerConfig.SEAT_HOMES.get(seatNumber);
                             if (seatHome != null) {
-                                ServerCommands.runAs(context.server(), player.getUuidAsString(),
+                                ServerCommands.runAs(context.server(), player.getStringUUID(),
                                         String.format("spawnpoint @s %d %d %d", seatHome.getX(), seatHome.getY(), seatHome.getZ()));
                             }
                         }
@@ -205,9 +205,9 @@ final class RoleHandlers {
                             // The traveler already got their full role via SendRoleS2CPayload
                             SendTravelerUpdateS2CPayload travelerPayload =
                                     new SendTravelerUpdateS2CPayload(travelerUuid, travelerBroadcast);
-                            for (ServerPlayerEntity recipient : context.server().getPlayerManager().getPlayerList()) {
-                                boolean isTraveler = recipient.getUuid().equals(travelerUuid);
-                                boolean isOperator = recipient.hasPermissionLevel(2);
+                            for (ServerPlayer recipient : context.server().getPlayerList().getPlayers()) {
+                                boolean isTraveler = recipient.getUUID().equals(travelerUuid);
+                                boolean isOperator = recipient.hasPermissions(2);
                                 if (!isTraveler && !isOperator) {
                                     ServerPlayNetworking.send(recipient, travelerPayload);
                                 }
@@ -220,13 +220,13 @@ final class RoleHandlers {
 
         // Targeted Send Roles: the full send for one player and server state updated for only them
         ModPackets.registerGuarded(SendRolesToPlayerC2SPayload.ID, (payload, context) -> {
-            if (!context.player().hasPermissionLevel(2)) {
+            if (!context.player().hasPermissions(2)) {
                 return;
             }
             UUID targetUuid = payload.targetPlayer();
-            ServerPlayerEntity target = context.server().getPlayerManager().getPlayer(targetUuid);
+            ServerPlayer target = context.server().getPlayerList().getPlayer(targetUuid);
             if (target == null) {
-                context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.cannot_send_offline").formatted(Formatting.RED), true);
+                context.player().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.roles.cannot_send_offline").withStyle(ChatFormatting.RED), true);
                 return;
             }
 
@@ -265,7 +265,7 @@ final class RoleHandlers {
                 DaytimeState.removeTraveler(targetUuid);
                 ServerPlayNetworking.send(target, SendRoleS2CPayload.ofRole(Role.NO_ROLE, true, activePlayerCount, travelerCount, false));
                 MadnessSync.sendMadnessesToPlayer(context.server(), targetUuid, payload.reminders(), pendingRoles);
-                context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.cleared_role", target.getGameProfile().getName()).formatted(Formatting.YELLOW), true);
+                context.player().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.roles.cleared_role", target.getGameProfile().getName()).withStyle(ChatFormatting.YELLOW), true);
                 return;
             }
 
@@ -279,27 +279,27 @@ final class RoleHandlers {
             ServerPlayNetworking.send(target, SendRoleS2CPayload.ofAssignment(assignment, activePlayerCount, travelerCount, false));
 
             MadnessSync.sendMadnessesToPlayer(context.server(), targetUuid, payload.reminders(), pendingRoles);
-            context.player().sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.sent_roles", target.getGameProfile().getName()).formatted(Formatting.GREEN), true);
+            context.player().displayClientMessage(Component.translatable("message.blood-on-the-blocktower.roles.sent_roles", target.getGameProfile().getName()).withStyle(ChatFormatting.GREEN), true);
         });
 
         ModPackets.registerGuarded(DistributeItemsC2SPayload.ID, (payload, context) -> {
-            ServerPlayerEntity player = context.player();
-            if (player.hasPermissionLevel(2)) {
+            ServerPlayer player = context.player();
+            if (player.hasPermissions(2)) {
                 // Iterate the seat map the storyteller actually sees (carried in the payload),
                 // not ServerState, since that map is only populated after Send Roles.
                 int itemsGiven = 0;
                 for (Map.Entry<UUID, Integer> entry : payload.seatNumbers().entrySet()) {
                     if (entry.getValue() > 0) {
-                        ServerPlayerEntity seatedPlayer = context.server().getPlayerManager().getPlayer(entry.getKey());
+                        ServerPlayer seatedPlayer = context.server().getPlayerList().getPlayer(entry.getKey());
                         if (seatedPlayer != null) {
                             // Give Script item if player doesn't have one
                             if (!ModPackets.playerHasItem(seatedPlayer, ModItems.SCRIPT)) {
-                                seatedPlayer.giveItemStack(new ItemStack(ModItems.SCRIPT));
+                                seatedPlayer.addItem(new ItemStack(ModItems.SCRIPT));
                                 itemsGiven++;
                             }
                             // Give Grimoire item if player doesn't have one
                             if (!ModPackets.playerHasItem(seatedPlayer, ModItems.GRIMOIRE)) {
-                                seatedPlayer.giveItemStack(new ItemStack(ModItems.GRIMOIRE));
+                                seatedPlayer.addItem(new ItemStack(ModItems.GRIMOIRE));
                                 itemsGiven++;
                             }
                         }
@@ -307,9 +307,9 @@ final class RoleHandlers {
                 }
                 // Send feedback to storyteller
                 if (itemsGiven > 0) {
-                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.distributed_items", itemsGiven).formatted(Formatting.GREEN), false);
+                    player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.roles.distributed_items", itemsGiven).withStyle(ChatFormatting.GREEN), false);
                 } else {
-                    player.sendMessage(Text.translatable("message.blood-on-the-blocktower.roles.all_have_items").formatted(Formatting.YELLOW), false);
+                    player.displayClientMessage(Component.translatable("message.blood-on-the-blocktower.roles.all_have_items").withStyle(ChatFormatting.YELLOW), false);
                 }
             }
         });

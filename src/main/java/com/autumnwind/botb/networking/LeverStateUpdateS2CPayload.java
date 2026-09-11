@@ -1,17 +1,16 @@
 package com.autumnwind.botb.networking;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * Server-to-Client payload for updating lever states during nomination phase (before vote starts).
@@ -21,20 +20,20 @@ public record LeverStateUpdateS2CPayload(
         Map<UUID, Boolean> leverStates,
         Set<UUID> bansheePlayers,
         Set<UUID> bansheeDoubleActivePlayers
-) implements CustomPayload {
-    public static final CustomPayload.Id<LeverStateUpdateS2CPayload> ID =
-            new CustomPayload.Id<>(Identifier.of(BloodOnTheBlocktower.MOD_ID, "lever_state_update"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<LeverStateUpdateS2CPayload> ID =
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(BloodOnTheBlocktower.MOD_ID, "lever_state_update"));
 
-    public static final PacketCodec<RegistryByteBuf, LeverStateUpdateS2CPayload> CODEC = PacketCodec.of(
+    public static final StreamCodec<RegistryFriendlyByteBuf, LeverStateUpdateS2CPayload> CODEC = StreamCodec.ofMember(
             LeverStateUpdateS2CPayload::write,
             LeverStateUpdateS2CPayload::read
     );
 
-    private static void write(LeverStateUpdateS2CPayload payload, RegistryByteBuf buf) {
+    private static void write(LeverStateUpdateS2CPayload payload, RegistryFriendlyByteBuf buf) {
         // Write lever states map
         buf.writeInt(payload.leverStates.size());
         for (Map.Entry<UUID, Boolean> entry : payload.leverStates.entrySet()) {
-            Uuids.PACKET_CODEC.encode(buf, entry.getKey());
+            UUIDUtil.STREAM_CODEC.encode(buf, entry.getKey());
             buf.writeBoolean(entry.getValue());
         }
 
@@ -42,12 +41,12 @@ public record LeverStateUpdateS2CPayload(
         writeUuidSet(buf, payload.bansheeDoubleActivePlayers);
     }
 
-    private static LeverStateUpdateS2CPayload read(RegistryByteBuf buf) {
+    private static LeverStateUpdateS2CPayload read(RegistryFriendlyByteBuf buf) {
         // Read lever states map
         int leverStatesSize = buf.readInt();
         Map<UUID, Boolean> leverStates = new HashMap<>();
         for (int i = 0; i < leverStatesSize; i++) {
-            UUID uuid = Uuids.PACKET_CODEC.decode(buf);
+            UUID uuid = UUIDUtil.STREAM_CODEC.decode(buf);
             boolean value = buf.readBoolean();
             leverStates.put(uuid, value);
         }
@@ -58,24 +57,24 @@ public record LeverStateUpdateS2CPayload(
         return new LeverStateUpdateS2CPayload(leverStates, bansheePlayers, bansheeDoubleActivePlayers);
     }
 
-    static void writeUuidSet(RegistryByteBuf buf, Set<UUID> set) {
+    static void writeUuidSet(RegistryFriendlyByteBuf buf, Set<UUID> set) {
         buf.writeInt(set.size());
         for (UUID uuid : set) {
-            Uuids.PACKET_CODEC.encode(buf, uuid);
+            UUIDUtil.STREAM_CODEC.encode(buf, uuid);
         }
     }
 
-    static Set<UUID> readUuidSet(RegistryByteBuf buf) {
+    static Set<UUID> readUuidSet(RegistryFriendlyByteBuf buf) {
         int size = buf.readInt();
         Set<UUID> set = new HashSet<>();
         for (int i = 0; i < size; i++) {
-            set.add(Uuids.PACKET_CODEC.decode(buf));
+            set.add(UUIDUtil.STREAM_CODEC.decode(buf));
         }
         return set;
     }
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

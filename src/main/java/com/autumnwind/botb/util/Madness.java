@@ -1,8 +1,7 @@
 package com.autumnwind.botb.util;
 
-import net.minecraft.text.Text;
-
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
 
 /**
  * Represents an active madness condition on a player.
@@ -33,7 +32,7 @@ public sealed interface Madness permits Madness.PixieMadness, Madness.HarpyMadne
         }
 
         public String getPlayerText() {
-            return Text.translatable("hud.blood-on-the-blocktower.madness.player.pixie", townsfolkRole.getDisplayName()).getString();
+            return Component.translatable("hud.blood-on-the-blocktower.madness.player.pixie", townsfolkRole.getDisplayName()).getString();
         }
     }
 
@@ -48,7 +47,7 @@ public sealed interface Madness permits Madness.PixieMadness, Madness.HarpyMadne
         }
 
         public String getPlayerText(String targetPlayerName) {
-            return Text.translatable("hud.blood-on-the-blocktower.madness.player.harpy", targetPlayerName).getString();
+            return Component.translatable("hud.blood-on-the-blocktower.madness.player.harpy", targetPlayerName).getString();
         }
     }
 
@@ -63,7 +62,7 @@ public sealed interface Madness permits Madness.PixieMadness, Madness.HarpyMadne
         }
 
         public String getPlayerText() {
-            return Text.translatable("hud.blood-on-the-blocktower.madness.player.cerenovus", madRole.getDisplayName()).getString();
+            return Component.translatable("hud.blood-on-the-blocktower.madness.player.cerenovus", madRole.getDisplayName()).getString();
         }
     }
 

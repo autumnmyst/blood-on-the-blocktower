@@ -4,22 +4,21 @@ import com.autumnwind.botb.config.ServerConfig;
 import com.autumnwind.botb.networking.PlaySoundS2CPayload;
 import com.autumnwind.botb.states.ServerState;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import com.autumnwind.botb.networking.SendDeathStatusS2CPayload;
-import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
-import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
-import net.minecraft.world.GameMode;
 import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.util.ServerCommands;
 
@@ -42,7 +41,7 @@ public class ExecutionManager {
     public static void executePlayer(MinecraftServer server, UUID player, boolean butcherAliveWithAbility, UUID butcherUuid) {
         if (player == null) return;
 
-        ServerPlayerEntity serverPlayer = server.getPlayerManager().getPlayer(player);
+        ServerPlayer serverPlayer = server.getPlayerList().getPlayer(player);
         if (serverPlayer == null) return;
 
         String playerName = serverPlayer.getName().getString();
@@ -56,24 +55,24 @@ public class ExecutionManager {
         if (executionPos != null) {
             // For unseated players, set gamemode to adventure before teleporting
             if (isUnseatedPlayer) {
-                serverPlayer.changeGameMode(GameMode.ADVENTURE);
+                serverPlayer.setGameMode(GameType.ADVENTURE);
             }
 
-            serverPlayer.teleport(
-                    server.getOverworld(),
+            serverPlayer.teleportTo(
+                    server.overworld(),
                     executionPos.getX() + 0.5,
                     executionPos.getY(),
                     executionPos.getZ() + 0.5,
-                    serverPlayer.getYaw(),
-                    serverPlayer.getPitch()
+                    serverPlayer.getYRot(),
+                    serverPlayer.getXRot()
             );
         }
 
         // IMMEDIATELY: Spawn anvil at anvil height if configured (> 0)
         if (ServerConfig.ANVIL_HEIGHT > 0 && executionPos != null) {
-            World world = server.getOverworld();
-            BlockPos anvilPos = executionPos.up(ServerConfig.ANVIL_HEIGHT);
-            world.setBlockState(anvilPos, Blocks.ANVIL.getDefaultState());
+            Level world = server.overworld();
+            BlockPos anvilPos = executionPos.above(ServerConfig.ANVIL_HEIGHT);
+            world.setBlockAndUpdate(anvilPos, Blocks.ANVIL.defaultBlockState());
         }
 
         // IMMEDIATELY: Start locking player in position if enabled
@@ -105,7 +104,7 @@ public class ExecutionManager {
                     }
 
                     server.execute(() -> {
-                        ServerPlayerEntity p = server.getPlayerManager().getPlayer(player);
+                        ServerPlayer p = server.getPlayerList().getPlayer(player);
                         if (p == null) return;
 
                         // Check if player moved too far from execution position (more than 0.5 blocks)
@@ -116,13 +115,13 @@ public class ExecutionManager {
 
                         if (distanceSquared > 0.25) { // 0.5 blocks squared
                             // Teleport player back to execution position
-                            p.teleport(
-                                    server.getOverworld(),
+                            p.teleportTo(
+                                    server.overworld(),
                                     lockPos.getX() + 0.5,
                                     lockPos.getY(),
                                     lockPos.getZ() + 0.5,
-                                    p.getYaw(),
-                                    p.getPitch()
+                                    p.getYRot(),
+                                    p.getXRot()
                             );
                         }
                     });
@@ -135,7 +134,7 @@ public class ExecutionManager {
             String executionCommand = ServerConfig.EXECUTION_COMMANDS.get(seat);
             if (executionCommand != null && !executionCommand.isEmpty()) {
                 // Execute command with server permissions targeting the player
-                ServerCommands.runAs(server, serverPlayer.getUuidAsString(), executionCommand);
+                ServerCommands.runAs(server, serverPlayer.getStringUUID(), executionCommand);
             }
         }
 
@@ -187,7 +186,7 @@ public class ExecutionManager {
                 @Override
                 public void run() {
                     server.execute(() -> {
-                        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+                        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                             ServerPlayNetworking.send(p, new PlaySoundS2CPayload(PlaySoundS2CPayload.EXECUTION));
                         }
                     });
@@ -195,14 +194,14 @@ public class ExecutionManager {
             }, ServerConfig.EXECUTION_SOUND_DELAY);
         } else {
             // No delay - play immediately
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 ServerPlayNetworking.send(p, new PlaySoundS2CPayload(PlaySoundS2CPayload.EXECUTION));
             }
         }
 
         // DELAYED: Display execution title and mark as dead after configured delay (using Timer for non-blocking delay)
-        Text titleText = Text.literal(playerName).formatted(Formatting.DARK_RED);
-        Text subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.has_been_executed").formatted(Formatting.DARK_RED);
+        Component titleText = Component.literal(playerName).withStyle(ChatFormatting.DARK_RED);
+        Component subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.has_been_executed").withStyle(ChatFormatting.DARK_RED);
 
         if (ServerConfig.EXECUTION_DEATH_TITLE_DELAY > 0) {
             new Timer().schedule(new TimerTask() {
@@ -222,7 +221,7 @@ public class ExecutionManager {
                         // Broadcast death status to all players (including storyteller)
                         SendDeathStatusS2CPayload deathStatusPayload =
                                 new SendDeathStatusS2CPayload(ServerState.PLAYER_DEATH_STATUS);
-                        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+                        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                             ServerPlayNetworking.send(p, deathStatusPayload);
                         }
 
@@ -233,10 +232,10 @@ public class ExecutionManager {
                         VotingManager.updatePlayerDeathIndicator(server, player);
 
                         // Display title and message
-                        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-                            p.networkHandler.sendPacket(new TitleS2CPacket(titleText));
-                            p.networkHandler.sendPacket(new SubtitleS2CPacket(subtitleText));
-                            p.sendMessage(titleText.copy().append(" ").append(subtitleText), false);
+                        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                            p.connection.send(new ClientboundSetTitleTextPacket(titleText));
+                            p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
+                            p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
                         }
 
                         // Schedule anvil cleanup 1 second after title display
@@ -258,7 +257,7 @@ public class ExecutionManager {
             // Broadcast death status to all players (including storyteller)
             SendDeathStatusS2CPayload deathStatusPayload =
                     new SendDeathStatusS2CPayload(ServerState.PLAYER_DEATH_STATUS);
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 ServerPlayNetworking.send(p, deathStatusPayload);
             }
 
@@ -268,10 +267,10 @@ public class ExecutionManager {
             // Update vote indicator block to reflect death status
             VotingManager.updatePlayerDeathIndicator(server, player);
 
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-                p.networkHandler.sendPacket(new TitleS2CPacket(titleText));
-                p.networkHandler.sendPacket(new SubtitleS2CPacket(subtitleText));
-                p.sendMessage(titleText.copy().append(" ").append(subtitleText), false);
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                p.connection.send(new ClientboundSetTitleTextPacket(titleText));
+                p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
+                p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
             }
 
             // Schedule anvil cleanup 1 second after title display
@@ -301,14 +300,14 @@ public class ExecutionManager {
             @Override
             public void run() {
                 server.execute(() -> {
-                    World world = server.getOverworld();
+                    Level world = server.overworld();
                     // Check execution position and up to 2 blocks above
                     for (int yOffset = 0; yOffset <= 2; yOffset++) {
-                        BlockPos checkPos = executionPos.up(yOffset);
+                        BlockPos checkPos = executionPos.above(yOffset);
                         Block block = world.getBlockState(checkPos).getBlock();
                         // Check for all anvil variants (anvil, chipped_anvil, damaged_anvil)
                         if (block == Blocks.ANVIL || block == Blocks.CHIPPED_ANVIL || block == Blocks.DAMAGED_ANVIL) {
-                            world.setBlockState(checkPos, Blocks.AIR.getDefaultState());
+                            world.setBlockAndUpdate(checkPos, Blocks.AIR.defaultBlockState());
                         }
                     }
                 });
@@ -327,7 +326,7 @@ public class ExecutionManager {
     public static void executePlayerFail(MinecraftServer server, UUID player, boolean butcherAliveWithAbility, UUID butcherUuid) {
         if (player == null) return;
 
-        ServerPlayerEntity serverPlayer = server.getPlayerManager().getPlayer(player);
+        ServerPlayer serverPlayer = server.getPlayerList().getPlayer(player);
         if (serverPlayer == null) return;
 
         String playerName = serverPlayer.getName().getString();
@@ -336,21 +335,21 @@ public class ExecutionManager {
         // IMMEDIATELY: Teleport player to execution position if set
         BlockPos executionPos = ServerConfig.EXECUTION_POSITION;
         if (executionPos != null) {
-            serverPlayer.teleport(
-                    server.getOverworld(),
+            serverPlayer.teleportTo(
+                    server.overworld(),
                     executionPos.getX() + 0.5,
                     executionPos.getY(),
                     executionPos.getZ() + 0.5,
-                    serverPlayer.getYaw(),
-                    serverPlayer.getPitch()
+                    serverPlayer.getYRot(),
+                    serverPlayer.getXRot()
             );
         }
 
         // IMMEDIATELY: Spawn anvil at anvil height if configured (> 0)
         if (ServerConfig.ANVIL_HEIGHT > 0 && executionPos != null) {
-            World world = server.getOverworld();
-            BlockPos anvilPos = executionPos.up(ServerConfig.ANVIL_HEIGHT);
-            world.setBlockState(anvilPos, Blocks.ANVIL.getDefaultState());
+            Level world = server.overworld();
+            BlockPos anvilPos = executionPos.above(ServerConfig.ANVIL_HEIGHT);
+            world.setBlockAndUpdate(anvilPos, Blocks.ANVIL.defaultBlockState());
         }
 
         // IMMEDIATELY: Start locking player in position if enabled
@@ -382,7 +381,7 @@ public class ExecutionManager {
                     }
 
                     server.execute(() -> {
-                        ServerPlayerEntity p = server.getPlayerManager().getPlayer(player);
+                        ServerPlayer p = server.getPlayerList().getPlayer(player);
                         if (p == null) return;
 
                         // Check if player moved too far from execution position (more than 0.5 blocks)
@@ -393,13 +392,13 @@ public class ExecutionManager {
 
                         if (distanceSquared > 0.25) { // 0.5 blocks squared
                             // Teleport player back to execution position
-                            p.teleport(
-                                    server.getOverworld(),
+                            p.teleportTo(
+                                    server.overworld(),
                                     lockPos.getX() + 0.5,
                                     lockPos.getY(),
                                     lockPos.getZ() + 0.5,
-                                    p.getYaw(),
-                                    p.getPitch()
+                                    p.getYRot(),
+                                    p.getXRot()
                             );
                         }
                     });
@@ -412,7 +411,7 @@ public class ExecutionManager {
             String executionCommand = ServerConfig.EXECUTION_COMMANDS.get(seat);
             if (executionCommand != null && !executionCommand.isEmpty()) {
                 // Execute command with server permissions targeting the player
-                ServerCommands.runAs(server, serverPlayer.getUuidAsString(), executionCommand);
+                ServerCommands.runAs(server, serverPlayer.getStringUUID(), executionCommand);
             }
         }
 
@@ -478,7 +477,7 @@ public class ExecutionManager {
                 @Override
                 public void run() {
                     server.execute(() -> {
-                        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+                        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                             ServerPlayNetworking.send(p, new PlaySoundS2CPayload(PlaySoundS2CPayload.EXECUTION_SURVIVED));
                         }
                     });
@@ -486,24 +485,24 @@ public class ExecutionManager {
             }, ServerConfig.EXECUTION_SURVIVED_SOUND_DELAY);
         } else {
             // No delay - play immediately
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 ServerPlayNetworking.send(p, new PlaySoundS2CPayload(PlaySoundS2CPayload.EXECUTION_SURVIVED));
             }
         }
 
         // DELAYED: Display execution title and chat message after configured delay (using Timer for non-blocking delay)
-        Text titleText = Text.literal(playerName).formatted(Formatting.DARK_RED);
-        Text subtitleText = Text.translatable("message.blood-on-the-blocktower.daytime.survives_execution").formatted(Formatting.GOLD);
+        Component titleText = Component.literal(playerName).withStyle(ChatFormatting.DARK_RED);
+        Component subtitleText = Component.translatable("message.blood-on-the-blocktower.daytime.survives_execution").withStyle(ChatFormatting.GOLD);
 
         if (ServerConfig.EXECUTION_DEATH_TITLE_DELAY > 0) {
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
                     server.execute(() -> {
-                        for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-                            p.networkHandler.sendPacket(new TitleS2CPacket(titleText));
-                            p.networkHandler.sendPacket(new SubtitleS2CPacket(subtitleText));
-                            p.sendMessage(titleText.copy().append(" ").append(subtitleText), false);
+                        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                            p.connection.send(new ClientboundSetTitleTextPacket(titleText));
+                            p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
+                            p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
                         }
 
                         // Schedule anvil cleanup 1 second after title display
@@ -513,10 +512,10 @@ public class ExecutionManager {
             }, ServerConfig.EXECUTION_DEATH_TITLE_DELAY);
         } else {
             // No delay - display immediately
-            for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-                p.networkHandler.sendPacket(new TitleS2CPacket(titleText));
-                p.networkHandler.sendPacket(new SubtitleS2CPacket(subtitleText));
-                p.sendMessage(titleText.copy().append(" ").append(subtitleText), false);
+            for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+                p.connection.send(new ClientboundSetTitleTextPacket(titleText));
+                p.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
+                p.displayClientMessage(titleText.copy().append(" ").append(subtitleText), false);
             }
 
             // Schedule anvil cleanup 1 second after title display
