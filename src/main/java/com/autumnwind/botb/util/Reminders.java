@@ -94,6 +94,13 @@ public final class Reminders {
         return text.startsWith(STORYTELLER_MINION_PREFIX);
     }
 
+    /** Whether the reminder's own name has a space, ignoring a Mad: or ST: prefix. */
+    public static boolean isMultiWord(String text) {
+        String name = isMad(text) ? text.substring(MAD_PREFIX.length())
+                : isStorytellerMinion(text) ? text.substring(STORYTELLER_MINION_PREFIX.length()) : text;
+        return name.trim().contains(" ");
+    }
+
     /** The Xaan's night. */
     public static String night(int night) {
         return "Night " + night;

@@ -881,7 +881,7 @@ public class ReminderChooseScreen extends Screen {
                     Text reminderText = def.displayText();
 
                     // Use wider margin for single words, narrower for multi-word names
-                    int wrapWidth = reminderText.getString().contains(" ") ? itemWidth - 4 : itemWidth + 1;
+                    int wrapWidth = Reminders.isMultiWord(def.text()) ? itemWidth - 4 : itemWidth + 1;
 
                     List<Text> textLines = client.textRenderer.getTextHandler()
                             .wrapLines(reminderText, wrapWidth, Style.EMPTY)
