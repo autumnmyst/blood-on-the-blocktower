@@ -5,8 +5,6 @@ import com.autumnwind.botb.states.StorytellerState;
 import com.autumnwind.botb.util.*;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Helper methods for analyzing roles, associated roles, and reminders.
@@ -53,7 +51,7 @@ public class RoleHelpers {
         boolean hasPixieAssociated = allReminders.stream()
                 .anyMatch(r -> r.text().equals("PIXIE") && r.role().isPresent() && r.role().get() == Role.PIXIE);
         boolean hasPixieAbility = allReminders.stream()
-                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
+                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
 
         for (Reminder r : allReminders) {
             String text = r.text();
@@ -62,7 +60,7 @@ public class RoleHelpers {
             if (r.role().isPresent()) {
                 Role role = r.role().get();
 
-                if (text.equals(role.name().replace('_', ' '))) {
+                if (Reminders.isRoleMarker(text, role)) {
                     RoleType type = role.getType();
                     if (type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER ||
                             type == RoleType.MINION || type == RoleType.DEMON) {
@@ -85,7 +83,7 @@ public class RoleHelpers {
             else if (text.equals(text.toUpperCase(Locale.ROOT)) && text.length() > 0) {
                 // Try to find a matching role (case-insensitive with trim)
                 for (Role role : Role.values()) {
-                    if (text.trim().equalsIgnoreCase(role.name().replace('_', ' '))) {
+                    if (text.trim().equalsIgnoreCase(Reminders.roleMarker(role))) {
                         RoleType type = role.getType();
                         if (type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER ||
                                 type == RoleType.MINION || type == RoleType.DEMON) {
@@ -151,26 +149,26 @@ public class RoleHelpers {
             String lowerText = r.text().toLowerCase(Locale.ROOT);
 
             if (lowerText.contains("drunk")) {
-                if (lowerText.equals("everyone is drunk") && isMinstrel) {
+                if (Reminders.EVERYONE_IS_DRUNK.equalsIgnoreCase(r.text()) && isMinstrel) {
                     continue; // Minstrel doesn't get their own drunk token
                 }
-                reminders.add(new Reminder("Drunk", Optional.empty()));
+                reminders.add(new Reminder(Reminders.DRUNK, Optional.empty()));
             }
             if (lowerText.contains("poisoned")) {
-                reminders.add(new Reminder("Poisoned", Optional.empty()));
+                reminders.add(new Reminder(Reminders.POISONED, Optional.empty()));
             }
         }
 
         // Add Minstrel drunk if player is NOT the minstrel
         if (minstrelPlayer != null && !isMinstrel) {
-            reminders.add(new Reminder("Drunk", Optional.empty()));
+            reminders.add(new Reminder(Reminders.DRUNK, Optional.empty()));
         }
 
         return reminders;
     }
 
     public static Reminder getVortoxReminder() {
-        return new Reminder("Vortox Effect", Optional.of(Role.VORTOX));
+        return new Reminder(Reminders.VORTOX_EFFECT, Optional.of(Role.VORTOX));
     }
 
     public static boolean hasFirstNightsAbility(Role role) {
@@ -198,7 +196,7 @@ public class RoleHelpers {
         String text = reminder.text();
 
         // Standard associated role: text=[RoleName], role=[Role]
-        if (text.equals(role.name().replace('_', ' '))) {
+        if (Reminders.isRoleMarker(text, role)) {
             RoleType type = role.getType();
             // Check if it's an ability-granting type
             return type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER ||
@@ -238,49 +236,49 @@ public class RoleHelpers {
 
             // Special case: Princess "Doesn't Kill" reminder. Two newlines = a blank
             // line before each modifier so the storyteller can scan them at a glance.
-            if (role == Role.PRINCESS && reminder.text().equals("Doesn't Kill")) {
+            if (role == Role.PRINCESS && reminder.text().equals(Reminders.DOESNT_KILL)) {
                 result.append("\n\n").append("PRINCESS: The demon doesn't kill tonight");
                 continue;
             }
 
             // Special case: Xaan "X" icon on townsfolk visits
-            if (role == Role.XAAN && reminder.text().equals("X")) {
+            if (role == Role.XAAN && reminder.text().equals(Reminders.X)) {
                 result.append("\n\n").append("XAAN: All Townsfolk are poisoned until dusk");
                 continue;
             }
 
             // Special case: Riot day modifier on Nominations
-            if (role == Role.RIOT && reminder.text().equals("Riot")) {
+            if (role == Role.RIOT && reminder.text().equals(Reminders.RIOT)) {
                 result.append("\n\n").append("RIOT: Each nominee dies immediately, then must nominate an alive player right away (3... 2... 1...). If nobody nominates, the Storyteller nominates. Good wins when all Riot players are dead.");
                 continue;
             }
 
             // Special case: Organ Grinder mode modifier on Nominations
-            if (role == Role.ORGAN_GRINDER && reminder.text().equals("Organ Grinder")) {
+            if (role == Role.ORGAN_GRINDER && reminder.text().equals(Reminders.ORGAN_GRINDER)) {
                 result.append("\n\n").append("ORGAN GRINDER: Votes are secret. Players are blinded while voting and see only \"???\" afterwards; you see the real count and marked player. Do not reveal results until nominations are over.");
                 continue;
             }
 
             // Special case: Bishop mode modifier on Nominations
-            if (role == Role.BISHOP && reminder.text().equals("Bishop")) {
+            if (role == Role.BISHOP && reminder.text().equals(Reminders.BISHOP)) {
                 result.append("\n\n").append("BISHOP: Only you can nominate. Nominate at least one player of the opposite alignment to the Bishop each day.");
                 continue;
             }
 
             // Special case: Toymaker "Final Night: No Attack" on the demon's visit
-            if (role == Role.TOYMAKER && reminder.text().equals("Final Night: No Attack")) {
+            if (role == Role.TOYMAKER && reminder.text().equals(Reminders.FINAL_NIGHT_NO_ATTACK)) {
                 result.append("\n\n").append("TOYMAKER: The Demon does not attack tonight.");
                 continue;
             }
 
             // Special case: Buddhist modifier on Dawn
-            if (role == Role.BUDDHIST && reminder.text().equals("Buddhist")) {
+            if (role == Role.BUDDHIST && reminder.text().equals(Reminders.BUDDHIST)) {
                 result.append("\n\n").append("BUDDHIST: For the first 2 minutes of the day, veteran players may not talk.");
                 continue;
             }
 
             // Special case: Legion modifier on Nominations
-            if (role == Role.LEGION && reminder.text().equals("Legion")) {
+            if (role == Role.LEGION && reminder.text().equals(Reminders.LEGION)) {
                 result.append("\n\n").append("LEGION: A vote where only evil players voted counts as zero. Players don't see this; only you are told.");
                 continue;
             }
@@ -300,7 +298,7 @@ public class RoleHelpers {
      */
     public static UUID findMinstrelPlayer() {
         return StorytellerState.REMINDERS.entrySet().stream()
-                .filter(e -> e.getValue().stream().anyMatch(r -> r.text().equals("Everyone Is Drunk")))
+                .filter(e -> e.getValue().stream().anyMatch(r -> r.text().equals(Reminders.EVERYONE_IS_DRUNK)))
                 .map(Map.Entry::getKey)
                 .findFirst().orElse(null);
     }
@@ -329,7 +327,7 @@ public class RoleHelpers {
         for (Reminder r : StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList())) {
             if (isIdentityReminder(r)) continue;
             String lowerText = r.text().toLowerCase(Locale.ROOT);
-            if (lowerText.equals("everyone is drunk")) continue;
+            if (Reminders.EVERYONE_IS_DRUNK.equalsIgnoreCase(r.text())) continue;
             if (lowerText.contains("drunk") || lowerText.contains("poisoned")) {
                 return true;
             }
@@ -388,7 +386,7 @@ public class RoleHelpers {
 
     /** Associated-role reminders (chooser-placed or hand-typed all-caps DRUNK) name an identity, not impairment. */
     private static boolean isIdentityReminder(Reminder r) {
-        return isSpecialReminder(r) || r.text().equals("DRUNK");
+        return isSpecialReminder(r) || Reminders.isRoleMarker(r.text(), Role.DRUNK);
     }
 
     private static boolean isAssignedTownsfolk(UUID uuid) {
@@ -434,10 +432,10 @@ public class RoleHelpers {
         List<Reminder> result = new ArrayList<>();
         for (Reminder r : StorytellerState.REMINDERS.getOrDefault(demon, Collections.emptyList())) {
             if (r.role().isEmpty()) continue;
-            if (r.role().get() == Role.PRINCESS && r.text().equals("Doesn't Kill")) {
-                result.add(new Reminder("Doesn't Kill", Optional.of(Role.PRINCESS)));
-            } else if (r.role().get() == Role.TOYMAKER && r.text().equals("Final Night: No Attack")) {
-                result.add(new Reminder("Final Night: No Attack", Optional.of(Role.TOYMAKER)));
+            if (r.role().get() == Role.PRINCESS && r.text().equals(Reminders.DOESNT_KILL)) {
+                result.add(new Reminder(Reminders.DOESNT_KILL, Optional.of(Role.PRINCESS)));
+            } else if (r.role().get() == Role.TOYMAKER && r.text().equals(Reminders.FINAL_NIGHT_NO_ATTACK)) {
+                result.add(new Reminder(Reminders.FINAL_NIGHT_NO_ATTACK, Optional.of(Role.TOYMAKER)));
             }
         }
         return result;
@@ -451,7 +449,6 @@ public class RoleHelpers {
 
     // ========== Xaan ==========
 
-    private static final Pattern XAAN_NIGHT = Pattern.compile("Night (\\d+)");
     private static boolean evaluatingXaan = false;
 
     /** Number of assigned outsiders (custom roles count by team). */
@@ -472,7 +469,7 @@ public class RoleHelpers {
     /** A "Night N" reminder on a real Xaan holder, catalog or hand-typed. */
     public static boolean isXaanNightReminder(UUID uuid, Reminder r) {
         if (r.role().isPresent() && r.role().get() != Role.XAAN) return false;
-        return XAAN_NIGHT.matcher(r.text()).matches() && isRealXaanHolder(uuid);
+        return Reminders.isNight(r.text()) && isRealXaanHolder(uuid);
     }
 
     /**
@@ -483,9 +480,7 @@ public class RoleHelpers {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
             for (Reminder r : entry.getValue()) {
                 if (isXaanNightReminder(entry.getKey(), r)) {
-                    Matcher m = XAAN_NIGHT.matcher(r.text());
-                    m.matches();
-                    return Integer.parseInt(m.group(1));
+                    return Reminders.nightNumber(r.text());
                 }
             }
         }
@@ -504,7 +499,7 @@ public class RoleHelpers {
             if (!isRealXaanHolder(uuid)) continue;
             List<Reminder> reminders = StorytellerState.REMINDERS.computeIfAbsent(uuid, k -> new ArrayList<>());
             if (reminders.stream().anyMatch(r -> isXaanNightReminder(uuid, r))) continue;
-            reminders.add(new Reminder("Night " + count, Optional.of(Role.XAAN)));
+            reminders.add(new Reminder(Reminders.night(count), Optional.of(Role.XAAN)));
             added = true;
         }
         return added;
@@ -537,7 +532,7 @@ public class RoleHelpers {
      */
     public static UUID findXaanXPlayer() {
         return StorytellerState.REMINDERS.entrySet().stream()
-                .filter(e -> e.getValue().stream().anyMatch(r -> r.text().equals("X") && r.role().isPresent() && r.role().get() == Role.XAAN))
+                .filter(e -> e.getValue().stream().anyMatch(r -> r.text().equals(Reminders.X) && r.role().isPresent() && r.role().get() == Role.XAAN))
                 .map(Map.Entry::getKey)
                 .findFirst().orElse(null);
     }
@@ -553,19 +548,19 @@ public class RoleHelpers {
             if (isIdentityReminder(r)) continue;
             String lowerText = r.text().toLowerCase(Locale.ROOT);
             if (lowerText.contains("drunk")) {
-                if (lowerText.equals("everyone is drunk") && isMinstrel) continue;
-                if (!reminderTexts.contains("Drunk")) reminderTexts.add("Drunk");
+                if (Reminders.EVERYONE_IS_DRUNK.equalsIgnoreCase(r.text()) && isMinstrel) continue;
+                if (!reminderTexts.contains(Reminders.DRUNK)) reminderTexts.add(Reminders.DRUNK);
             }
             if (lowerText.contains("poisoned")) {
-                if (!reminderTexts.contains("Poisoned")) reminderTexts.add("Poisoned");
+                if (!reminderTexts.contains(Reminders.POISONED)) reminderTexts.add(Reminders.POISONED);
             }
         }
 
         if (minstrelPlayer != null && !isMinstrel) {
-            if (!reminderTexts.contains("Drunk")) reminderTexts.add("Drunk");
+            if (!reminderTexts.contains(Reminders.DRUNK)) reminderTexts.add(Reminders.DRUNK);
         }
         if (isAssignedTownsfolk(uuid) && isXaanPoisonActive()) {
-            if (!reminderTexts.contains("Poisoned")) reminderTexts.add("Poisoned");
+            if (!reminderTexts.contains(Reminders.POISONED)) reminderTexts.add(Reminders.POISONED);
         }
 
         if (reminderTexts.isEmpty()) return "";

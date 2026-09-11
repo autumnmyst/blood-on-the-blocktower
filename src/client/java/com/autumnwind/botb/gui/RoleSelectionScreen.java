@@ -327,7 +327,7 @@ public class RoleSelectionScreen extends Screen {
                     // Add all outsiders on script as associated role reminders (except Hermit itself)
                     for (Role scriptRole : ClientState.currentScript.roles()) {
                         if (scriptRole.getType() == RoleType.OUTSIDER && scriptRole != Role.HERMIT) {
-                            Reminder outsiderReminder = new Reminder(scriptRole.name().replace('_', ' '), Optional.of(scriptRole));
+                            Reminder outsiderReminder = new Reminder(Reminders.roleMarker(scriptRole), Optional.of(scriptRole));
                             if (!newReminders.contains(outsiderReminder)) {
                                 newReminders.add(outsiderReminder);
                             }

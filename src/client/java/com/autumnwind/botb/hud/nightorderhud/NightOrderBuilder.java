@@ -62,7 +62,7 @@ public class NightOrderBuilder {
         boolean vortoxInPlay = isVortoxInPlay();
 
         boolean lilMonstaInPlay = StorytellerState.REMINDERS.values().stream()
-                .anyMatch(list -> list.stream().anyMatch(r -> r.text().equals("Is The Demon") && r.role().isPresent() && r.role().get() == Role.LIL_MONSTA));
+                .anyMatch(list -> list.stream().anyMatch(r -> r.text().equals(Reminders.IS_THE_DEMON) && r.role().isPresent() && r.role().get() == Role.LIL_MONSTA));
 
         // Check for Xaan X reminder
         boolean xaanXActive = isXaanPoisonActive();
@@ -269,32 +269,32 @@ public class NightOrderBuilder {
             boolean ogModeActive = ClientState.organGrinderModeActiveToday ||
                     StorytellerState.isOrganGrinderModeActive(ClientState.playerDeathStatus);
             if (ogModeActive) {
-                staticIconReminders.add(new Reminder("Organ Grinder", Optional.of(Role.ORGAN_GRINDER)));
+                staticIconReminders.add(new Reminder(Reminders.ORGAN_GRINDER, Optional.of(Role.ORGAN_GRINDER)));
             }
 
             // Riot day: day 3 with a living Riot
             boolean riotDay = ClientState.currentNight == 3 && getRoleAbilityHolders(Role.RIOT).stream()
                     .anyMatch(uuid -> !ClientState.playerDeathStatus.getOrDefault(uuid, false));
             if (riotDay) {
-                staticIconReminders.add(new Reminder("Riot", Optional.of(Role.RIOT)));
+                staticIconReminders.add(new Reminder(Reminders.RIOT, Optional.of(Role.RIOT)));
             }
 
             // Bishop mode: a working Bishop makes the storyteller the only nominator
             if (StorytellerState.getBishopAliveWithAbility(ClientState.playerDeathStatus).isPresent()) {
-                staticIconReminders.add(new Reminder("Bishop", Optional.of(Role.BISHOP)));
+                staticIconReminders.add(new Reminder(Reminders.BISHOP, Optional.of(Role.BISHOP)));
             }
 
             // Legion: a living, working Legion changes how evil-only votes count
             boolean legionActive = getRoleAbilityHolders(Role.LEGION).stream()
                     .anyMatch(uuid -> !ClientState.playerDeathStatus.getOrDefault(uuid, false));
             if (legionActive) {
-                staticIconReminders.add(new Reminder("Legion", Optional.of(Role.LEGION)));
+                staticIconReminders.add(new Reminder(Reminders.LEGION, Optional.of(Role.LEGION)));
             }
         }
 
         // Buddhist: the day starts with veteran players silent
         if (info.getStaticAction() == NightOrder.StaticAction.DAWN && isFabledOrLoricOnScript(Role.BUDDHIST)) {
-            staticIconReminders.add(new Reminder("Buddhist", Optional.of(Role.BUDDHIST)));
+            staticIconReminders.add(new Reminder(Reminders.BUDDHIST, Optional.of(Role.BUDDHIST)));
         }
 
         if (info.getStaticAction() == NightOrder.StaticAction.DAWN || info.getStaticAction() == NightOrder.StaticAction.NOMINATIONS || info.getStaticAction() == NightOrder.StaticAction.DUSK || !playersForVisit.isEmpty()) {
@@ -549,7 +549,7 @@ public class NightOrderBuilder {
                 // Skip demons with Exorcist "Chosen" reminder
                 if (infoRole.getType() == RoleType.DEMON) {
                     boolean hasExorcistChosen = StorytellerState.REMINDERS.getOrDefault(p, Collections.emptyList()).stream()
-                        .anyMatch(r -> r.text().equals("Chosen") && r.role().isPresent() && r.role().get() == Role.EXORCIST);
+                        .anyMatch(r -> r.text().equals(Reminders.CHOSEN) && r.role().isPresent() && r.role().get() == Role.EXORCIST);
                     if (hasExorcistChosen) {
                         continue;
                     }
@@ -559,7 +559,7 @@ public class NightOrderBuilder {
                 if (infoRole == Role.ZOMBUUL) {
                     boolean someoneDiedToday = StorytellerState.REMINDERS.values().stream()
                         .flatMap(List::stream)
-                        .anyMatch(r -> r.text().equals("Died Today") && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
+                        .anyMatch(r -> r.text().equals(Reminders.DIED_TODAY) && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
 
                     if (!someoneDiedToday && !hasPreacherNoAbility(p) && !isRoleAbilityBlocked(p, infoRole)) {
                         playersForVisit.add(p);
@@ -575,7 +575,7 @@ public class NightOrderBuilder {
                     if (hasZombuulAssociated) {
                         boolean someoneDiedToday = StorytellerState.REMINDERS.values().stream()
                             .flatMap(List::stream)
-                            .anyMatch(r -> r.text().equals("Died Today") && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
+                            .anyMatch(r -> r.text().equals(Reminders.DIED_TODAY) && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
 
                         if (someoneDiedToday) {
                             continue;
@@ -589,7 +589,7 @@ public class NightOrderBuilder {
                     boolean outsiderDiedToday = false;
                     for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
                         boolean hasGodfatherDiedToday = entry.getValue().stream()
-                            .anyMatch(r -> r.text().equals("Died Today") && r.role().isPresent() && r.role().get() == Role.GODFATHER);
+                            .anyMatch(r -> r.text().equals(Reminders.DIED_TODAY) && r.role().isPresent() && r.role().get() == Role.GODFATHER);
                         if (hasGodfatherDiedToday) {
                             // Check if this player is an Outsider
                             PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(entry.getKey());
@@ -703,7 +703,7 @@ public class NightOrderBuilder {
             // Skip Pixie associated roles unless they have Has Ability reminder
             if (assignedRole == Role.PIXIE) {
                 boolean hasAbility = StorytellerState.REMINDERS.getOrDefault(p, Collections.emptyList()).stream()
-                        .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
+                        .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
                 if (!hasAbility) {
                     continue;
                 }
@@ -721,7 +721,7 @@ public class NightOrderBuilder {
             if (infoRole == Role.ZOMBUUL) {
                 boolean someoneDiedToday = StorytellerState.REMINDERS.values().stream()
                     .flatMap(List::stream)
-                    .anyMatch(r -> r.text().equals("Died Today") && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
+                    .anyMatch(r -> r.text().equals(Reminders.DIED_TODAY) && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
 
                 if (!someoneDiedToday && !hasPreacherNoAbility(p) && !isRoleAbilityBlocked(p, infoRole)) {
                     associatedPlayersForVisit.add(p);
@@ -734,7 +734,7 @@ public class NightOrderBuilder {
                 boolean outsiderDiedToday = false;
                 for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
                     boolean hasGodfatherDiedToday = entry.getValue().stream()
-                        .anyMatch(r -> r.text().equals("Died Today") && r.role().isPresent() && r.role().get() == Role.GODFATHER);
+                        .anyMatch(r -> r.text().equals(Reminders.DIED_TODAY) && r.role().isPresent() && r.role().get() == Role.GODFATHER);
                     if (hasGodfatherDiedToday) {
                         // Check if this player is an Outsider
                         PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(entry.getKey());
@@ -763,7 +763,7 @@ public class NightOrderBuilder {
                 if (hasZombuulAssociated) {
                     boolean someoneDiedToday = StorytellerState.REMINDERS.values().stream()
                         .flatMap(List::stream)
-                        .anyMatch(r -> r.text().equals("Died Today") && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
+                        .anyMatch(r -> r.text().equals(Reminders.DIED_TODAY) && r.role().isPresent() && r.role().get() == Role.ZOMBUUL);
 
                     if (someoneDiedToday) {
                         continue;
@@ -810,7 +810,7 @@ public class NightOrderBuilder {
             Role assignedRole = firstAssignment != null ? firstAssignment.role() : Role.NO_ROLE;
 
             Set<Reminder> iconReminders = new HashSet<>();
-            iconReminders.add(new Reminder(infoRole.getDisplayName(), Optional.of(infoRole)));
+            iconReminders.add(new Reminder(Reminders.roleMarker(infoRole), Optional.of(infoRole)));
             addGlobalEffectIconReminders(infoRole, minstrelPlayer, vortoxInPlay, xaanXActive, associatedPlayersForVisit, iconReminders);
 
             List<Reminder> nonAssociatedReminders = iconReminders.stream()
@@ -870,7 +870,7 @@ public class NightOrderBuilder {
                         ? pAssignment.customRole().get().team()
                         : (pAssignment != null ? pAssignment.role().getType() : RoleType.NONE);
                 if (pType == RoleType.TOWNSFOLK) {
-                    iconReminders.add(new Reminder("X", Optional.of(Role.XAAN)));
+                    iconReminders.add(new Reminder(Reminders.X, Optional.of(Role.XAAN)));
                 }
             }
         }
@@ -895,7 +895,7 @@ public class NightOrderBuilder {
                 Role assignedRole = StorytellerState.PENDING_ROLES.get(plagueDocPlayer).role();
 
                 Set<Reminder> stIconReminders = new HashSet<>();
-                stIconReminders.add(new Reminder(infoRole.getDisplayName(), Optional.of(infoRole)));
+                stIconReminders.add(new Reminder(Reminders.roleMarker(infoRole), Optional.of(infoRole)));
                 stIconReminders.addAll(getStandardIconReminders(plagueDocPlayer, minstrelPlayer));
 
                 List<Reminder> stNonAssociatedReminders = stIconReminders.stream()

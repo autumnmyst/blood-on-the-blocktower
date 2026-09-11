@@ -1441,12 +1441,11 @@ public class AssignRolesScreen extends Screen {
                     reminderHoverText = Text.literal(reminderRole.getAbility());
                     showingReminderDescription = true;
                 } else {
-                    String hoverText = rWidget.reminder.text();
+                    reminderHoverText = rWidget.reminder.displayText();
                     if (rWidget.reminder.isPlayerReminder() && rWidget.reminder.playerUuid().isPresent()) {
                         PlayerListUtil.PlayerInfo info = PlayerListUtil.getPlayerOrCached(client, rWidget.reminder.playerUuid().get());
-                        if (info != null) hoverText = info.name();
+                        if (info != null) reminderHoverText = Text.literal(info.name());
                     }
-                    reminderHoverText = Text.literal(hoverText);
                 }
                 borderColor = 0xFFFFFFFF;
             }

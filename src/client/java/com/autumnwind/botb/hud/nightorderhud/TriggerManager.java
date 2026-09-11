@@ -177,7 +177,7 @@ public class TriggerManager {
         boolean isPixieWithAbility = false;
         if (assignedRole == Role.PIXIE) {
             isPixieWithAbility = StorytellerState.REMINDERS.getOrDefault(playerUUID, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
+                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
         }
 
         for (Reminder reminder : associatedRoles) {
@@ -239,7 +239,7 @@ public class TriggerManager {
         // Check if the dying player has a "Grandchild" reminder from Grandmother
         List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(grandchildUUID, Collections.emptyList());
         boolean isGrandchild = reminders.stream()
-                .anyMatch(r -> r.text().equals("Grandchild") &&
+                .anyMatch(r -> r.text().equals(Reminders.GRANDCHILD) &&
                           r.role().isPresent() &&
                           r.role().get() == Role.GRANDMOTHER);
 
@@ -319,7 +319,7 @@ public class TriggerManager {
     /** Whether this player carries the Fang Gu's "Once" reminder, the mark of a jump. */
     private static boolean hasFangGuOnceReminder(UUID uuid) {
         return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
-                .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.FANG_GU && r.text().equals("Once"));
+                .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.FANG_GU && r.text().equals(Reminders.ONCE));
     }
 
     private static void createScarletWomanTriggerIfDemonDied(UUID demonUUID) {
@@ -401,7 +401,7 @@ public class TriggerManager {
                 isScarletWoman = swReminders.stream()
                         .anyMatch(r -> r.role().isPresent() &&
                                   r.role().get() == Role.SCARLET_WOMAN &&
-                                  r.text().equals(Role.SCARLET_WOMAN.name().replace('_', ' ')));
+                                  Reminders.isRoleMarker(r.text(), Role.SCARLET_WOMAN));
             }
 
             // A droisoned Scarlet Woman doesn't become the demon, so no role-update visit
@@ -487,7 +487,7 @@ public class TriggerManager {
         // For Pixie, check if they have "Has Ability" reminder
         if (assignedRole == Role.PIXIE) {
             boolean hasAbility = StorytellerState.REMINDERS.getOrDefault(playerUUID, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
+                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
             if (!hasAbility) {
                 return; // Don't create triggers for Pixie without Has Ability
             }
@@ -648,7 +648,7 @@ public class TriggerManager {
             List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(playerUuid, Collections.emptyList());
             boolean hasCannibalAssociated = reminders.stream()
                     .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.CANNIBAL &&
-                            r.text().equals(Role.CANNIBAL.name().replace('_', ' ')));
+                            Reminders.isRoleMarker(r.text(), Role.CANNIBAL));
             if (hasCannibalAssociated) {
                 hasCannibal = true;
                 cannibalPlayers.add(playerUuid);
@@ -956,10 +956,10 @@ public class TriggerManager {
         // Build icon reminders
         Set<Reminder> iconReminders = new HashSet<>(getStandardIconReminders(playerUUID, minstrelPlayer));
         if (associatedRole.isPresent()) {
-            iconReminders.add(new Reminder(associatedRole.get().getDisplayName(), associatedRole));
+            iconReminders.add(new Reminder(Reminders.roleMarker(associatedRole.get()), associatedRole));
         }
         if (xaanXActive && assignedRole.getType() == RoleType.TOWNSFOLK) {
-            iconReminders.add(new Reminder("X", Optional.of(Role.XAAN)));
+            iconReminders.add(new Reminder(Reminders.X, Optional.of(Role.XAAN)));
         }
         if (vortoxInPlay && triggeredRole.getType() == RoleType.TOWNSFOLK) {
             iconReminders.add(getVortoxReminder());
@@ -1024,11 +1024,11 @@ public class TriggerManager {
         Set<Reminder> iconReminders = new HashSet<>(getStandardIconReminders(playerUUID, minstrelPlayer));
         // Only add associated role icon if it's different from the player's assigned role
         if (isCustomAssigned || associatedRole != assignedRole) {
-            iconReminders.add(new Reminder(associatedRole.getDisplayName(), Optional.of(associatedRole)));
+            iconReminders.add(new Reminder(Reminders.roleMarker(associatedRole), Optional.of(associatedRole)));
         }
         RoleType assignedRoleType = isCustomAssigned ? assignment.customRole().get().team() : assignedRole.getType();
         if (xaanXActive && assignedRoleType == RoleType.TOWNSFOLK) {
-            iconReminders.add(new Reminder("X", Optional.of(Role.XAAN)));
+            iconReminders.add(new Reminder(Reminders.X, Optional.of(Role.XAAN)));
         }
         if (vortoxInPlay && associatedRole.getType() == RoleType.TOWNSFOLK) {
             iconReminders.add(getVortoxReminder());

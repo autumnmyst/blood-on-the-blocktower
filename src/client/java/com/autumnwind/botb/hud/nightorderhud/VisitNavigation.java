@@ -642,7 +642,7 @@ public class VisitNavigation {
     private static Text withVortoxLine(RoleVisit visit, Text extraInfo) {
         boolean vortoxOnVisit = visit.iconReminders() != null && visit.iconReminders().stream()
                 .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.VORTOX
-                        && r.text().equals("Vortox Effect"));
+                        && r.text().equals(Reminders.VORTOX_EFFECT));
         if (!vortoxOnVisit) return extraInfo;
         // Unstyled root so the helper info keeps its own colors instead of inheriting red
         MutableText result = Text.empty().append(Text.literal("Tell them lies").formatted(Formatting.RED));

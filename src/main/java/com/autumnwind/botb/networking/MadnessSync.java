@@ -4,6 +4,7 @@ import com.autumnwind.botb.daytime.*;
 import com.autumnwind.botb.util.Madness;
 import com.autumnwind.botb.util.PendingRoleAssignment;
 import com.autumnwind.botb.util.Reminder;
+import com.autumnwind.botb.util.Reminders;
 import com.autumnwind.botb.util.Role;
 import com.autumnwind.botb.util.RoleType;
 import java.util.*;
@@ -89,7 +90,7 @@ public final class MadnessSync {
                     .filter(r -> {
                         Role role = r.role().get();
                         return role == Role.PIXIE &&
-                               r.text().equals(role.name().replace('_', ' '));
+                               Reminders.isRoleMarker(r.text(), role);
                     })
                     .count();
 
@@ -101,7 +102,7 @@ public final class MadnessSync {
                             continue;
                         }
                         if (role.getType() == RoleType.TOWNSFOLK &&
-                            reminder.text().equals(role.name().replace('_', ' '))) {
+                            Reminders.isRoleMarker(reminder.text(), role)) {
                             // Player is mad they are this townsfolk role
                             // Note: "Has Ability" reminder is for storyteller tracking only
                             madnesses.add(new Madness.PixieMadness(role));
@@ -142,6 +143,6 @@ public final class MadnessSync {
         return reminders.stream().anyMatch(r ->
             r.role().isPresent() &&
             r.role().get() == role &&
-            r.text().equals(role.name().replace('_', ' ')));
+            Reminders.isRoleMarker(r.text(), role));
     }
 }

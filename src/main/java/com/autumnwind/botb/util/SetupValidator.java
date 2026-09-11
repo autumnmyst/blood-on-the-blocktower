@@ -843,7 +843,7 @@ public class SetupValidator {
         return reminder.customRoleId()
                 .flatMap(id -> script == null ? Optional.<CustomRole>empty() : script.getCustomRole(id))
                 .map(CustomRole::getDisplayName)
-                .orElse(reminder.text());
+                .orElse(reminder.displayText().getString());
     }
 
     /**

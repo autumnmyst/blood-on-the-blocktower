@@ -76,7 +76,7 @@ public class ReminderChooseScreen extends Screen {
 
     private boolean isLilMonstaHolder(UUID uuid) {
         return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList())
-                .stream().anyMatch(r -> r.text().equals("Is The Demon"));
+                .stream().anyMatch(r -> r.text().equals(Reminders.IS_THE_DEMON));
     }
 
     private static final Set<String> REDUNDANT_GLOBALS = Set.of(
@@ -221,49 +221,49 @@ public class ReminderChooseScreen extends Screen {
             case DRUNK: // b. Drunk: Not-in-play Townsfolk
                 for (Role r : notInPlayRoles) {
                     if (r.getType() == RoleType.TOWNSFOLK) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
             case MARIONETTE: // c. Marionette: Not-in-play Good
                 for (Role r : notInPlayRoles) {
                     if (r.isDefaultGood()) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
             case ALCHEMIST: // d. Alchemist: All Minions on script
                 for (Role r : scriptRoles) {
                     if (r.getType() == RoleType.MINION) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
             case PHILOSOPHER: // e. Philosopher: All Good characters on script
                 for (Role r : scriptRoles) {
                     if (r.isDefaultGood()) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
             case LUNATIC: // a. Lunatic: All Demons on script
                 for (Role r : scriptRoles) {
                     if (r.getType() == RoleType.DEMON) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
             case CANNIBAL: // Cannibal: All Good characters on script
                 for (Role r : scriptRoles) {
                     if (r.isDefaultGood()) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
             case PIXIE: // Pixie: All Townsfolk on script
                 for (Role r : scriptRoles) {
                     if (r.getType() == RoleType.TOWNSFOLK) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 break;
@@ -272,21 +272,21 @@ public class ReminderChooseScreen extends Screen {
                 List<Reminder> hermitReminders = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList());
                 boolean hasDrunkAssociated = hermitReminders.stream()
                         .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.DRUNK &&
-                                       r.text().equals(Role.DRUNK.name().replace('_', ' ')));
+                                       Reminders.isRoleMarker(r.text(), Role.DRUNK));
                 boolean hasLunaticAssociated = hermitReminders.stream()
                         .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.LUNATIC &&
-                                       r.text().equals(Role.LUNATIC.name().replace('_', ' ')));
+                                       Reminders.isRoleMarker(r.text(), Role.LUNATIC));
 
                 for (Role r : scriptRoles) {
                     if (r.getType() == RoleType.OUTSIDER && r != Role.HERMIT) {
-                        valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                        valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                     }
                 }
                 // If Drunk associated, add all Townsfolk
                 if (hasDrunkAssociated) {
                     for (Role r : scriptRoles) {
                         if (r.getType() == RoleType.TOWNSFOLK) {
-                            valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                            valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                         }
                     }
                 }
@@ -294,7 +294,7 @@ public class ReminderChooseScreen extends Screen {
                 if (hasLunaticAssociated) {
                     for (Role r : scriptRoles) {
                         if (r.getType() == RoleType.DEMON) {
-                            valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                            valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                         }
                     }
                 }
@@ -306,7 +306,7 @@ public class ReminderChooseScreen extends Screen {
                         // Boffin gives Good characters on script
                         for (Role r : scriptRoles) {
                             if (r.isDefaultGood()) {
-                                valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                                valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                             }
                         }
                     }
@@ -317,7 +317,7 @@ public class ReminderChooseScreen extends Screen {
         // Check if player has "Mad" reminder from Harpy
         List<Reminder> targetReminders = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList());
         boolean hasHarpyMadReminder = targetReminders.stream()
-                .anyMatch(r -> r.text().equals("Mad") && r.role().isPresent() && r.role().get() == Role.HARPY);
+                .anyMatch(r -> r.text().equals(Reminders.MAD) && r.role().isPresent() && r.role().get() == Role.HARPY);
 
         if (hasHarpyMadReminder) {
             addPlayerRemindersForHarpy(valid);
@@ -325,7 +325,7 @@ public class ReminderChooseScreen extends Screen {
 
         // Check if player has "Mad" reminder from Cerenovus
         boolean hasMadReminder = targetReminders.stream()
-                .anyMatch(r -> r.text().equals("Mad") && r.role().isPresent() && r.role().get() == Role.CERENOVUS);
+                .anyMatch(r -> r.text().equals(Reminders.MAD) && r.role().isPresent() && r.role().get() == Role.CERENOVUS);
 
         if (hasMadReminder) {
             addMadRoleRemindersForCerenovus(valid, scriptRoles);
@@ -336,14 +336,14 @@ public class ReminderChooseScreen extends Screen {
         boolean isPlagueDoctor = assignment != null && assignment.role() == Role.PLAGUE_DOCTOR;
         boolean hasPlagueDoctorAssociated = targetReminders.stream()
                 .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.PLAGUE_DOCTOR &&
-                               r.text().equals(Role.PLAGUE_DOCTOR.name().replace('_', ' ')));
+                               Reminders.isRoleMarker(r.text(), Role.PLAGUE_DOCTOR));
 
         if (isPlagueDoctor || hasPlagueDoctorAssociated) {
             addStorytellerMinionRemindersForPlagueDoctor(valid, scriptRoles);
         } else {
             // Add minions for not Plague Doctor nor associated players with the PD "Storyteller Ability" reminder ---
             boolean hasStorytellerAbility = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Storyteller Ability"));
+                .anyMatch(r -> r.text().equals(Reminders.STORYTELLER_ABILITY));
 
             if (hasStorytellerAbility) {
                 for (Role r : scriptRoles) {
@@ -382,7 +382,7 @@ public class ReminderChooseScreen extends Screen {
         if (anyPlayerHasPixieAssociated) {
             for (Role r : scriptRoles) {
                 if (r.getType() == RoleType.TOWNSFOLK) {
-                    valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                    valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                 }
             }
         }
@@ -391,7 +391,7 @@ public class ReminderChooseScreen extends Screen {
         if (anyPlayerHasAlchemistAssociated) {
             for (Role r : scriptRoles) {
                 if (r.getType() == RoleType.MINION) {
-                    valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                    valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                 }
             }
         }
@@ -400,7 +400,7 @@ public class ReminderChooseScreen extends Screen {
         if (anyPlayerHasPhilosopherAssociated) {
             for (Role r : scriptRoles) {
                 if (r.isDefaultGood()) {
-                    valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                    valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                 }
             }
         }
@@ -409,7 +409,7 @@ public class ReminderChooseScreen extends Screen {
         if (anyPlayerHasCannibalAssociated) {
             for (Role r : scriptRoles) {
                 if (r.isDefaultGood()) {
-                    valid.add(new ReminderCatalog.ReminderDefinition(r, r.name().replace('_', ' '), false));
+                    valid.add(new ReminderCatalog.ReminderDefinition(r, Reminders.roleMarker(r), false));
                 }
             }
         }
@@ -503,7 +503,7 @@ public class ReminderChooseScreen extends Screen {
                 // Mad role reminders use the format "Mad: RoleName"
                 valid.add(new ReminderCatalog.ReminderDefinition(
                     r,
-                    "Mad: " + r.getDisplayName(),
+                    Reminders.mad(r),
                     false
                 ));
             }
@@ -519,7 +519,7 @@ public class ReminderChooseScreen extends Screen {
                 // Storyteller-minion reminders use the format "ST: MinionName"
                 valid.add(new ReminderCatalog.ReminderDefinition(
                     r,
-                    "ST: " + r.getDisplayName(),
+                    Reminders.storytellerMinion(r),
                     false
                 ));
             }
@@ -536,7 +536,7 @@ public class ReminderChooseScreen extends Screen {
         Optional<Role> matchedRole = Optional.empty();
         if (text.equals(text.toUpperCase(Locale.ROOT)) && text.length() > 0) {
             for (Role role : Role.values()) {
-                if (text.trim().equalsIgnoreCase(role.name().replace('_', ' '))) {
+                if (text.trim().equalsIgnoreCase(Reminders.roleMarker(role))) {
                     RoleType type = role.getType();
                     if (type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER ||
                             type == RoleType.MINION || type == RoleType.DEMON) {
@@ -607,7 +607,7 @@ public class ReminderChooseScreen extends Screen {
                     // Check for Pixie associated role
                     hasPixie = StorytellerState.REMINDERS.getOrDefault(targetUUID, Collections.emptyList()).stream()
                         .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.PIXIE &&
-                                       r.text().equals(Role.PIXIE.name().replace('_', ' ')));
+                                       Reminders.isRoleMarker(r.text(), Role.PIXIE));
                 }
 
                 // Determine if we can create the trigger:
@@ -616,7 +616,7 @@ public class ReminderChooseScreen extends Screen {
                 boolean canCreateTrigger = true;
                 if (!isPixieItself && hasPixie) {
                     canCreateTrigger = StorytellerState.REMINDERS.getOrDefault(targetUUID, Collections.emptyList()).stream()
-                        .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
+                        .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
                 }
 
                 // Skip only setup or true Night 1 (natural FN processing handles those).
@@ -637,7 +637,7 @@ public class ReminderChooseScreen extends Screen {
         }
 
         // Special case: If adding "Has Ability" reminder to a Pixie, create FN-only triggers for existing FN-only associated roles
-        if (reminder.text().equals("Has Ability") && reminder.role().isPresent() && reminder.role().get() == Role.PIXIE) {
+        if (reminder.text().equals(Reminders.HAS_ABILITY) && reminder.role().isPresent() && reminder.role().get() == Role.PIXIE) {
             PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(targetUUID);
             if (assignment != null) {
                 Role assignedRole = assignment.role();
@@ -647,7 +647,7 @@ public class ReminderChooseScreen extends Screen {
                 if (!hasPixie) {
                     hasPixie = StorytellerState.REMINDERS.getOrDefault(targetUUID, Collections.emptyList()).stream()
                         .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.PIXIE &&
-                                       r.text().equals(Role.PIXIE.name().replace('_', ' ')));
+                                       Reminders.isRoleMarker(r.text(), Role.PIXIE));
                 }
 
                 if (hasPixie) {
@@ -725,7 +725,7 @@ public class ReminderChooseScreen extends Screen {
         String text = reminder.text();
 
         // Standard associated role: text=[RoleName], role=[Role]
-        if (text.equals(role.name().replace('_', ' '))) {
+        if (Reminders.isRoleMarker(text, role)) {
             RoleType type = role.getType();
             // Check if it's an ability-granting type
             return type == RoleType.TOWNSFOLK || type == RoleType.OUTSIDER ||
@@ -865,10 +865,10 @@ public class ReminderChooseScreen extends Screen {
                     } else if (isCustomRole && iconTexture != null) {
                         // Render custom role icon (includes custom role Good/Evil reminders)
                         context.drawTexture(iconTexture, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
-                    } else if (def.text().equals("Good")) {
+                    } else if (def.text().equals(Reminders.GOOD)) {
                         // Render Good alignment icon (only for global Good reminder with no associated role)
                         context.drawTexture(Reminder.GOOD_ICON, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
-                    } else if (def.text().equals("Evil")) {
+                    } else if (def.text().equals(Reminders.EVIL)) {
                         // Render Evil alignment icon (only for global Evil reminder with no associated role)
                         context.drawTexture(Reminder.EVIL_ICON, borderX + 1, y + 6, 0, 0, 38, 38, 38, 38);
                     } else {
@@ -878,14 +878,13 @@ public class ReminderChooseScreen extends Screen {
 
                     int textCenterX = borderX + (borderWidth / 2);
 
-                    // --- MODIFIED --- Use reminder text instead of role name
-                    String reminderTextString = def.text();
+                    Text reminderText = def.displayText();
 
                     // Use wider margin for single words, narrower for multi-word names
-                    int wrapWidth = reminderTextString.contains(" ") ? itemWidth - 4 : itemWidth + 1;
+                    int wrapWidth = reminderText.getString().contains(" ") ? itemWidth - 4 : itemWidth + 1;
 
                     List<Text> textLines = client.textRenderer.getTextHandler()
-                            .wrapLines(reminderTextString, wrapWidth, Style.EMPTY)
+                            .wrapLines(reminderText, wrapWidth, Style.EMPTY)
                             .stream()
                             .map(line -> Text.literal(line.getString()))
                             .collect(Collectors.toList());

@@ -33,11 +33,11 @@ public class AbilityChecker {
 
         // Check for Vigormortis "Has Ability" reminder
         boolean hasVigormortisAbility = StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.VIGORMORTIS);
+                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.VIGORMORTIS);
 
         // Check for Bone Collector "Has Ability" reminder (traveler that gives dead players their ability back once)
         boolean hasBoneCollectorAbility = StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.BONE_COLLECTOR);
+                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.BONE_COLLECTOR);
 
         if (deathBased) {
             boolean isDead = ClientState.playerDeathStatus.getOrDefault(uuid, false);
@@ -65,7 +65,7 @@ public class AbilityChecker {
      */
     public static boolean hasPreacherNoAbility(UUID uuid) {
         return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("No Ability") && r.role().isPresent() && r.role().get() == Role.PREACHER);
+                .anyMatch(r -> r.text().equals(Reminders.NO_ABILITY) && r.role().isPresent() && r.role().get() == Role.PREACHER);
     }
 
     /**
@@ -77,7 +77,7 @@ public class AbilityChecker {
      */
     public static boolean hasRoleNoAbility(UUID uuid, Role role) {
         return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("No Ability") && r.role().isPresent() && r.role().get() == role);
+                .anyMatch(r -> r.text().equals(Reminders.NO_ABILITY) && r.role().isPresent() && r.role().get() == role);
     }
 
     /**
@@ -88,7 +88,7 @@ public class AbilityChecker {
      */
     public static boolean hasGenericNoAbility(UUID uuid) {
         return StorytellerState.REMINDERS.getOrDefault(uuid, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals("No Ability") && r.role().isEmpty());
+                .anyMatch(r -> r.text().equals(Reminders.NO_ABILITY) && r.role().isEmpty());
     }
 
     /**
@@ -142,7 +142,7 @@ public class AbilityChecker {
 
             // Check for demon "Dead" reminder
             boolean hasDemonDeadReminder = reminders.stream()
-                    .anyMatch(r -> r.text().equals("Dead") &&
+                    .anyMatch(r -> r.text().equals(Reminders.DEAD) &&
                               r.role().isPresent() &&
                               r.role().get().getType() == RoleType.DEMON);
 
@@ -152,7 +152,7 @@ public class AbilityChecker {
 
             // Check for al_hadikhia "1", "2", or "3" reminder
             boolean hasAlHadikhiaReminder = reminders.stream()
-                    .anyMatch(r -> (r.text().equals("1") || r.text().equals("2") || r.text().equals("3")) &&
+                    .anyMatch(r -> (r.text().equals(Reminders.ONE) || r.text().equals(Reminders.TWO) || r.text().equals(Reminders.THREE)) &&
                               r.role().isPresent() &&
                               r.role().get() == Role.AL_HADIKHIA);
 

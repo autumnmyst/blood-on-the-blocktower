@@ -2,6 +2,7 @@ package com.autumnwind.botb.util;
 
 import com.autumnwind.botb.BloodOnTheBlocktower;
 import net.minecraft.network.RegistryByteBuf;
+import net.minecraft.text.Text;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.util.Identifier;
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Represents a single reminder token.
- * @param text The text to display on hover.
+ * @param text The reminder's identity, see {@link Reminders}. Shown through {@link #displayText()}.
  * @param role The role this reminder is associated with (for the icon).
  * If empty, this is a custom reminder or a custom role reminder.
  * @param customRoleId The custom role ID this reminder is associated with (for custom role reminders).
@@ -47,6 +48,10 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
         return customRoleId.isPresent() && customRoleId.get().startsWith("fabled:");
     }
 
+    public Text displayText() {
+        return Reminders.display(text, role);
+    }
+
     /**
      * The icon used for custom reminders (when role is empty).
      */
@@ -76,14 +81,14 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
      * Checks if this is a mad role reminder (for Cerenovus madness).
      */
     public boolean isMadRoleReminder() {
-        return text.startsWith("Mad: ") && role.isPresent();
+        return Reminders.isMad(text) && role.isPresent();
     }
 
     /**
      * Checks if this is a storyteller-minion reminder (for Plague Doctor).
      */
     public boolean isStorytellerMinionReminder() {
-        return text.startsWith("ST: ") && role.isPresent() && role.get().getType() == RoleType.MINION;
+        return Reminders.isStorytellerMinion(text) && role.isPresent() && role.get().getType() == RoleType.MINION;
     }
 
     /**
@@ -102,7 +107,7 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
         // NO_ROLE is excluded so global Good/Evil reminders fall through to text-based icon checks
         if (role.isPresent() && role.get() != Role.NO_ROLE) {
             // Vortox icon is special case
-            if (role.get() == Role.VORTOX && text.equals("Vortox")) {
+            if (role.get() == Role.VORTOX && text.equals(Reminders.VORTOX)) {
                 return VORTOX_ICON;
             }
             return role.get().getIcon();
@@ -114,18 +119,18 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
         }
 
         // Good/Evil alignment reminders (only if no associated role)
-        if (text.equals("Good")) {
+        if (text.equals(Reminders.GOOD)) {
             return GOOD_ICON;
         }
-        if (text.equals("Evil")) {
+        if (text.equals(Reminders.EVIL)) {
             return EVIL_ICON;
         }
 
         // If role is empty but text is exactly "Drunk" or "Poisoned" (for NightOrderHUD icons)
-        if (text.equals("Drunk")) {
+        if (text.equals(Reminders.DRUNK)) {
             return DRUNK_ICON;
         }
-        if (text.equals("Poisoned")) {
+        if (text.equals(Reminders.POISONED)) {
             return POISONED_ICON;
         }
         return CUSTOM_ICON;
@@ -179,7 +184,7 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
                     type != RoleType.TRAVELER) {
                 return false;
             }
-            return text.trim().equals(r.name().replace('_', ' '));
+            return Reminders.isRoleMarker(text, r);
         }
         if (customRoleId.isPresent() && script != null) {
             return script.getCustomRole(customRoleId.get())
@@ -209,8 +214,8 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
 
         if (role.isPresent()) {
             // The global effects do not get borders
-            boolean isVortoxEffect = role.get() == Role.VORTOX && text.equals("Vortox Effect");
-            boolean isXaanEffect = role.get() == Role.XAAN && text.equals("X");
+            boolean isVortoxEffect = role.get() == Role.VORTOX && text.equals(Reminders.VORTOX_EFFECT);
+            boolean isXaanEffect = role.get() == Role.XAAN && text.equals(Reminders.X);
             if (isVortoxEffect || isXaanEffect) {
                 return RoleType.NONE.getColor();
             }
@@ -225,10 +230,10 @@ public record Reminder(String text, Optional<Role> role, Optional<String> custom
         }
 
         // Special colors for "Good" and "Evil" reminders
-        if (text.equals("Good")) {
+        if (text.equals(Reminders.GOOD)) {
             return RoleType.TOWNSFOLK.getColor(); // Townsfolk blue
         }
-        if (text.equals("Evil")) {
+        if (text.equals(Reminders.EVIL)) {
             return RoleType.MINION.getColor(); // Minion red
         }
         // Text-based reminders ("Drunk", "Poisoned") have no alignment color

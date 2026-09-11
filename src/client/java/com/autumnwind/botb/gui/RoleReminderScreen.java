@@ -108,7 +108,7 @@ public class RoleReminderScreen extends Screen {
         } else {
             // Official role reminder
             Role role = scriptRole.asRole();
-            String reminderText = role.name().replace('_', ' ');
+            String reminderText = Reminders.roleMarker(role);
             reminder = new Reminder(reminderText, Optional.of(role));
         }
 
@@ -185,14 +185,14 @@ public class RoleReminderScreen extends Screen {
                         // Check for Pixie associated role
                         hasPixie = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList()).stream()
                                 .anyMatch(r -> r.role().isPresent() && r.role().get() == Role.PIXIE &&
-                                        r.text().equals(Role.PIXIE.name().replace('_', ' ')));
+                                        Reminders.isRoleMarker(r.text(), Role.PIXIE));
                     }
 
                     // Determine if we can create the trigger
                     boolean canCreateTrigger = true;
                     if (!isPixieItself && hasPixie) {
                         canCreateTrigger = StorytellerState.REMINDERS.getOrDefault(targetPlayerUUID, Collections.emptyList()).stream()
-                                .anyMatch(r -> r.text().equals("Has Ability") && r.role().isPresent() && r.role().get() == Role.PIXIE);
+                                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
                     }
 
                     // Skip on night 1 - associated roles already get the normal FN visit

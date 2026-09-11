@@ -37,7 +37,7 @@ public class StorytellerState {
 
         // Check if player has the role OR a role-associated reminder
         boolean hasRole = assignment.role() == role;
-        String roleText = role.name().replace('_', ' ');
+        String roleText = Reminders.roleMarker(role);
         boolean hasRoleReminder = playerReminders.stream()
                 .anyMatch(r -> r.role().isPresent() && r.role().get() == role &&
                         r.text().equalsIgnoreCase(roleText));
@@ -52,7 +52,7 @@ public class StorytellerState {
 
         // Check for "No Ability" reminder (generic or role-specific)
         boolean hasNoAbility = playerReminders.stream()
-                .anyMatch(r -> r.text().equals("No Ability") &&
+                .anyMatch(r -> r.text().equals(Reminders.NO_ABILITY) &&
                         (r.role().isEmpty() || r.role().get() == role));
         if (hasNoAbility) {
             return false;
@@ -61,7 +61,7 @@ public class StorytellerState {
         // For minions: also check Preacher "No Ability"
         if (role.getType() == RoleType.MINION) {
             boolean hasPreacherNoAbility = playerReminders.stream()
-                    .anyMatch(r -> r.text().equals("No Ability") &&
+                    .anyMatch(r -> r.text().equals(Reminders.NO_ABILITY) &&
                             r.role().isPresent() && r.role().get() == Role.PREACHER);
             if (hasPreacherNoAbility) {
                 return false;
@@ -74,13 +74,13 @@ public class StorytellerState {
             // Dead players need a "Has Ability" reminder to have their ability
             // Check generic "Has Ability" or Bone Collector "Has Ability"
             boolean hasAbilityReminder = playerReminders.stream()
-                    .anyMatch(r -> r.text().equals("Has Ability") &&
+                    .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) &&
                             (r.role().isEmpty() || r.role().get() == Role.BONE_COLLECTOR));
 
             // For minions: also check Vigormortis "Has Ability"
             if (!hasAbilityReminder && role.getType() == RoleType.MINION) {
                 hasAbilityReminder = playerReminders.stream()
-                        .anyMatch(r -> r.text().equals("Has Ability") &&
+                        .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) &&
                                 r.role().isPresent() && r.role().get() == Role.VIGORMORTIS);
             }
 
@@ -140,7 +140,7 @@ public class StorytellerState {
             if (!RoleHelpers.hasStorytellerMinionReminder(playerUuid, Role.ORGAN_GRINDER)) continue;
 
             boolean organGrinderDrunk = REMINDERS.getOrDefault(playerUuid, Collections.emptyList()).stream()
-                    .anyMatch(r -> r.text().equals("Drunk") &&
+                    .anyMatch(r -> r.text().equals(Reminders.DRUNK) &&
                             (r.role().isEmpty() || r.role().get() == Role.ORGAN_GRINDER));
             if (!organGrinderDrunk) return true;
         }
@@ -399,7 +399,7 @@ public class StorytellerState {
             List<Reminder> reminders = entry.getValue();
 
             boolean hasBansheeAbility = reminders.stream()
-                    .anyMatch(r -> r.text().equals("Has Ability") &&
+                    .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) &&
                             r.role().isPresent() && r.role().get() == Role.BANSHEE);
 
             if (hasBansheeAbility) {
@@ -435,7 +435,7 @@ public class StorytellerState {
         List<UUID> result = new ArrayList<>();
         for (Map.Entry<UUID, List<Reminder>> entry : REMINDERS.entrySet()) {
             boolean has = entry.getValue().stream()
-                    .anyMatch(r -> r.text().equals("Ug hat") &&
+                    .anyMatch(r -> r.text().equals(Reminders.UG_HAT) &&
                             r.role().isPresent() && r.role().get() == Role.GOD_OF_UG);
             if (has) result.add(entry.getKey());
         }
@@ -449,7 +449,7 @@ public class StorytellerState {
         List<UUID> result = new ArrayList<>();
         for (Map.Entry<UUID, List<Reminder>> entry : REMINDERS.entrySet()) {
             boolean has = entry.getValue().stream()
-                    .anyMatch(r -> r.text().equals("3 Votes") &&
+                    .anyMatch(r -> r.text().equals(Reminders.THREE_VOTES) &&
                             r.role().isPresent() && r.role().get() == Role.BUREAUCRAT);
             if (has) result.add(entry.getKey());
         }
@@ -463,7 +463,7 @@ public class StorytellerState {
         List<UUID> result = new ArrayList<>();
         for (Map.Entry<UUID, List<Reminder>> entry : REMINDERS.entrySet()) {
             boolean has = entry.getValue().stream()
-                    .anyMatch(r -> r.text().equals("Negative Vote") &&
+                    .anyMatch(r -> r.text().equals(Reminders.NEGATIVE_VOTE) &&
                             r.role().isPresent() && r.role().get() == Role.THIEF);
             if (has) result.add(entry.getKey());
         }
@@ -481,7 +481,7 @@ public class StorytellerState {
             List<Reminder> reminders = entry.getValue();
 
             boolean hasMayNotNominate = reminders.stream()
-                    .anyMatch(r -> r.text().equals("May Not Nominate"));
+                    .anyMatch(r -> r.text().equals(Reminders.MAY_NOT_NOMINATE));
 
             if (hasMayNotNominate) {
                 mayNotNominatePlayers.add(playerUuid);

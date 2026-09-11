@@ -75,7 +75,7 @@ public class NightOrderInfoGenerator {
                 List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(entry.getKey(), Collections.emptyList());
                 for (Reminder r : reminders) {
                     if (r.role().isPresent() && r.role().get().isDefaultGood() &&
-                            r.text().equals(r.role().get().name().replace('_', ' '))) {
+                            Reminders.isRoleMarker(r.text(), r.role().get())) {
                         return Text.literal("Demon has: ")
                                 .append(Text.literal(r.role().get().getDisplayName())
                                         .formatted(Formatting.AQUA));
@@ -164,7 +164,7 @@ public class NightOrderInfoGenerator {
     private static Text generateEvilTwinInfo(List<UUID> players) {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
             for (Reminder r : entry.getValue()) {
-                if (r.role().isPresent() && r.role().get() == Role.EVIL_TWIN && r.text().equals("Twin")) {
+                if (r.role().isPresent() && r.role().get() == Role.EVIL_TWIN && r.text().equals(Reminders.TWIN)) {
                     String twinName = getPlayerName(entry.getKey());
                     if (twinName != null) {
                         return Text.literal("Twin: ")
@@ -183,10 +183,8 @@ public class NightOrderInfoGenerator {
         List<Reminder> reminders = StorytellerState.REMINDERS.getOrDefault(pixieUuid, Collections.emptyList());
         for (Reminder r : reminders) {
             if (r.role().isPresent() && r.role().get().getType() == RoleType.TOWNSFOLK &&
-                    r.text().equals(r.role().get().name().replace('_', ' '))) {
-                return Text.literal("Mad: ")
-                        .append(Text.literal(r.role().get().getDisplayName())
-                                .formatted(Formatting.BLUE));
+                    Reminders.isRoleMarker(r.text(), r.role().get())) {
+                return Reminders.displayMad(Text.literal(r.role().get().getDisplayName()).formatted(Formatting.BLUE));
             }
         }
         return null;
@@ -197,7 +195,7 @@ public class NightOrderInfoGenerator {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
             for (Reminder r : entry.getValue()) {
                 if (r.role().isPresent() && r.role().get() == Role.FORTUNE_TELLER
-                        && r.text().equals("Red Herring")) {
+                        && r.text().equals(Reminders.RED_HERRING)) {
                     String name = getPlayerName(entry.getKey());
                     if (name != null) {
                         return Text.literal("Red Herring: ").formatted(Formatting.GRAY)
@@ -210,15 +208,15 @@ public class NightOrderInfoGenerator {
     }
 
     private static Text generateWasherwomanInfo(List<UUID> players) {
-        return generateFirstNightInfoText(Role.WASHERWOMAN, "Townsfolk", RoleType.TOWNSFOLK);
+        return generateFirstNightInfoText(Role.WASHERWOMAN, Reminders.TOWNSFOLK, RoleType.TOWNSFOLK);
     }
 
     private static Text generateLibrarianInfo(List<UUID> players) {
-        return generateFirstNightInfoText(Role.LIBRARIAN, "Outsider", RoleType.OUTSIDER);
+        return generateFirstNightInfoText(Role.LIBRARIAN, Reminders.OUTSIDER, RoleType.OUTSIDER);
     }
 
     private static Text generateInvestigatorInfo(List<UUID> players) {
-        return generateFirstNightInfoText(Role.INVESTIGATOR, "Minion", RoleType.MINION);
+        return generateFirstNightInfoText(Role.INVESTIGATOR, Reminders.MINION, RoleType.MINION);
     }
 
     private static Text generateFirstNightInfoText(Role sourceRole, String targetReminderText, RoleType targetType) {
@@ -231,7 +229,7 @@ public class NightOrderInfoGenerator {
                     // An associated-role marker (text is the role's own name) tags whoever
                     // merely THINKS they are this role, like a Marionette. That player is
                     // not one of the two the ability points at, so they are not an option.
-                    if (r.text().equals(sourceRole.name().replace('_', ' '))) {
+                    if (Reminders.isRoleMarker(r.text(), sourceRole)) {
                         continue;
                     }
                     String name = getPlayerName(entry.getKey());
@@ -365,7 +363,7 @@ public class NightOrderInfoGenerator {
     private static Text generateGrandmotherInfo(List<UUID> players) {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
             for (Reminder r : entry.getValue()) {
-                if (r.role().isPresent() && r.role().get() == Role.GRANDMOTHER && r.text().equals("Grandchild")) {
+                if (r.role().isPresent() && r.role().get() == Role.GRANDMOTHER && r.text().equals(Reminders.GRANDCHILD)) {
                     String grandchildName = getPlayerName(entry.getKey());
                     PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(entry.getKey());
                     if (grandchildName != null && assignment != null) {
@@ -466,7 +464,7 @@ public class NightOrderInfoGenerator {
                     String name = getPlayerName(entry.getKey());
                     if (name != null && !names.contains(name)) {
                         names.add(name);
-                        if (r.text().equals("Seen")) {
+                        if (r.text().equals(Reminders.SEEN)) {
                             PendingRoleAssignment assignment = StorytellerState.PENDING_ROLES.get(entry.getKey());
                             if (assignment != null && !assignment.isFinalGood()) {
                                 evilName = name;
@@ -551,7 +549,7 @@ public class NightOrderInfoGenerator {
     private static Text generateBountyHunterInfo(List<UUID> players) {
         for (Map.Entry<UUID, List<Reminder>> entry : StorytellerState.REMINDERS.entrySet()) {
             for (Reminder r : entry.getValue()) {
-                if (r.role().isPresent() && r.role().get() == Role.BOUNTY_HUNTER && r.text().equals("Known")) {
+                if (r.role().isPresent() && r.role().get() == Role.BOUNTY_HUNTER && r.text().equals(Reminders.KNOWN)) {
                     String name = getPlayerName(entry.getKey());
                     if (name != null) {
                         return Text.literal("Known evil: ")

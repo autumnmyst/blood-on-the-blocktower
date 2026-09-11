@@ -46,7 +46,7 @@ public class MadnessHUD {
                     .filter(r -> {
                         Role role = r.role().get();
                         return role == Role.PIXIE &&
-                               r.text().equals(role.name().replace('_', ' '));
+                               Reminders.isRoleMarker(r.text(), role);
                     })
                     .count();
 
@@ -59,7 +59,7 @@ public class MadnessHUD {
                             continue;
                         }
                         if (role.getType() == RoleType.TOWNSFOLK &&
-                            reminder.text().equals(role.name().replace('_', ' '))) {
+                            Reminders.isRoleMarker(reminder.text(), role)) {
                             // Player is mad they are this townsfolk role
                             // Note: "Has Ability" reminder is for storyteller tracking only
                             madnesses.add(new Madness.PixieMadness(role));
@@ -103,7 +103,7 @@ public class MadnessHUD {
         return reminders.stream().anyMatch(r ->
             r.role().isPresent() &&
             r.role().get() == role &&
-            r.text().equals(role.name().replace('_', ' ')));
+            Reminders.isRoleMarker(r.text(), role));
     }
 
     /**
@@ -149,7 +149,7 @@ public class MadnessHUD {
                 if (madness instanceof Madness.PixieMadness) {
                     List<Reminder> playerReminders = StorytellerState.REMINDERS.getOrDefault(playerUuid, Collections.emptyList());
                     boolean hasAbility = playerReminders.stream()
-                        .anyMatch(r -> r.text().equals("Has Ability") &&
+                        .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) &&
                                      r.role().isPresent() && r.role().get() == Role.PIXIE);
                     if (hasAbility) {
                         continue; // Skip rendering this madness

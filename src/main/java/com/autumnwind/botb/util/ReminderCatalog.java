@@ -1,5 +1,7 @@
 package com.autumnwind.botb.util;
 
+import net.minecraft.text.Text;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +57,10 @@ public class ReminderCatalog {
         public static ReminderDefinition forFabled(String fabledId, String text, boolean isGlobal) {
             return new ReminderDefinition(null, "fabled:" + fabledId, text, isGlobal, Optional.empty());
         }
+
+        public Text displayText() {
+            return Reminders.display(text, Optional.ofNullable(role));
+        }
     }
 
     private static final List<ReminderDefinition> DEFINITIONS = new ArrayList<>();
@@ -71,17 +77,17 @@ public class ReminderCatalog {
 
         // --- WASHERWOMAN ---
         remindersForThisRole.clear();
-        addReminder(Role.WASHERWOMAN, "Townsfolk", false, remindersForThisRole);
+        addReminder(Role.WASHERWOMAN, Reminders.TOWNSFOLK, false, remindersForThisRole);
         addReminder(Role.WASHERWOMAN, "Wrong", false, remindersForThisRole);
 
         // --- LIBRARIAN ---
         remindersForThisRole.clear();
-        addReminder(Role.LIBRARIAN, "Outsider", false, remindersForThisRole);
+        addReminder(Role.LIBRARIAN, Reminders.OUTSIDER, false, remindersForThisRole);
         addReminder(Role.LIBRARIAN, "Wrong", false, remindersForThisRole);
 
         // --- INVESTIGATOR ---
         remindersForThisRole.clear();
-        addReminder(Role.INVESTIGATOR, "Minion", false, remindersForThisRole);
+        addReminder(Role.INVESTIGATOR, Reminders.MINION, false, remindersForThisRole);
         addReminder(Role.INVESTIGATOR, "Wrong", false, remindersForThisRole);
 
         // --- CHEF --- (No reminders)
@@ -89,11 +95,11 @@ public class ReminderCatalog {
 
         // --- FORTUNE TELLER ---
         remindersForThisRole.clear();
-        addReminder(Role.FORTUNE_TELLER, "Red Herring", false, remindersForThisRole);
+        addReminder(Role.FORTUNE_TELLER, Reminders.RED_HERRING, false, remindersForThisRole);
 
         // --- UNDERTAKER ---
         remindersForThisRole.clear();
-        addReminder(Role.UNDERTAKER, "Died Today", false, remindersForThisRole);
+        addReminder(Role.UNDERTAKER, Reminders.DIED_TODAY, false, remindersForThisRole);
 
         // --- MONK ---
         remindersForThisRole.clear();
@@ -103,11 +109,11 @@ public class ReminderCatalog {
 
         // --- VIRGIN ---
         remindersForThisRole.clear();
-        addReminder(Role.VIRGIN, "No Ability", false, remindersForThisRole);
+        addReminder(Role.VIRGIN, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- SLAYER ---
         remindersForThisRole.clear();
-        addReminder(Role.SLAYER, "No Ability", false, remindersForThisRole);
+        addReminder(Role.SLAYER, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- SOLDIER --- (No reminders)
         // --- MAYOR --- (No reminders)
@@ -125,64 +131,64 @@ public class ReminderCatalog {
 
         // --- POISONER ---
         remindersForThisRole.clear();
-        addReminder(Role.POISONER, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.POISONER, Reminders.POISONED, false, remindersForThisRole);
 
         // --- SPY --- (No reminders)
 
         // --- SCARLET WOMAN ---
         remindersForThisRole.clear();
-        addReminder(Role.SCARLET_WOMAN, "Is The Demon", false, remindersForThisRole);
+        addReminder(Role.SCARLET_WOMAN, Reminders.IS_THE_DEMON, false, remindersForThisRole);
 
         // --- BARON --- (No reminders)
 
         // --- IMP ---
         remindersForThisRole.clear();
-        addReminder(Role.IMP, "Dead", false, remindersForThisRole);
+        addReminder(Role.IMP, Reminders.DEAD, false, remindersForThisRole);
 
         // --- GRANDMOTHER ---
         remindersForThisRole.clear();
-        addReminder(Role.GRANDMOTHER, "Grandchild", false, remindersForThisRole);
-        addReminder(Role.GRANDMOTHER, "Dead", false, remindersForThisRole);
+        addReminder(Role.GRANDMOTHER, Reminders.GRANDCHILD, false, remindersForThisRole);
+        addReminder(Role.GRANDMOTHER, Reminders.DEAD, false, remindersForThisRole);
 
         // --- SAILOR ---
         remindersForThisRole.clear();
-        addReminder(Role.SAILOR, "Drunk", false, remindersForThisRole);
+        addReminder(Role.SAILOR, Reminders.DRUNK, false, remindersForThisRole);
 
         // --- CHAMBERMAID --- (No reminders)
 
         // --- EXORCIST ---
         remindersForThisRole.clear();
-        addReminder(Role.EXORCIST, "Chosen", false, remindersForThisRole);
+        addReminder(Role.EXORCIST, Reminders.CHOSEN, false, remindersForThisRole);
 
         // --- INNKEEPER ---
         remindersForThisRole.clear();
         addReminder(Role.INNKEEPER, "Safe", false, remindersForThisRole);
         // "Safe" is repeated, addReminder() will skip it
-        addReminder(Role.INNKEEPER, "Drunk", false, remindersForThisRole);
+        addReminder(Role.INNKEEPER, Reminders.DRUNK, false, remindersForThisRole);
 
         // --- GAMBLER ---
         remindersForThisRole.clear();
-        addReminder(Role.GAMBLER, "Dead", false, remindersForThisRole);
+        addReminder(Role.GAMBLER, Reminders.DEAD, false, remindersForThisRole);
 
         // --- GOSSIP ---
         remindersForThisRole.clear();
-        addReminder(Role.GOSSIP, "Dead", false, remindersForThisRole);
+        addReminder(Role.GOSSIP, Reminders.DEAD, false, remindersForThisRole);
 
         // --- COURTIER ---
         remindersForThisRole.clear();
         addReminder(Role.COURTIER, "Drunk 1", false, remindersForThisRole);
         addReminder(Role.COURTIER, "Drunk 2", false, remindersForThisRole);
         addReminder(Role.COURTIER, "Drunk 3", false, remindersForThisRole);
-        addReminder(Role.COURTIER, "No Ability", false, remindersForThisRole);
+        addReminder(Role.COURTIER, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- PROFESSOR ---
         remindersForThisRole.clear();
         addReminder(Role.PROFESSOR, "Alive", false, remindersForThisRole);
-        addReminder(Role.PROFESSOR, "No Ability", false, remindersForThisRole);
+        addReminder(Role.PROFESSOR, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- MINSTREL ---
         remindersForThisRole.clear();
-        addReminder(Role.MINSTREL, "Everyone Is Drunk", false, remindersForThisRole);
+        addReminder(Role.MINSTREL, Reminders.EVERYONE_IS_DRUNK, false, remindersForThisRole);
 
         // --- TEA LADY ---
         remindersForThisRole.clear();
@@ -193,29 +199,29 @@ public class ReminderCatalog {
 
         // --- FOOL ---
         remindersForThisRole.clear();
-        addReminder(Role.FOOL, "No Ability", false, remindersForThisRole);
+        addReminder(Role.FOOL, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- GOON ---
         remindersForThisRole.clear();
-        addReminder(Role.GOON, "Drunk", false, remindersForThisRole);
+        addReminder(Role.GOON, Reminders.DRUNK, false, remindersForThisRole);
 
         // --- LUNATIC ---
         remindersForThisRole.clear();
-        addReminder(Role.LUNATIC, "Chosen", false, remindersForThisRole);
+        addReminder(Role.LUNATIC, Reminders.CHOSEN, false, remindersForThisRole);
         // "Chosen" is repeated, addReminder() will skip it
 
         // --- TINKER ---
         remindersForThisRole.clear();
-        addReminder(Role.TINKER, "Dead", false, remindersForThisRole);
+        addReminder(Role.TINKER, Reminders.DEAD, false, remindersForThisRole);
 
         // --- MOONCHILD ---
         remindersForThisRole.clear();
-        addReminder(Role.MOONCHILD, "Dead", false, remindersForThisRole);
+        addReminder(Role.MOONCHILD, Reminders.DEAD, false, remindersForThisRole);
 
         // --- GODFATHER ---
         remindersForThisRole.clear();
-        addReminder(Role.GODFATHER, "Died Today", false, remindersForThisRole);
-        addReminder(Role.GODFATHER, "Dead", false, remindersForThisRole);
+        addReminder(Role.GODFATHER, Reminders.DIED_TODAY, false, remindersForThisRole);
+        addReminder(Role.GODFATHER, Reminders.DEAD, false, remindersForThisRole);
 
         // --- DEVILS ADVOCATE ---
         remindersForThisRole.clear();
@@ -223,31 +229,31 @@ public class ReminderCatalog {
 
         // --- ASSASSIN ---
         remindersForThisRole.clear();
-        addReminder(Role.ASSASSIN, "Dead", false, remindersForThisRole);
-        addReminder(Role.ASSASSIN, "No Ability", false, remindersForThisRole);
+        addReminder(Role.ASSASSIN, Reminders.DEAD, false, remindersForThisRole);
+        addReminder(Role.ASSASSIN, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- MASTERMIND --- (No reminders)
 
         // --- ZOMBUUL ---
         remindersForThisRole.clear();
-        addReminder(Role.ZOMBUUL, "Died Today", false, remindersForThisRole);
-        addReminder(Role.ZOMBUUL, "Dead", false, remindersForThisRole);
+        addReminder(Role.ZOMBUUL, Reminders.DIED_TODAY, false, remindersForThisRole);
+        addReminder(Role.ZOMBUUL, Reminders.DEAD, false, remindersForThisRole);
 
         // --- PUKKA ---
         remindersForThisRole.clear();
-        addReminder(Role.PUKKA, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.PUKKA, Reminders.POISONED, false, remindersForThisRole);
         // "Poisoned" is repeated, addReminder() will skip it
-        addReminder(Role.PUKKA, "Dead", false, remindersForThisRole);
+        addReminder(Role.PUKKA, Reminders.DEAD, false, remindersForThisRole);
 
         // --- SHABALOTH ---
         remindersForThisRole.clear();
-        addReminder(Role.SHABALOTH, "Dead", false, remindersForThisRole);
+        addReminder(Role.SHABALOTH, Reminders.DEAD, false, remindersForThisRole);
         // "Dead" is repeated, addReminder() will skip it
         addReminder(Role.SHABALOTH, "Alive", false, remindersForThisRole);
 
         // --- PO ---
         remindersForThisRole.clear();
-        addReminder(Role.PO, "Dead", false, remindersForThisRole);
+        addReminder(Role.PO, Reminders.DEAD, false, remindersForThisRole);
         // "Dead" is repeated, addReminder() will skip it
         addReminder(Role.PO, "3 Attacks", false, remindersForThisRole);
 
@@ -256,7 +262,7 @@ public class ReminderCatalog {
 
         // --- SNAKE CHARMER ---
         remindersForThisRole.clear();
-        addReminder(Role.SNAKE_CHARMER, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.SNAKE_CHARMER, Reminders.POISONED, false, remindersForThisRole);
 
         // --- MATHEMATICIAN ---
         remindersForThisRole.clear();
@@ -277,16 +283,16 @@ public class ReminderCatalog {
 
         // --- SEAMSTRESS ---
         remindersForThisRole.clear();
-        addReminder(Role.SEAMSTRESS, "No Ability", false, remindersForThisRole);
+        addReminder(Role.SEAMSTRESS, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- PHILOSOPHER ---
         remindersForThisRole.clear();
-        addReminder(Role.PHILOSOPHER, "Drunk", false, remindersForThisRole);
+        addReminder(Role.PHILOSOPHER, Reminders.DRUNK, false, remindersForThisRole);
         addReminder(Role.PHILOSOPHER, "Is The Philosopher", false, remindersForThisRole);
 
         // --- ARTIST ---
         remindersForThisRole.clear();
-        addReminder(Role.ARTIST, "No Ability", false, remindersForThisRole);
+        addReminder(Role.ARTIST, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- JUGGLER ---
         remindersForThisRole.clear();
@@ -301,7 +307,7 @@ public class ReminderCatalog {
 
         // --- SWEETHEART ---
         remindersForThisRole.clear();
-        addReminder(Role.SWEETHEART, "Drunk", false, remindersForThisRole);
+        addReminder(Role.SWEETHEART, Reminders.DRUNK, false, remindersForThisRole);
 
         // --- KLUTZ --- (No reminders)
 
@@ -311,33 +317,33 @@ public class ReminderCatalog {
 
         // --- CERENOVUS ---
         remindersForThisRole.clear();
-        addReminder(Role.CERENOVUS, "Mad", false, remindersForThisRole);
+        addReminder(Role.CERENOVUS, Reminders.MAD, false, remindersForThisRole);
 
         // --- PIT-HAG --- (No reminders)
 
         // --- EVIL TWIN ---
         remindersForThisRole.clear();
-        addReminder(Role.EVIL_TWIN, "Twin", false, remindersForThisRole);
+        addReminder(Role.EVIL_TWIN, Reminders.TWIN, false, remindersForThisRole);
 
         // --- FANG GU ---
         remindersForThisRole.clear();
-        addReminder(Role.FANG_GU, "Dead", false, remindersForThisRole);
-        addReminder(Role.FANG_GU, "Once", false, remindersForThisRole);
+        addReminder(Role.FANG_GU, Reminders.DEAD, false, remindersForThisRole);
+        addReminder(Role.FANG_GU, Reminders.ONCE, false, remindersForThisRole);
 
         // --- VIGORMORTIS ---
         remindersForThisRole.clear();
-        addReminder(Role.VIGORMORTIS, "Dead", false, remindersForThisRole);
-        addReminder(Role.VIGORMORTIS, "Has Ability", false, remindersForThisRole);
-        addReminder(Role.VIGORMORTIS, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.VIGORMORTIS, Reminders.DEAD, false, remindersForThisRole);
+        addReminder(Role.VIGORMORTIS, Reminders.HAS_ABILITY, false, remindersForThisRole);
+        addReminder(Role.VIGORMORTIS, Reminders.POISONED, false, remindersForThisRole);
 
         // --- NO DASHII ---
         remindersForThisRole.clear();
-        addReminder(Role.NO_DASHII, "Dead", false, remindersForThisRole);
-        addReminder(Role.NO_DASHII, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.NO_DASHII, Reminders.DEAD, false, remindersForThisRole);
+        addReminder(Role.NO_DASHII, Reminders.POISONED, false, remindersForThisRole);
 
         // --- VORTOX ---
         remindersForThisRole.clear();
-        addReminder(Role.VORTOX, "Dead", false, remindersForThisRole);
+        addReminder(Role.VORTOX, Reminders.DEAD, false, remindersForThisRole);
 // --- KICKSTARTER ROLES ---
 
         // --- NOBLE ---
@@ -346,8 +352,8 @@ public class ReminderCatalog {
 
         // --- PIXIE ---
         remindersForThisRole.clear();
-        addReminder(Role.PIXIE, "Mad", false, remindersForThisRole);
-        addReminder(Role.PIXIE, "Has Ability", false, remindersForThisRole);
+        addReminder(Role.PIXIE, Reminders.MAD, false, remindersForThisRole);
+        addReminder(Role.PIXIE, Reminders.HAS_ABILITY, false, remindersForThisRole);
 
         // --- GENERAL --- (No reminders)
         // --- KING --- (No reminders)
@@ -355,15 +361,15 @@ public class ReminderCatalog {
         // --- LYCANTHROPE ---
         remindersForThisRole.clear();
         addReminder(Role.LYCANTHROPE, "Faux Paw", false, remindersForThisRole);
-        addReminder(Role.LYCANTHROPE, "Dead", false, remindersForThisRole);
+        addReminder(Role.LYCANTHROPE, Reminders.DEAD, false, remindersForThisRole);
 
         // --- ENGINEER ---
         remindersForThisRole.clear();
-        addReminder(Role.ENGINEER, "No Ability", false, remindersForThisRole);
+        addReminder(Role.ENGINEER, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- HUNTSMAN ---
         remindersForThisRole.clear();
-        addReminder(Role.HUNTSMAN, "No Ability", false, remindersForThisRole);
+        addReminder(Role.HUNTSMAN, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- ALCHEMIST ---
         remindersForThisRole.clear();
@@ -371,7 +377,7 @@ public class ReminderCatalog {
 
         // --- CANNIBAL ---
         remindersForThisRole.clear();
-        addReminder(Role.CANNIBAL, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.CANNIBAL, Reminders.POISONED, false, remindersForThisRole);
         addReminder(Role.CANNIBAL, "Lunch", false, remindersForThisRole);
 
         // --- AMNESIAC ---
@@ -389,7 +395,7 @@ public class ReminderCatalog {
 
         // --- GOLEM ---
         remindersForThisRole.clear();
-        addReminder(Role.GOLEM, "May Not Nominate", false, remindersForThisRole);
+        addReminder(Role.GOLEM, Reminders.MAY_NOT_NOMINATE, false, remindersForThisRole);
 
         // --- DAMSEL ---
         remindersForThisRole.clear();
@@ -400,13 +406,13 @@ public class ReminderCatalog {
 
         // --- PUZZLEMASTER ---
         remindersForThisRole.clear();
-        addReminder(Role.PUZZLEMASTER, "Drunk", false, remindersForThisRole);
+        addReminder(Role.PUZZLEMASTER, Reminders.DRUNK, false, remindersForThisRole);
         addReminder(Role.PUZZLEMASTER, "Guess Used", false, remindersForThisRole);
 
         // --- MEZEPHELES ---
         remindersForThisRole.clear();
         addReminder(Role.MEZEPHELES, "Turns Evil", false, remindersForThisRole);
-        addReminder(Role.MEZEPHELES, "No Ability", false, remindersForThisRole);
+        addReminder(Role.MEZEPHELES, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- FEARMONGER ---
         remindersForThisRole.clear();
@@ -422,19 +428,19 @@ public class ReminderCatalog {
 
         // --- LEGION ---
         remindersForThisRole.clear();
-        addReminder(Role.LEGION, "Dead", false, remindersForThisRole);
+        addReminder(Role.LEGION, Reminders.DEAD, false, remindersForThisRole);
         addReminder(Role.LEGION, "About To Die", false, remindersForThisRole);
 
         // --- LLEECH ---
         remindersForThisRole.clear();
-        addReminder(Role.LLEECH, "Dead", false, remindersForThisRole);
-        addReminder(Role.LLEECH, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.LLEECH, Reminders.DEAD, false, remindersForThisRole);
+        addReminder(Role.LLEECH, Reminders.POISONED, false, remindersForThisRole);
 
         // --- AL HADIKHIA ---
         remindersForThisRole.clear();
-        addReminder(Role.AL_HADIKHIA, "1", false, remindersForThisRole);
-        addReminder(Role.AL_HADIKHIA, "2", false, remindersForThisRole);
-        addReminder(Role.AL_HADIKHIA, "3", false, remindersForThisRole);
+        addReminder(Role.AL_HADIKHIA, Reminders.ONE, false, remindersForThisRole);
+        addReminder(Role.AL_HADIKHIA, Reminders.TWO, false, remindersForThisRole);
+        addReminder(Role.AL_HADIKHIA, Reminders.THREE, false, remindersForThisRole);
 
         // --- RIOT --- (No reminders)
 
@@ -457,7 +463,7 @@ public class ReminderCatalog {
 
         // --- BOUNTY HUNTER ---
         remindersForThisRole.clear();
-        addReminder(Role.BOUNTY_HUNTER, "Known", false, remindersForThisRole);
+        addReminder(Role.BOUNTY_HUNTER, Reminders.KNOWN, false, remindersForThisRole);
 
         // --- HIGH PRIESTESS --- (No reminders)
 
@@ -467,38 +473,38 @@ public class ReminderCatalog {
 
         // --- PREACHER ---
         remindersForThisRole.clear();
-        addReminder(Role.PREACHER, "No Ability", false, remindersForThisRole);
+        addReminder(Role.PREACHER, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- VILLAGE IDIOT ---
         remindersForThisRole.clear();
-        addReminder(Role.VILLAGE_IDIOT, "Drunk", false, remindersForThisRole);
+        addReminder(Role.VILLAGE_IDIOT, Reminders.DRUNK, false, remindersForThisRole);
 
         // --- CULT LEADER --- (No reminders)
 
         // --- ACROBAT ---
         remindersForThisRole.clear();
-        addReminder(Role.ACROBAT, "Chosen", false, remindersForThisRole);
-        addReminder(Role.ACROBAT, "Dead", false, remindersForThisRole);
+        addReminder(Role.ACROBAT, Reminders.CHOSEN, false, remindersForThisRole);
+        addReminder(Role.ACROBAT, Reminders.DEAD, false, remindersForThisRole);
 
         // --- ALSAAHIR --- (No reminders)
 
         // --- NIGHTWATCHMAN ---
         remindersForThisRole.clear();
-        addReminder(Role.NIGHTWATCHMAN, "No Ability", false, remindersForThisRole);
+        addReminder(Role.NIGHTWATCHMAN, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- FISHERMAN ---
         remindersForThisRole.clear();
-        addReminder(Role.FISHERMAN, "No Ability", false, remindersForThisRole);
+        addReminder(Role.FISHERMAN, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- PRINCESS ---
         remindersForThisRole.clear();
-        addReminder(Role.PRINCESS, "Doesn't Kill", false, remindersForThisRole);
+        addReminder(Role.PRINCESS, Reminders.DOESNT_KILL, false, remindersForThisRole);
 
         // --- CHOIRBOY --- (No reminders)
 
         // --- BANSHEE ---
         remindersForThisRole.clear();
-        addReminder(Role.BANSHEE, "Has Ability", false, remindersForThisRole);
+        addReminder(Role.BANSHEE, Reminders.HAS_ABILITY, false, remindersForThisRole);
 
         // --- HERMIT --- (No reminders)
 
@@ -508,7 +514,7 @@ public class ReminderCatalog {
 
         // --- PLAGUE DOCTOR ---
         remindersForThisRole.clear();
-        addReminder(Role.PLAGUE_DOCTOR, "Storyteller Ability", false, remindersForThisRole);
+        addReminder(Role.PLAGUE_DOCTOR, Reminders.STORYTELLER_ABILITY, false, remindersForThisRole);
 
         // --- HATTER ---
         remindersForThisRole.clear();
@@ -519,7 +525,7 @@ public class ReminderCatalog {
 
         // --- HARPY ---
         remindersForThisRole.clear();
-        addReminder(Role.HARPY, "Mad", false, remindersForThisRole);
+        addReminder(Role.HARPY, Reminders.MAD, false, remindersForThisRole);
         addReminder(Role.HARPY, "2nd", false, remindersForThisRole);
 
         // --- WIZARD ---
@@ -528,7 +534,7 @@ public class ReminderCatalog {
 
         // --- WIDOW ---
         remindersForThisRole.clear();
-        addReminder(Role.WIDOW, "Poisoned", false, remindersForThisRole);
+        addReminder(Role.WIDOW, Reminders.POISONED, false, remindersForThisRole);
         addReminder(Role.WIDOW, "Knows", false, remindersForThisRole);
 
         // --- XAAN ---
@@ -536,7 +542,7 @@ public class ReminderCatalog {
         addReminder(Role.XAAN, "Night 1", false, remindersForThisRole);
         addReminder(Role.XAAN, "Night 2", false, remindersForThisRole);
         addReminder(Role.XAAN, "Night 3", false, remindersForThisRole);
-        addReminder(Role.XAAN, "X", false, remindersForThisRole);
+        addReminder(Role.XAAN, Reminders.X, false, remindersForThisRole);
 
         // --- WRAITH --- (No reminders)
 
@@ -551,30 +557,30 @@ public class ReminderCatalog {
         // --- ORGAN GRINDER ---
         remindersForThisRole.clear();
         addReminder(Role.ORGAN_GRINDER, "About To Die", false, remindersForThisRole);
-        addReminder(Role.ORGAN_GRINDER, "Drunk", false, remindersForThisRole);
+        addReminder(Role.ORGAN_GRINDER, Reminders.DRUNK, false, remindersForThisRole);
 
         // --- BOFFIN --- (No reminders)
 
         // --- YAGGABABBLE ---
         remindersForThisRole.clear();
-        addReminder(Role.YAGGABABBLE, "Dead", false, remindersForThisRole);
+        addReminder(Role.YAGGABABBLE, Reminders.DEAD, false, remindersForThisRole);
 
         // --- LIL MONSTA ---
         remindersForThisRole.clear();
-        addReminder(Role.LIL_MONSTA, "Is The Demon", true, remindersForThisRole); // (Global)
-        addReminder(Role.LIL_MONSTA, "Dead", true, remindersForThisRole); // (Global)
+        addReminder(Role.LIL_MONSTA, Reminders.IS_THE_DEMON, true, remindersForThisRole); // (Global)
+        addReminder(Role.LIL_MONSTA, Reminders.DEAD, true, remindersForThisRole); // (Global)
 
         // --- KAZALI ---
         remindersForThisRole.clear();
-        addReminder(Role.KAZALI, "Dead", false, remindersForThisRole);
+        addReminder(Role.KAZALI, Reminders.DEAD, false, remindersForThisRole);
 
         // --- OJO ---
         remindersForThisRole.clear();
-        addReminder(Role.OJO, "Dead", false, remindersForThisRole);
+        addReminder(Role.OJO, Reminders.DEAD, false, remindersForThisRole);
 
         // --- LORD OF TYPHON ---
         remindersForThisRole.clear();
-        addReminder(Role.LORD_OF_TYPHON, "Dead", false, remindersForThisRole);
+        addReminder(Role.LORD_OF_TYPHON, Reminders.DEAD, false, remindersForThisRole);
 
         // ====================================================================
         // --- TRAVELERS ---
@@ -582,11 +588,11 @@ public class ReminderCatalog {
 
         // --- THIEF ---
         remindersForThisRole.clear();
-        addReminder(Role.THIEF, "Negative Vote", false, remindersForThisRole);
+        addReminder(Role.THIEF, Reminders.NEGATIVE_VOTE, false, remindersForThisRole);
 
         // --- BUREAUCRAT ---
         remindersForThisRole.clear();
-        addReminder(Role.BUREAUCRAT, "3 Votes", false, remindersForThisRole);
+        addReminder(Role.BUREAUCRAT, Reminders.THREE_VOTES, false, remindersForThisRole);
 
         // --- GUNSLINGER --- (No reminders)
         // --- SCAPEGOAT --- (No reminders)
@@ -600,7 +606,7 @@ public class ReminderCatalog {
 
         // --- JUDGE ---
         remindersForThisRole.clear();
-        addReminder(Role.JUDGE, "No Ability", false, remindersForThisRole);
+        addReminder(Role.JUDGE, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- VOUDON --- (No reminders)
 
@@ -617,15 +623,15 @@ public class ReminderCatalog {
 
         // --- HARLOT ---
         remindersForThisRole.clear();
-        addReminder(Role.HARLOT, "Dead", false, remindersForThisRole);
+        addReminder(Role.HARLOT, Reminders.DEAD, false, remindersForThisRole);
 
         // --- BUTCHER --- (No reminders)
         // --- DEVIANT --- (No reminders)
 
         // --- BONE COLLECTOR ---
         remindersForThisRole.clear();
-        addReminder(Role.BONE_COLLECTOR, "No Ability", false, remindersForThisRole);
-        addReminder(Role.BONE_COLLECTOR, "Has Ability", false, remindersForThisRole);
+        addReminder(Role.BONE_COLLECTOR, Reminders.NO_ABILITY, false, remindersForThisRole);
+        addReminder(Role.BONE_COLLECTOR, Reminders.HAS_ABILITY, false, remindersForThisRole);
 
         // --- CACKLEJACK ---
         remindersForThisRole.clear();
@@ -664,7 +670,7 @@ public class ReminderCatalog {
 
         // --- FIBBIN ---
         remindersForThisRole.clear();
-        addReminder(Role.FIBBIN, "No Ability", false, remindersForThisRole);
+        addReminder(Role.FIBBIN, Reminders.NO_ABILITY, false, remindersForThisRole);
 
         // --- FIDDLER --- (No reminders)
 
@@ -684,7 +690,7 @@ public class ReminderCatalog {
 
         // --- TOYMAKER ---
         remindersForThisRole.clear();
-        addReminder(Role.TOYMAKER, "Final Night: No Attack", false, remindersForThisRole);
+        addReminder(Role.TOYMAKER, Reminders.FINAL_NIGHT_NO_ATTACK, false, remindersForThisRole);
 
         // ====================================================================
         // --- LORIC ---
@@ -696,7 +702,7 @@ public class ReminderCatalog {
 
         // --- GOD OF UG ---
         remindersForThisRole.clear();
-        addReminder(Role.GOD_OF_UG, "Ug hat", false, remindersForThisRole);
+        addReminder(Role.GOD_OF_UG, Reminders.UG_HAT, false, remindersForThisRole);
 
         // --- HINDU --- (No reminders)
 
@@ -712,7 +718,7 @@ public class ReminderCatalog {
 
         // --- VENTRILOQUIST ---
         remindersForThisRole.clear();
-        addReminder(Role.VENTRILOQUIST, "Mad", false, remindersForThisRole);
+        addReminder(Role.VENTRILOQUIST, Reminders.MAD, false, remindersForThisRole);
 
         // --- ZENOMANCER ---
         remindersForThisRole.clear();
@@ -721,8 +727,8 @@ public class ReminderCatalog {
         // --- GLOBAL ALIGNMENT REMINDERS (available to all players) ---
         // Using NO_ROLE as a placeholder since these are alignment markers, not role-specific
         remindersForThisRole.clear();
-        DEFINITIONS.add(new ReminderDefinition(Role.NO_ROLE, "Good", true));
-        DEFINITIONS.add(new ReminderDefinition(Role.NO_ROLE, "Evil", true));
+        DEFINITIONS.add(new ReminderDefinition(Role.NO_ROLE, Reminders.GOOD, true));
+        DEFINITIONS.add(new ReminderDefinition(Role.NO_ROLE, Reminders.EVIL, true));
     }
 
     /**
