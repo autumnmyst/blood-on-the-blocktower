@@ -488,31 +488,6 @@ public class TriggerManager {
     }
 
     /**
-     * Creates mark triggers for a specific associated role.
-     * Called from ReminderChooseScreen when an associated role reminder is added to an already-marked player.
-     */
-    public static void createMarkTriggersForAssociatedRole(UUID playerUUID, Role assignedRole, Role associatedRole) {
-        // For Pixie, check if they have "Has Ability" reminder
-        if (assignedRole == Role.PIXIE) {
-            boolean hasAbility = StorytellerState.REMINDERS.getOrDefault(playerUUID, Collections.emptyList()).stream()
-                .anyMatch(r -> r.text().equals(Reminders.HAS_ABILITY) && r.role().isPresent() && r.role().get() == Role.PIXIE);
-            if (!hasAbility) {
-                return; // Don't create triggers for Pixie without Has Ability
-            }
-        }
-
-        // Check if this associated role has mark-based triggers
-        NightOrder.getOtherNightOrder().stream()
-            .filter(info -> info.isRole() && info.isTriggered() && !info.isDeathBased() && info.getRole() == associatedRole)
-            .forEach(info -> {
-                RoleVisit triggerVisit = buildTriggeredVisit(playerUUID, assignedRole, info, Optional.of(associatedRole));
-                if (triggerVisit != null) {
-                    addTriggeredVisit(triggerVisit);
-                }
-            });
-    }
-
-    /**
      * Creates a resurrection trigger for a player who was resurrected.
      * If the player's role has a first night only visit, add it as a trigger.
      * Uses same logic as cannibal's first night trigger for associated roles.
