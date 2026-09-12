@@ -36,12 +36,38 @@ import com.autumnwind.botb.networking.RequestScriptC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.minecraft.util.hit.HitResult;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourceReloadListenerKeys;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.Identifier;
+import com.autumnwind.botb.BloodOnTheBlocktower;
+import java.util.Collection;
+import java.util.List;
 
 public class BloodOnTheBlocktowerClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         PlayerConfig.load();
-        AssetPackTemplate.generate();
+
+        // Written after languages load so the readme carries translated role names
+        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+            @Override
+            public Identifier getFabricId() {
+                return Identifier.of(BloodOnTheBlocktower.MOD_ID, "asset_pack_template");
+            }
+
+            @Override
+            public Collection<Identifier> getFabricDependencies() {
+                return List.of(ResourceReloadListenerKeys.LANGUAGES);
+            }
+
+            @Override
+            public void reload(ResourceManager manager) {
+                AssetPackTemplate.generate();
+            }
+        });
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             // Restore the saved grimoire BEFORE asking the server for the script. Order
