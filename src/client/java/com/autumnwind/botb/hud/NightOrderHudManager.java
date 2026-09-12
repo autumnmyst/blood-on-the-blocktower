@@ -64,13 +64,6 @@ public class NightOrderHudManager {
     }
 
     /**
-     * Creates mark triggers for a specific associated role.
-     */
-    public static void createMarkTriggersForAssociatedRole(UUID playerUUID, Role assignedRole, Role associatedRole) {
-        TriggerManager.createMarkTriggersForAssociatedRole(playerUUID, assignedRole, associatedRole);
-    }
-
-    /**
      * Creates a resurrection trigger for a player who was resurrected.
      */
     public static void createResurrectionTrigger(UUID playerUUID) {

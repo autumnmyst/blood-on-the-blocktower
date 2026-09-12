@@ -204,11 +204,6 @@ public class RoleReminderScreen extends Screen {
                         NightOrderHudManager.createFirstNightTriggeredVisitForPlayer(targetPlayerUUID, role);
                     }
                 }
-
-                // If player is marked, create mark triggers for this new associated role
-                if (StorytellerState.markedPlayers.contains(targetPlayerUUID)) {
-                    NightOrderHudManager.createMarkTriggersForAssociatedRole(targetPlayerUUID, assignedRole, role);
-                }
             }
         }
 

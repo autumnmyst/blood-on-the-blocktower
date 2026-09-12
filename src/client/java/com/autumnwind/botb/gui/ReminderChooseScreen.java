@@ -635,11 +635,6 @@ public class ReminderChooseScreen extends Screen {
                     NightOrderHudManager.createFirstNightTriggeredVisitForPlayer(targetUUID, associatedRole);
                 }
             }
-
-            // If player is marked, create mark triggers for this new associated role
-            if (StorytellerState.markedPlayers.contains(targetUUID)) {
-                NightOrderHudManager.createMarkTriggersForAssociatedRole(targetUUID, assignedRole, associatedRole);
-            }
         }
 
         // Special case: If adding "Has Ability" reminder to a Pixie, create FN-only triggers for existing FN-only associated roles
