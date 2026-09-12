@@ -94,5 +94,6 @@ public final class TeamManager {
             if (scoreboard.getPlayersTeam(playerName) == target) continue;
             scoreboard.addPlayerToTeam(playerName, target);
         }
+        PlayerWaypoints.refresh(server);
     }
 }

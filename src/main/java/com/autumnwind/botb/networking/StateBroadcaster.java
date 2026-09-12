@@ -138,6 +138,7 @@ public final class StateBroadcaster {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
+        PlayerWaypoints.refresh(server);
     }
 
     /** The current daytime snapshot, for broadcasting or for catching one player up. */

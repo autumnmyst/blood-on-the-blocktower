@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.server.permissions.Permissions;
+import com.autumnwind.botb.world.PlayerWaypoints;
 
 /** Server-bound packet handlers: Ending the game and the final reveal. */
 final class GameEndHandlers {
@@ -53,6 +54,7 @@ final class GameEndHandlers {
                         online.removeEffect(MobEffects.INVISIBILITY);
                     }
                 }
+                PlayerWaypoints.refresh(context.server());
 
                 // Delay reveal team assignment so nametag colors flip at the same moment
                 // floating role icons become visible on clients (after the ~1s fade-to-black).

@@ -7,7 +7,8 @@
 		"MessageCommandMixin",
 		"PlayerNameMixin",
 		"PlayerListNameMixin",
-		"PlayerListPermissionMixin"
+		"PlayerListPermissionMixin",
+		"WaypointTransmitterMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
