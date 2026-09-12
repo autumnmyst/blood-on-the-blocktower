@@ -97,9 +97,9 @@ public final class AssetPackTemplate {
         sb.append("Role receive plays the first of these that exists: the role, then its type, then its alignment, then the default.\n\n");
         sb.append("| Path | Plays when |\n|---|---|\n");
         sb.append("| `sounds/").append(CustomSounds.MADNESS_RECEIVE).append(".ogg` | Gaining a madness |\n");
-        sb.append("| `sounds/").append(CustomSounds.VOTE_MUSIC_DIR).append("organ_grinder.ogg` | Vote music during an Organ Grinder vote |\n");
-        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("victory.ogg` | Plays on victory |\n");
-        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("defeat.ogg` | Plays on defeat |\n");
+        sb.append("| `sounds/").append(CustomSounds.VOTE_MUSIC_DIR).append("organ_grinder.ogg` | Organ Grinder vote |\n");
+        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("victory.ogg` | Victory screen |\n");
+        sb.append("| `sounds/").append(CustomSounds.GAME_END_DIR).append("defeat.ogg` | Defeat screen |\n");
         sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("good.ogg` | Any good role |\n");
         sb.append("| `sounds/").append(CustomSounds.ROLE_RECEIVE_DIR).append("evil.ogg` | Any evil role |\n");
         for (RoleType type : RoleType.values()) {
