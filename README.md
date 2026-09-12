@@ -93,7 +93,7 @@ Additional voice chat setup (highly recommended):
 
 ## Bug Reports
 
-Please file bugs as new issues. Currently not accepting PRs at this time, however, localization support is planned, and once that's added PRs for language localization will be encouraged!
+Please file bugs as new issues. Translations are accepted: see [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a language. (Thank you!)
 
 
 ## Credits
