@@ -23,6 +23,7 @@ import com.autumnwind.botb.util.ServerCommands;
 import com.autumnwind.botb.world.TeamManager;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.scores.TeamColor;
+import com.autumnwind.botb.world.PlayerWaypoints;
 
 /** Server-bound packet handlers: Role assignment and item distribution from the storyteller's grimoire. */
 final class RoleHandlers {
@@ -84,6 +85,7 @@ final class RoleHandlers {
                 Set<UUID> previouslySeated = previousSeats.keySet();
                 Set<Integer> previouslySeatedSeats = new HashSet<>(previousSeats.values());
                 ServerState.updateSeats(seatNumbers);
+                PlayerWaypoints.refresh(context.server());
 
                 // Stored whole rather than reduced to (role, alignment): a homebrew assignment
                 // carries its identity in the custom role id, which a Role enum can't hold, and
@@ -259,6 +261,7 @@ final class RoleHandlers {
             } else {
                 ServerState.PLAYER_SEAT_NUMBERS.remove(targetUuid);
             }
+            PlayerWaypoints.refresh(target);
             ServerPlayNetworking.send(target, new SendSeatsS2CPayload(seatNumbers));
 
             PendingRoleAssignment assignment = pendingRoles.get(targetUuid);

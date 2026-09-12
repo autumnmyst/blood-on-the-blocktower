@@ -14,6 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.permissions.Permissions;
+import com.autumnwind.botb.world.PlayerWaypoints;
 
 /** Sends game state to clients: full catch-up on join, and broadcasts when daytime, day/night, clock hands, whisper settings, custom names, or lobby counts change. */
 public final class StateBroadcaster {
@@ -177,6 +178,7 @@ public final class StateBroadcaster {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(player, payload);
         }
+        PlayerWaypoints.refresh(server);
     }
 
     /**

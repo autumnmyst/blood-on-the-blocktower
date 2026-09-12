@@ -27,6 +27,7 @@ import com.autumnwind.botb.networking.StateBroadcaster;
 import com.autumnwind.botb.util.ServerCommands;
 import com.autumnwind.botb.world.TeamManager;
 import net.minecraft.world.scores.TeamColor;
+import com.autumnwind.botb.world.PlayerWaypoints;
 
 /**
  * Player and block event hooks: join and disconnect bookkeeping, re-applying death
@@ -50,6 +51,7 @@ public final class PlayerEvents {
             }
 
             TimerManager.addPlayer(handler.getPlayer());
+            PlayerWaypoints.refresh(handler.getPlayer());
 
             // Re-applies the correct scoreboard team based on the joining player's UUID:
             //   - If they're the current MFE → botb_mfe (preserves red glow on rejoin)
@@ -98,6 +100,7 @@ public final class PlayerEvents {
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             TimerManager.removePlayer(handler.getPlayer());
+            PlayerWaypoints.forget(handler.getPlayer());
         });
 
         // Register player respawn event to reapply invisibility

@@ -3,9 +3,11 @@
 	"package": "com.autumnwind.botb.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
+		"LivingEntityWaypointMixin",
 		"MessageCommandMixin",
 		"PlayerNameMixin",
-		"PlayerListNameMixin"
+		"PlayerListNameMixin",
+		"PlayerListPermissionMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
