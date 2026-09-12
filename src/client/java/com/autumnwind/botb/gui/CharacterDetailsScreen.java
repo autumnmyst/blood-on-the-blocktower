@@ -21,6 +21,7 @@ import com.autumnwind.botb.config.CustomRoleLibrary;
 import java.util.ArrayList;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.Style;
 
 public class CharacterDetailsScreen extends Screen {
     private final ScriptRole scriptRole;
@@ -396,9 +397,7 @@ public class CharacterDetailsScreen extends Screen {
             if (details != null) {
                 // Official role - show Summary and Examples from RoleDetails
                 this.addEntry(DocumentEntry.title(font, Component.translatable("gui.blood-on-the-blocktower.character_details.summary").withStyle(ChatFormatting.GOLD)));
-                for (FormattedCharSequence line : font.split(Component.literal(details.summary()), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
-                }
+                addMultilineText(details.summary(), textWidth);
 
                 // Spacer
                 this.addEntry(DocumentEntry.spacer());
@@ -406,9 +405,7 @@ public class CharacterDetailsScreen extends Screen {
 
                 // Examples Section
                 this.addEntry(DocumentEntry.title(font, Component.translatable("gui.blood-on-the-blocktower.character_details.examples").withStyle(ChatFormatting.GOLD)));
-                for (FormattedCharSequence line : font.split(Component.literal(details.examples()), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
-                }
+                addMultilineText(details.examples(), textWidth);
             } else if (almanacRoleData != null) {
                 // Custom role - show sections from almanac data
                 boolean needsSpacer = false;
@@ -446,23 +443,36 @@ public class CharacterDetailsScreen extends Screen {
             }
         }
 
+        private static final String BULLET = "\u2022 ";
+
         private void addMultilineText(String content, int textWidth) {
             // Split by line breaks first, then wrap each paragraph
             String[] paragraphs = content.split("\n");
-            boolean firstParagraph = true;
+            boolean needsGap = false;
             for (String paragraph : paragraphs) {
                 if (paragraph.isEmpty()) {
                     // Empty line = paragraph break
                     this.addEntry(DocumentEntry.spacer());
+                    needsGap = false;
                     continue;
                 }
-                if (!firstParagraph) {
+                if (needsGap) {
                     // Add gap between paragraphs
                     this.addEntry(DocumentEntry.spacer());
                 }
-                firstParagraph = false;
-                for (FormattedCharSequence line : font.split(Component.literal(paragraph), textWidth)) {
-                    this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
+                needsGap = true;
+                boolean bulleted = paragraph.startsWith("- ");
+                String body = bulleted ? paragraph.substring(2) : paragraph;
+                int indent = bulleted ? font.width(BULLET) : 0;
+                List<FormattedCharSequence> lines = font.split(Component.literal(body), textWidth - indent);
+                for (int i = 0; i < lines.size(); i++) {
+                    FormattedCharSequence line = lines.get(i);
+                    if (bulleted && i == 0) {
+                        line = FormattedCharSequence.composite(FormattedCharSequence.forward(BULLET, Style.EMPTY), line);
+                        this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF));
+                    } else {
+                        this.addEntry(DocumentEntry.text(font, line, 0xFFFFFFFF, indent));
+                    }
                 }
             }
         }
