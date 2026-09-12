@@ -18,6 +18,7 @@ import java.util.List;
 import com.autumnwind.botb.config.CustomRoleLibrary;
 import java.util.ArrayList;
 import com.autumnwind.botb.gui.widget.DocumentEntry;
+import net.minecraft.text.Style;
 
 public class CharacterDetailsScreen extends Screen {
     private final ScriptRole scriptRole;
@@ -389,9 +390,7 @@ public class CharacterDetailsScreen extends Screen {
             if (details != null) {
                 // Official role - show Summary and Examples from RoleDetails
                 this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.summary").formatted(Formatting.GOLD)));
-                for (OrderedText line : textRenderer.wrapLines(Text.literal(details.summary()), textWidth)) {
-                    this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
-                }
+                addMultilineText(details.summary(), textWidth);
 
                 // Spacer
                 this.addEntry(DocumentEntry.spacer());
@@ -399,9 +398,7 @@ public class CharacterDetailsScreen extends Screen {
 
                 // Examples Section
                 this.addEntry(DocumentEntry.title(textRenderer, Text.translatable("gui.blood-on-the-blocktower.character_details.examples").formatted(Formatting.GOLD)));
-                for (OrderedText line : textRenderer.wrapLines(Text.literal(details.examples()), textWidth)) {
-                    this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
-                }
+                addMultilineText(details.examples(), textWidth);
             } else if (almanacRoleData != null) {
                 // Custom role - show sections from almanac data
                 boolean needsSpacer = false;
@@ -439,23 +436,36 @@ public class CharacterDetailsScreen extends Screen {
             }
         }
 
+        private static final String BULLET = "\u2022 ";
+
         private void addMultilineText(String content, int textWidth) {
             // Split by line breaks first, then wrap each paragraph
             String[] paragraphs = content.split("\n");
-            boolean firstParagraph = true;
+            boolean needsGap = false;
             for (String paragraph : paragraphs) {
                 if (paragraph.isEmpty()) {
                     // Empty line = paragraph break
                     this.addEntry(DocumentEntry.spacer());
+                    needsGap = false;
                     continue;
                 }
-                if (!firstParagraph) {
+                if (needsGap) {
                     // Add gap between paragraphs
                     this.addEntry(DocumentEntry.spacer());
                 }
-                firstParagraph = false;
-                for (OrderedText line : textRenderer.wrapLines(Text.literal(paragraph), textWidth)) {
-                    this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
+                needsGap = true;
+                boolean bulleted = paragraph.startsWith("- ");
+                String body = bulleted ? paragraph.substring(2) : paragraph;
+                int indent = bulleted ? textRenderer.getWidth(BULLET) : 0;
+                List<OrderedText> lines = textRenderer.wrapLines(Text.literal(body), textWidth - indent);
+                for (int i = 0; i < lines.size(); i++) {
+                    OrderedText line = lines.get(i);
+                    if (bulleted && i == 0) {
+                        line = OrderedText.concat(OrderedText.styledForwardsVisitedString(BULLET, Style.EMPTY), line);
+                        this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF));
+                    } else {
+                        this.addEntry(DocumentEntry.text(textRenderer, line, 0xFFFFFF, indent));
+                    }
                 }
             }
         }

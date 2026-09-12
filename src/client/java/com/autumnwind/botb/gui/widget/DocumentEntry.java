@@ -40,10 +40,15 @@ public abstract class DocumentEntry extends ElementListWidget.Entry<DocumentEntr
 
     /** One wrapped line of body text, drawn without a shadow. */
     public static DocumentEntry text(TextRenderer textRenderer, OrderedText text, int color) {
+        return text(textRenderer, text, color, 0);
+    }
+
+    /** Same, shifted right by {@code indent} pixels, for the continuation lines of a bullet. */
+    public static DocumentEntry text(TextRenderer textRenderer, OrderedText text, int color, int indent) {
         return new DocumentEntry() {
             @Override
             public void render(DrawContext context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-                context.drawText(textRenderer, text, x, y, color, false);
+                context.drawText(textRenderer, text, x + indent, y, color, false);
             }
         };
     }
